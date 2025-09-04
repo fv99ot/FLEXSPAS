@@ -779,6 +779,91 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="pending" className="space-y-6">
+            {/* Pending Customer Approvals */}
+            <Card className="dashboard-card">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <Users className="h-5 w-5 mr-2" />
+                  Pending Customer Approvals ({pendingCustomers.length})
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Review and approve new customer applications from QR code registrations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <Button onClick={fetchPendingCustomers} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                    Refresh Pending List
+                  </Button>
+
+                  {pendingCustomers.length === 0 ? (
+                    <p className="text-gray-400 text-center py-8">No pending customer applications</p>
+                  ) : (
+                    <div className="grid gap-4">
+                      {pendingCustomers.map((customer) => (
+                        <div key={customer.id} className="p-4 border border-yellow-500/50 rounded-lg bg-yellow-600/10">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <Avatar>
+                                <AvatarFallback className="bg-yellow-600 text-white">
+                                  {customer.first_name.charAt(0)}{customer.last_name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h3 className="font-semibold text-white">
+                                  {customer.first_name} {customer.last_name}
+                                </h3>
+                                <div className="text-sm text-gray-300 space-y-1">
+                                  <p>ID: {customer.id_number}</p>
+                                  <p>DOB: {customer.date_of_birth}</p>
+                                  <p>ID Exp: {customer.id_expiration_date}</p>
+                                  <p>State: {customer.state_of_id}</p>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2">
+                                  Applied: {new Date(customer.created_at).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => {
+                                  if (window.confirm(`Approve ${customer.first_name} ${customer.last_name}? Make sure you have verified their physical ID.`)) {
+                                    approvePendingCustomer(customer.id);
+                                  }
+                                }}
+                              >
+                                ✓ Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => {
+                                  if (window.confirm(`Reject application for ${customer.first_name} ${customer.last_name}?`)) {
+                                    rejectPendingCustomer(customer.id);
+                                  }
+                                }}
+                              >
+                                ✗ Reject
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="mt-3 p-3 bg-blue-600/20 rounded border border-blue-500/50">
+                            <p className="text-blue-200 text-sm">
+                              <strong>📋 Verification Required:</strong> Please verify the customer's physical ID matches the information above before approving.
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="active" className="space-y-6">
             {/* Active Check-ins */}
             <Card className="dashboard-card">
