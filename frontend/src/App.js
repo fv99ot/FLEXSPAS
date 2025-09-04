@@ -274,6 +274,7 @@ const Dashboard = () => {
     try {
       const response = await axios.get(`${API}/rooms/available/${roomType}`);
       setAvailableRooms(response.data.available_rooms);
+      setRoomDetails(response.data.room_details || []);
     } catch (error) {
       console.error('Error fetching available rooms:', error);
     }
