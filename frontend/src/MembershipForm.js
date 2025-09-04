@@ -74,12 +74,14 @@ const MembershipForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <Card className="shadow-lg">
-          <CardHeader className="text-center bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-            <CardTitle className="text-3xl font-bold">FLEX_LA</CardTitle>
-            <CardDescription className="text-purple-100">
+        <Card className="shadow-lg membership-form">
+          <CardHeader className="text-center flex-button">
+            <CardTitle className="text-4xl font-bold text-white flex-brand">
+              FLEX<span className="flex-accent">_LA</span>
+            </CardTitle>
+            <CardDescription className="text-gray-300">
               Membership Registration Form
             </CardDescription>
           </CardHeader>
