@@ -60,10 +60,17 @@ const MembershipForm = () => {
         <Card className="w-full max-w-md text-center membership-form">
           <CardContent className="pt-6">
             <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-green-400 mb-2">Form Submitted Successfully!</h2>
+            <h2 className="text-2xl font-bold text-green-400 mb-2">Application Submitted Successfully!</h2>
             <p className="text-gray-300 mb-4">
-              Thank you for pre-registering. Please proceed to the front desk to complete your check-in process.
+              Your membership application has been submitted and is pending staff approval. 
+              Please proceed to the front desk when ready.
             </p>
+            <div className="bg-yellow-600/20 p-4 rounded-lg border border-yellow-500/50 mb-4">
+              <p className="text-yellow-200 font-semibold mb-2">📋 REMINDER:</p>
+              <p className="text-yellow-200 text-sm">
+                Please be ready to show your physical ID to staff for verification when you arrive at the front desk.
+              </p>
+            </div>
             <p className="text-sm text-gray-400">
               Reference ID: {formData.id_number}
             </p>
