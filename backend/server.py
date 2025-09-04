@@ -293,7 +293,30 @@ async def get_available_rooms_for_type(room_type: RoomType, current_user: User =
     occupied_numbers = [checkin["room_number"] for checkin in occupied_rooms]
     available_rooms = [room for room in all_rooms if room not in occupied_numbers]
     
-    return {"available_rooms": available_rooms}
+    # Add room details with proper labels
+    room_details = []
+    for room_num in available_rooms:
+        if room_type == RoomType.LOCKER:
+            label = f"Locker #{room_num}"
+            color = "blue"
+        elif room_type == RoomType.SMALL_ROOM:
+            label = f"Small Room #{room_num} (No TV)"
+            color = "green"
+        elif room_type == RoomType.REGULAR_ROOM:
+            label = f"Changing Room #{room_num} (With TV)"
+            color = "purple"
+        elif room_type == RoomType.DELUXE_ROOM:
+            label = f"Deluxe Room #{room_num} (With TV)"
+            color = "gold"
+        
+        room_details.append({
+            "number": room_num,
+            "label": label,
+            "color": color,
+            "type": room_type
+        })
+    
+    return {"available_rooms": available_rooms, "room_details": room_details}
 
 @api_router.post("/checkin", response_model=CheckIn)
 async def check_in_customer(checkin_data: dict, current_user: User = Depends(get_current_user)):
