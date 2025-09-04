@@ -1254,9 +1254,21 @@ const Dashboard = () => {
                 Cancel
               </Button>
               <Button 
-                type="submit" 
+                type="button"
                 disabled={loading || !checkinForm.room_number || !checkinForm.membership_type} 
                 className="flex-button"
+                onClick={(e) => {
+                  // Force cleanup any lingering overlays
+                  document.querySelectorAll('[data-radix-select-content]').forEach(el => {
+                    if (el.getAttribute('data-state') === 'open') {
+                      el.style.display = 'none';
+                      el.style.pointerEvents = 'none';
+                    }
+                  });
+                  
+                  // Call handleCheckIn directly
+                  handleCheckIn(e);
+                }}
               >
                 {loading ? 'Processing...' : 'Check In'}
               </Button>
