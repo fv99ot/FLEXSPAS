@@ -1283,7 +1283,10 @@ const Dashboard = () => {
                 type="button"
                 disabled={loading || !checkinForm.room_number || !checkinForm.membership_type} 
                 className="flex-button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
                   console.log('🔥 CHECK IN BUTTON CLICKED - FINAL VERSION');
                   console.log('📋 Form state:', checkinForm);
                   console.log('👤 Customer:', selectedCustomer);
@@ -1295,7 +1298,15 @@ const Dashboard = () => {
                     overlay.style.pointerEvents = 'none';
                   });
                   
-                  handleCheckIn();
+                  console.log('🚀 About to call handleCheckIn...');
+                  
+                  try {
+                    handleCheckIn(e);
+                    console.log('✅ handleCheckIn called successfully');
+                  } catch (error) {
+                    console.error('❌ Error calling handleCheckIn:', error);
+                    alert('Error: ' + error.message);
+                  }
                 }}
               >
                 {loading ? 'Processing...' : 'Check In'}
