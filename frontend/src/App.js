@@ -221,6 +221,7 @@ const Dashboard = () => {
   useEffect(() => {
     fetchActiveCheckins();
     generateQRCode();
+    fetchPendingCustomers(); // All staff can see pending customers
     if (user?.role === 'manager') {
       fetchEmployees();
       fetchAdditionalItems();
