@@ -1283,36 +1283,10 @@ const Dashboard = () => {
                 type="button"
                 disabled={loading || !checkinForm.room_number || !checkinForm.membership_type} 
                 className="flex-button"
-                onClick={async (e) => {
-                  console.log('🔥 CHECK IN BUTTON CLICKED!');
-                  console.log('🔍 Current form state:', checkinForm);
-                  console.log('🔍 Selected customer:', selectedCustomer);
-                  
-                  e.preventDefault();
-                  e.stopPropagation();
-                  
-                  // Force cleanup any lingering overlays
-                  try {
-                    document.querySelectorAll('[data-radix-select-content]').forEach(el => {
-                      if (el.getAttribute('data-state') === 'open') {
-                        el.style.display = 'none';
-                        el.style.pointerEvents = 'none';
-                      }
-                    });
-                    console.log('🧹 Overlay cleanup completed');
-                  } catch (cleanupError) {
-                    console.error('⚠️ Overlay cleanup error:', cleanupError);
-                  }
-                  
-                  // Call handleCheckIn directly
-                  try {
-                    console.log('🚀 About to call handleCheckIn...');
-                    await handleCheckIn(e);
-                    console.log('✅ handleCheckIn call completed');
-                  } catch (handleError) {
-                    console.error('❌ Error in handleCheckIn:', handleError);
-                    alert('Error during check-in: ' + handleError.message);
-                  }
+                onClick={() => {
+                  console.log('🔥 SIMPLE BUTTON CLICK TEST');
+                  alert('Button clicked! Form state: ' + JSON.stringify(checkinForm));
+                  handleCheckIn();
                 }}
               >
                 {loading ? 'Processing...' : 'Check In'}
