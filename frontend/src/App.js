@@ -728,6 +728,179 @@ const Dashboard = () => {
             </DialogFooter>
           </form>
         </DialogContent>
+      {/* Payment Dialog */}
+      <Dialog open={showPayment} onOpenChange={setShowPayment}>
+        <DialogContent className="sm:max-w-[500px] dashboard-card">
+          <DialogHeader>
+            <DialogTitle className="text-white">Payment & Transaction</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Complete payment for {paymentData.customerName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Transaction Summary */}
+            <div className="bg-black/40 p-4 rounded-lg border border-white/20">
+              <h3 className="font-semibold text-white mb-2">Transaction Summary</h3>
+              <div className="text-gray-300 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span>Customer:</span>
+                  <span className="text-white">{paymentData.customerName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Amount:</span>
+                  <span className="text-white font-semibold">${paymentData.totalAmount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Method */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Payment Method *
+              </label>
+              <Select 
+                value={paymentData.paymentMethod} 
+                onValueChange={(value) => setPaymentData({...paymentData, paymentMethod: value})}
+              >
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Select Payment Method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">💵 Cash</SelectItem>
+                  <SelectItem value="card">💳 Credit/Debit Card</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Additional Items */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Additional Items (Optional)
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-white/20 text-white hover:bg-white/10"
+                  onClick={() => {
+                    const newItems = [...paymentData.additionalItems];
+                    const existing = newItems.find(item => item.name === 'Sandals');
+                    if (existing) {
+                      existing.quantity += 1;
+                    } else {
+                      newItems.push({name: 'Sandals', price: 15, quantity: 1});
+                    }
+                    setPaymentData({
+                      ...paymentData, 
+                      additionalItems: newItems,
+                      totalAmount: paymentData.totalAmount + 15
+                    });
+                  }}
+                >
+                  🩴 Sandals (+$15)
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-white/20 text-white hover:bg-white/10"
+                  onClick={() => {
+                    const newItems = [...paymentData.additionalItems];
+                    const existing = newItems.find(item => item.name === 'Cleaning Fee');
+                    if (!existing) {
+                      newItems.push({name: 'Cleaning Fee', price: 10, quantity: 1});
+                      setPaymentData({
+                        ...paymentData, 
+                        additionalItems: newItems,
+                        totalAmount: paymentData.totalAmount + 10
+                      });
+                    }
+                  }}
+                >
+                  🧽 Cleaning Fee (+$10)
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-white/20 text-white hover:bg-white/10"
+                  onClick={() => {
+                    const newItems = [...paymentData.additionalItems];
+                    const existing = newItems.find(item => item.name === 'Lost Key Fee');
+                    if (!existing) {
+                      newItems.push({name: 'Lost Key Fee', price: 25, quantity: 1});
+                      setPaymentData({
+                        ...paymentData, 
+                        additionalItems: newItems,
+                        totalAmount: paymentData.totalAmount + 25
+                      });
+                    }
+                  }}
+                >
+                  🔑 Lost Key Fee (+$25)
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-white/20 text-white hover:bg-white/10"
+                  onClick={() => {
+                    const newItems = [...paymentData.additionalItems];
+                    const existing = newItems.find(item => item.name === 'Adult Items');
+                    if (existing) {
+                      existing.quantity += 1;
+                    } else {
+                      newItems.push({name: 'Adult Items', price: 20, quantity: 1});
+                    }
+                    setPaymentData({
+                      ...paymentData, 
+                      additionalItems: newItems,
+                      totalAmount: paymentData.totalAmount + 20
+                    });
+                  }}
+                >
+                  🔞 Adult Items (+$20)
+                </Button>
+              </div>
+            </div>
+
+            {/* Additional Items List */}
+            {paymentData.additionalItems.length > 0 && (
+              <div className="bg-black/40 p-3 rounded-lg border border-white/20">
+                <h4 className="text-white font-medium mb-2">Additional Items:</h4>
+                {paymentData.additionalItems.map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm text-gray-300">
+                    <span>{item.name} x{item.quantity}</span>
+                    <span>${item.price * item.quantity}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Updated Total */}
+            <div className="bg-red-600/20 p-3 rounded-lg border border-red-500/50">
+              <div className="flex justify-between text-white font-semibold">
+                <span>Final Total:</span>
+                <span>${paymentData.totalAmount}</span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowPayment(false)}
+              className="border-white/20 text-white hover:bg-white/10"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handlePaymentComplete}
+              disabled={!paymentData.paymentMethod}
+              className="flex-button"
+            >
+              Complete Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );
