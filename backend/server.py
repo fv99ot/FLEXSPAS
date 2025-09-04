@@ -536,6 +536,50 @@ async def delete_user(user_id: str, current_user: User = Depends(get_current_use
     
     return {"message": "User deleted successfully"}
 
+# Discount System Models
+class Discount(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    percentage: float  # 0-100 percentage
+    amount: Optional[float] = None  # Fixed amount discount
+    code: Optional[str] = None  # Optional discount code
+    active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class DiscountCreate(BaseModel):
+    name: str
+    percentage: Optional[float] = None
+    amount: Optional[float] = None  
+    code: Optional[str] = None
+
+# Waitlist Models
+class WaitlistEntry(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customer_id: str
+    room_type: Optional[RoomType] = None  # None = any room
+    membership_type: MembershipType
+    priority: int = 1
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    status: str = "waiting"  # waiting, notified, expired
+
+class WaitlistCreate(BaseModel):
+    customer_id: str
+    room_type: Optional[RoomType] = None
+    membership_type: MembershipType
+
+# Upgrade System Models  
+class RoomUpgrade(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    checkin_id: str
+    old_room_type: RoomType
+    old_room_number: int
+    new_room_type: RoomType
+    new_room_number: int
+    upgrade_fee: float
+    cleaning_fee: float = 5.0
+    total_additional_cost: float
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Additional Items Management
 class AdditionalItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
