@@ -682,6 +682,9 @@ class BathhouseAPITester:
         # NEW FEATURE: Sales reports tests
         self.test_sales_reports()
         
+        # NEW FEATURE: Customer approval system tests
+        self.test_pending_customer_approval_system()
+        
         # Business rules tests
         self.test_business_rules()
         
