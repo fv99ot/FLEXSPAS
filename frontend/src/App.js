@@ -405,31 +405,59 @@ const Dashboard = () => {
     setLoading(true);
 
     try {
+      // Debug logging
+      console.log('Form state before submission:', checkinForm);
+      console.log('Selected customer:', selectedCustomer);
+
+      // Validate required fields
+      if (!checkinForm.membership_type) {
+        alert('Please select a membership type');
+        setLoading(false);
+        return;
+      }
+
+      if (!checkinForm.room_number) {
+        alert('Please select a room/locker number');
+        setLoading(false);
+        return;
+      }
+
       // Prepare check-in data with proper room_type for backend
       const checkInData = {
         customer_id: selectedCustomer.id,
         membership_type: checkinForm.membership_type,
         room_type: checkinForm.room_type || (checkinForm.accommodation_type === 'locker' ? 'locker' : checkinForm.room_type),
-        room_number: checkinForm.room_number
+        room_number: parseInt(checkinForm.room_number)
       };
 
-      console.log('Sending check-in data:', checkInData); // Debug log
+      console.log('Sending check-in data:', checkInData);
 
       const response = await axios.post(`${API}/checkin`, checkInData);
       
-      console.log('Check-in response:', response.data); // Debug log
+      console.log('Check-in response:', response.data);
       
       // Set up payment data
-      setPaymentData({
+      const paymentInfo = {
         checkInId: response.data.id,
         customerName: `${selectedCustomer.first_name} ${selectedCustomer.last_name}`,
         totalAmount: response.data.total_amount,
         paymentMethod: '',
         additionalItems: []
-      });
+      };
+
+      console.log('Setting payment data:', paymentInfo);
       
+      setPaymentData(paymentInfo);
+      
+      // Close check-in dialog and open payment dialog
       setShowCheckIn(false);
-      setShowPayment(true);
+      
+      // Small delay to ensure dialog state updates properly
+      setTimeout(() => {
+        setShowPayment(true);
+        console.log('Payment dialog should be open now');
+      }, 100);
+      
       setSelectedCustomer(null);
       setCheckinForm({
         membership_type: '',
@@ -440,6 +468,7 @@ const Dashboard = () => {
       
     } catch (error) {
       console.error('Error checking in customer:', error);
+      console.error('Error details:', error.response?.data);
       alert(error.response?.data?.detail || 'Error checking in customer');
     }
     setLoading(false);
