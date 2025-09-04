@@ -331,6 +331,15 @@ const Dashboard = () => {
     fetchActiveCheckins();
   };
 
+  const fetchSalesReport = async (date = reportDate) => {
+    try {
+      const response = await axios.get(`${API}/reports/daily-sales?date=${date}`);
+      setSalesReport(response.data);
+    } catch (error) {
+      console.error('Error fetching sales report:', error);
+    }
+  };
+
   const handleCheckOut = async (checkinId) => {
     try {
       await axios.put(`${API}/checkin/${checkinId}/checkout`);
