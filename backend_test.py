@@ -528,13 +528,22 @@ class BathhouseAPITester:
         self.test_search_customers()
         self.test_get_customer()
         
+        # NEW FEATURE: User management tests
+        self.test_user_management()
+        
         # Room management tests
         self.test_available_rooms()
+        
+        # NEW FEATURE: Detailed room availability tests
+        self.test_room_availability_detailed()
         
         # Check-in/out tests
         self.test_checkin()
         self.test_active_checkins()
         self.test_checkout()
+        
+        # NEW FEATURE: Sales reports tests
+        self.test_sales_reports()
         
         # Business rules tests
         self.test_business_rules()
