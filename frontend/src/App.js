@@ -188,6 +188,15 @@ const Dashboard = () => {
     category: 'general'
   });
   const [pendingCustomers, setPendingCustomers] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
+  const [waitlist, setWaitlist] = useState([]);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const [selectedCheckin, setSelectedCheckin] = useState(null);
+  const [upgradeForm, setUpgradeForm] = useState({
+    new_room_type: '',
+    new_room_number: ''
+  });
+  const [secretCodeActive, setSecretCodeActive] = useState(false);
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
