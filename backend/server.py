@@ -586,6 +586,17 @@ async def get_daily_sales_report(date: str = None, current_user: User = Depends(
             except:
                 employee_names[emp_id] = "Unknown"
         
+        # Clean checkins data to remove MongoDB ObjectIds
+        clean_checkins = []
+        for checkin in checkins:
+            clean_checkin = {k: v for k, v in checkin.items() if k != "_id"}
+            # Convert datetime objects to ISO strings for JSON serialization
+            if "check_in_time" in clean_checkin and isinstance(clean_checkin["check_in_time"], datetime):
+                clean_checkin["check_in_time"] = clean_checkin["check_in_time"].isoformat()
+            if "check_out_time" in clean_checkin and isinstance(clean_checkin["check_out_time"], datetime):
+                clean_checkin["check_out_time"] = clean_checkin["check_out_time"].isoformat()
+            clean_checkins.append(clean_checkin)
+
         return {
             "date": date,
             "total_revenue": round(total_revenue, 2),
@@ -595,7 +606,7 @@ async def get_daily_sales_report(date: str = None, current_user: User = Depends(
             "membership_breakdown": membership_breakdown,
             "employee_breakdown": employee_breakdown,
             "employee_names": employee_names,
-            "checkins": checkins
+            "checkins": clean_checkins
         }
     except Exception as e:
         # Log the error for debugging
