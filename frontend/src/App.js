@@ -1202,8 +1202,12 @@ const Dashboard = () => {
               <Button type="button" variant="outline" onClick={() => setShowCheckIn(false)} className="border-white/20 text-white hover:bg-white/10">
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading || !checkinForm.room_number} className="flex-button">
-                Check In
+              <Button 
+                type="submit" 
+                disabled={loading || !checkinForm.room_number || !checkinForm.membership_type} 
+                className="flex-button"
+              >
+                {loading ? 'Processing...' : 'Check In'}
               </Button>
             </DialogFooter>
           </form>
