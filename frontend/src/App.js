@@ -513,6 +513,45 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+          <TabsContent value="qr" className="space-y-6">
+            {/* QR Code Section */}
+            <Card className="dashboard-card">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <User className="h-5 w-5 mr-2" />
+                  Membership Form QR Code
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Generate QR code for customers to pre-fill membership forms
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="max-w-md mx-auto space-y-4">
+                  {qrCodeUrl && (
+                    <div className="bg-white p-4 rounded-lg inline-block">
+                      <img src={qrCodeUrl} alt="Membership Form QR Code" className="mx-auto" />
+                    </div>
+                  )}
+                  <div className="text-gray-300">
+                    <p className="font-medium mb-2">Scan to access membership form</p>
+                    <p className="text-sm">
+                      Customers can scan this QR code to fill out their membership information 
+                      while waiting in line, making the check-in process faster.
+                    </p>
+                    <p className="text-xs mt-3 text-gray-400">
+                      URL: {window.location.origin}/membership
+                    </p>
+                  </div>
+                  <Button 
+                    onClick={generateQRCode} 
+                    className="flex-button"
+                  >
+                    Regenerate QR Code
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
