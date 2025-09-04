@@ -169,6 +169,17 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [salesReport, setSalesReport] = useState(null);
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [employees, setEmployees] = useState([]);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [employeeForm, setEmployeeForm] = useState({
+    username: '',
+    password: '',
+    role: 'employee'
+  });
+  const [roomMap, setRoomMap] = useState({
+    lockers: [],
+    rooms: []
+  });
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
