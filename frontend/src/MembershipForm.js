@@ -189,7 +189,8 @@ const MembershipForm = () => {
                   placeholder="e.g., CA, NY, TX"
                   maxLength="2"
                   required
-                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-red-600"
+                  style={{ color: '#ffffff !important' }}
                 />
               </div>
 
