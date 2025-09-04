@@ -317,6 +317,71 @@ const Dashboard = () => {
     setLoading(false);
   };
 
+  const fetchDiscounts = async () => {
+    try {
+      const response = await axios.get(`${API}/discounts`);
+      setDiscounts(response.data);
+    } catch (error) {
+      console.error('Error fetching discounts:', error);
+    }
+  };
+
+  const fetchWaitlist = async () => {
+    try {
+      const response = await axios.get(`${API}/waitlist`);
+      setWaitlist(response.data);
+    } catch (error) {
+      console.error('Error fetching waitlist:', error);
+    }
+  };
+
+  const addToWaitlist = async (customerId, roomType, membershipType) => {
+    try {
+      await axios.post(`${API}/waitlist`, {
+        customer_id: customerId,
+        room_type: roomType,
+        membership_type: membershipType
+      });
+      fetchWaitlist();
+      alert('Customer added to waitlist successfully!');
+    } catch (error) {
+      console.error('Error adding to waitlist:', error);
+      alert('Error adding to waitlist');
+    }
+  };
+
+  const upgradeRoom = async (checkinId, newRoomType, newRoomNumber) => {
+    try {
+      const response = await axios.post(`${API}/checkin/${checkinId}/upgrade`, {
+        new_room_type: newRoomType,
+        new_room_number: newRoomNumber
+      });
+      fetchActiveCheckins();
+      return response.data;
+    } catch (error) {
+      console.error('Error upgrading room:', error);
+      throw error;
+    }
+  };
+
+  // Secret code detection
+  const handleKeyDown = (e) => {
+    if (e.shiftKey && e.key === '!' && e.code === 'Digit1') {
+      // Shift + 1 + 0 sequence - we'll check for Shift + ! (which is Shift + 1)
+      setTimeout(() => {
+        if (e.shiftKey && e.key === ')') { // Shift + 0 is ')'
+          setSecretCodeActive(true);
+          console.log('🤫 Secret code activated - Ghost discount available');
+        }
+      }, 100);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const fetchPendingCustomers = async () => {
     try {
       const response = await axios.get(`${API}/pending-customers`);
