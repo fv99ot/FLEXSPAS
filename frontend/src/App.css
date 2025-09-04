@@ -258,9 +258,9 @@ code {
 
 /* Time display styles */
 .time-display {
-  font-family: 'Rajdhani', monospace;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+  font-family: 'Bebas Neue', Impact, monospace;
+  font-weight: 400;
+  letter-spacing: 0.1em;
 }
 
 /* Header styling */
