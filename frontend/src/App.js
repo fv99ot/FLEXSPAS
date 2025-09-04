@@ -1200,6 +1200,59 @@ const Dashboard = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Add Employee Dialog */}
+      {user?.role === 'manager' && (
+        <Dialog open={showAddEmployee} onOpenChange={setShowAddEmployee}>
+          <DialogContent className="sm:max-w-[425px] dashboard-card">
+            <DialogHeader>
+              <DialogTitle className="text-white">Add New Employee</DialogTitle>
+              <DialogDescription className="text-gray-300">
+                Create a new employee login account
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={addEmployee}>
+              <div className="grid gap-4 py-4">
+                <Input
+                  placeholder="Username"
+                  value={employeeForm.username}
+                  onChange={(e) => setEmployeeForm({...employeeForm, username: e.target.value})}
+                  required
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={employeeForm.password}
+                  onChange={(e) => setEmployeeForm({...employeeForm, password: e.target.value})}
+                  required
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                />
+                <Select 
+                  value={employeeForm.role} 
+                  onValueChange={(value) => setEmployeeForm({...employeeForm, role: value})}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="employee">Employee</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowAddEmployee(false)} className="border-white/20 text-white hover:bg-white/10">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading} className="flex-button">
+                  Add Employee
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Payment Dialog */}
       <Dialog open={showPayment} onOpenChange={setShowPayment}>
         <DialogContent className="sm:max-w-[500px] dashboard-card">
