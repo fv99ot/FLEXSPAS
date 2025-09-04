@@ -1281,10 +1281,20 @@ const Dashboard = () => {
               </Button>
               <Button 
                 type="button"
+                disabled={loading || !checkinForm.room_number || !checkinForm.membership_type} 
                 className="flex-button"
                 onClick={() => {
-                  console.log('🔥 SIMPLE BUTTON CLICK TEST');
-                  alert('Button clicked! Form state: ' + JSON.stringify(checkinForm));
+                  console.log('🔥 CHECK IN BUTTON CLICKED - FINAL VERSION');
+                  console.log('📋 Form state:', checkinForm);
+                  console.log('👤 Customer:', selectedCustomer);
+                  
+                  // Clean up any overlays
+                  const overlays = document.querySelectorAll('[data-radix-select-content][data-state="open"]');
+                  overlays.forEach(overlay => {
+                    overlay.style.display = 'none';
+                    overlay.style.pointerEvents = 'none';
+                  });
+                  
                   handleCheckIn();
                 }}
               >
