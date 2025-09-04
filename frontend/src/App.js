@@ -187,6 +187,7 @@ const Dashboard = () => {
     price: '',
     category: 'general'
   });
+  const [pendingCustomers, setPendingCustomers] = useState([]);
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
