@@ -595,6 +595,145 @@ class AdditionalItemCreate(BaseModel):
     category: str = "general"
 
 # Additional Items Management
+# Discount Management
+@api_router.get("/discounts", response_model=List[Discount])
+async def get_discounts(current_user: User = Depends(get_current_user)):
+    discounts = await db.discounts.find({"active": True}).to_list(1000)
+    return [Discount(**discount) for discount in discounts]
+
+@api_router.post("/discounts", response_model=Discount)
+async def create_discount(discount_create: DiscountCreate, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can create discounts")
+    
+    discount_doc = discount_create.dict()
+    discount_doc["id"] = str(uuid.uuid4())
+    discount_doc["active"] = True
+    discount_doc["created_at"] = datetime.now(timezone.utc)
+    
+    await db.discounts.insert_one(discount_doc)
+    return Discount(**discount_doc)
+
+@api_router.put("/discounts/{discount_id}/toggle")
+async def toggle_discount(discount_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can modify discounts")
+    
+    discount = await db.discounts.find_one({"id": discount_id})
+    if not discount:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    
+    new_status = not discount["active"]
+    await db.discounts.update_one({"id": discount_id}, {"$set": {"active": new_status}})
+    return {"message": f"Discount {'enabled' if new_status else 'disabled'}"}
+
+@api_router.delete("/discounts/{discount_id}")
+async def delete_discount(discount_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can delete discounts")
+    
+    result = await db.discounts.update_one({"id": discount_id}, {"$set": {"active": False}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    return {"message": "Discount deleted successfully"}
+
+# Waitlist Management
+@api_router.get("/waitlist", response_model=List[dict])
+async def get_waitlist(current_user: User = Depends(get_current_user)):
+    waitlist = await db.waitlist.find({"status": "waiting"}).to_list(1000)
+    
+    # Enrich with customer data
+    result = []
+    for entry in waitlist:
+        customer = await db.customers.find_one({"id": entry["customer_id"]})
+        entry_data = WaitlistEntry(**entry).dict()
+        entry_data["customer"] = Customer(**customer).dict() if customer else None
+        result.append(entry_data)
+    
+    return result
+
+@api_router.post("/waitlist", response_model=WaitlistEntry)
+async def add_to_waitlist(waitlist_create: WaitlistCreate, current_user: User = Depends(get_current_user)):
+    waitlist_doc = waitlist_create.dict()
+    waitlist_doc["id"] = str(uuid.uuid4())
+    waitlist_doc["priority"] = 1
+    waitlist_doc["created_at"] = datetime.now(timezone.utc)
+    waitlist_doc["status"] = "waiting"
+    
+    await db.waitlist.insert_one(waitlist_doc)
+    return WaitlistEntry(**waitlist_doc)
+
+@api_router.delete("/waitlist/{entry_id}")
+async def remove_from_waitlist(entry_id: str, current_user: User = Depends(get_current_user)):
+    result = await db.waitlist.update_one({"id": entry_id}, {"$set": {"status": "expired"}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Waitlist entry not found")
+    return {"message": "Removed from waitlist"}
+
+# Room Upgrade System
+@api_router.post("/checkin/{checkin_id}/upgrade")
+async def upgrade_room(checkin_id: str, upgrade_data: dict, current_user: User = Depends(get_current_user)):
+    # Get current check-in
+    checkin = await db.check_ins.find_one({"id": checkin_id, "check_out_time": None})
+    if not checkin:
+        raise HTTPException(status_code=404, detail="Active check-in not found")
+    
+    new_room_type = upgrade_data["new_room_type"]
+    new_room_number = upgrade_data["new_room_number"]
+    
+    # Check if new room is available
+    existing_checkin = await db.check_ins.find_one({
+        "room_number": new_room_number,
+        "room_type": new_room_type,
+        "check_out_time": None
+    })
+    if existing_checkin:
+        raise HTTPException(status_code=400, detail="Room is already occupied")
+    
+    # Calculate upgrade cost
+    is_weekend = is_weekend_day()
+    old_room_fee = get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
+    new_room_fee = get_room_pricing(RoomType(new_room_type), is_weekend)
+    upgrade_fee = max(0, new_room_fee - old_room_fee)
+    cleaning_fee = 5.0 if checkin["room_type"] != "locker" or new_room_type != "locker" else 0
+    total_additional_cost = upgrade_fee + cleaning_fee
+    
+    # Create upgrade record
+    upgrade_doc = {
+        "id": str(uuid.uuid4()),
+        "checkin_id": checkin_id,
+        "old_room_type": checkin["room_type"],
+        "old_room_number": checkin["room_number"],
+        "new_room_type": new_room_type,
+        "new_room_number": new_room_number,
+        "upgrade_fee": upgrade_fee,
+        "cleaning_fee": cleaning_fee,
+        "total_additional_cost": total_additional_cost,
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    await db.room_upgrades.insert_one(upgrade_doc)
+    
+    # Update check-in record
+    await db.check_ins.update_one(
+        {"id": checkin_id},
+        {
+            "$set": {
+                "room_type": new_room_type,
+                "room_number": new_room_number
+            },
+            "$inc": {"total_amount": total_additional_cost}
+        }
+    )
+    
+    return {
+        "upgrade_id": upgrade_doc["id"],
+        "additional_cost": total_additional_cost,
+        "upgrade_fee": upgrade_fee,
+        "cleaning_fee": cleaning_fee,
+        "message": "Room upgraded successfully"
+    }
+
 @api_router.get("/additional-items", response_model=List[AdditionalItem])
 async def get_additional_items(current_user: User = Depends(get_current_user)):
     items = await db.additional_items.find({"active": True}).to_list(1000)
