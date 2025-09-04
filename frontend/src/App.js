@@ -346,19 +346,22 @@ const Dashboard = () => {
 
   const fetchRoomMap = async () => {
     try {
-      const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes] = await Promise.all([
+      const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes] = await Promise.all([
         axios.get(`${API}/rooms/available/locker`),
         axios.get(`${API}/rooms/available/small_room`),
         axios.get(`${API}/rooms/available/regular_room`),
-        axios.get(`${API}/rooms/available/deluxe_room`)
+        axios.get(`${API}/rooms/available/deluxe_room`),
+        axios.get(`${API}/checkins/active`)
       ]);
 
-      const activeCheckinsRes = await axios.get(`${API}/checkins/active`);
+      // Get occupied rooms from active check-ins
       const occupiedRooms = activeCheckinsRes.data.map(checkin => ({
         number: checkin.room_number,
         type: checkin.room_type,
         customer: `${checkin.customer?.first_name} ${checkin.customer?.last_name}`
       }));
+
+      console.log('Occupied rooms:', occupiedRooms); // Debug log
 
       // Create complete room map
       const allLockers = Array.from({length: 114}, (_, i) => i + 40); // 40-153
@@ -366,44 +369,58 @@ const Dashboard = () => {
       const allRegularRooms = [...Array.from({length: 6}, (_, i) => i + 1), ...Array.from({length: 8}, (_, i) => i + 25)]; // 1-6, 25-32
       const allDeluxeRooms = Array.from({length: 6}, (_, i) => i + 34); // 34-39
 
-      const mapLockers = allLockers.map(num => ({
-        number: num,
-        type: 'locker',
-        available: lockersRes.data.available_rooms.includes(num),
-        customer: occupiedRooms.find(r => r.number === num && r.type === 'locker')?.customer || null
-      }));
+      const mapLockers = allLockers.map(num => {
+        const occupied = occupiedRooms.find(r => r.number === num && r.type === 'locker');
+        return {
+          number: num,
+          type: 'locker',
+          available: !occupied, // Available if NOT occupied
+          customer: occupied ? occupied.customer : null
+        };
+      });
 
       const mapRooms = [
-        ...allSmallRooms.map(num => ({
-          number: num,
-          type: 'small_room',
-          label: 'Small Room (No TV)',
-          available: smallRoomsRes.data.available_rooms.includes(num),
-          customer: occupiedRooms.find(r => r.number === num && r.type === 'small_room')?.customer || null,
-          color: 'green'
-        })),
-        ...allRegularRooms.map(num => ({
-          number: num,
-          type: 'regular_room',
-          label: 'Regular Room (With TV)',
-          available: regularRoomsRes.data.available_rooms.includes(num),
-          customer: occupiedRooms.find(r => r.number === num && r.type === 'regular_room')?.customer || null,
-          color: 'purple'
-        })),
-        ...allDeluxeRooms.map(num => ({
-          number: num,
-          type: 'deluxe_room',
-          label: 'Deluxe Room (With TV)',
-          available: deluxeRoomsRes.data.available_rooms.includes(num),
-          customer: occupiedRooms.find(r => r.number === num && r.type === 'deluxe_room')?.customer || null,
-          color: 'gold'
-        }))
+        ...allSmallRooms.map(num => {
+          const occupied = occupiedRooms.find(r => r.number === num && r.type === 'small_room');
+          return {
+            number: num,
+            type: 'small_room',
+            label: 'Small Room (No TV)',
+            available: !occupied, // Available if NOT occupied
+            customer: occupied ? occupied.customer : null,
+            color: 'green'
+          };
+        }),
+        ...allRegularRooms.map(num => {
+          const occupied = occupiedRooms.find(r => r.number === num && r.type === 'regular_room');
+          return {
+            number: num,
+            type: 'regular_room',
+            label: 'Regular Room (With TV)',
+            available: !occupied, // Available if NOT occupied
+            customer: occupied ? occupied.customer : null,
+            color: 'purple'
+          };
+        }),
+        ...allDeluxeRooms.map(num => {
+          const occupied = occupiedRooms.find(r => r.number === num && r.type === 'deluxe_room');
+          return {
+            number: num,
+            type: 'deluxe_room',
+            label: 'Deluxe Room (With TV)',
+            available: !occupied, // Available if NOT occupied
+            customer: occupied ? occupied.customer : null,
+            color: 'gold'
+          };
+        })
       ];
 
       setRoomMap({
         lockers: mapLockers,
         rooms: mapRooms.sort((a, b) => a.number - b.number)
       });
+
+      console.log('Room map updated:', { lockers: mapLockers.length, rooms: mapRooms.length }); // Debug log
     } catch (error) {
       console.error('Error fetching room map:', error);
     }
