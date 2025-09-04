@@ -183,6 +183,7 @@ const Dashboard = () => {
   });
 
   const [availableRooms, setAvailableRooms] = useState([]);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
 
   useEffect(() => {
     fetchActiveCheckins();
