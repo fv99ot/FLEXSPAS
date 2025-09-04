@@ -187,7 +187,25 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchActiveCheckins();
+    generateQRCode();
   }, []);
+
+  const generateQRCode = async () => {
+    try {
+      const membershipUrl = `${window.location.origin}/membership`;
+      const qrDataUrl = await QRCode.toDataURL(membershipUrl, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrDataUrl);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    }
+  };
 
   const searchCustomers = async () => {
     if (!searchQuery.trim()) {
