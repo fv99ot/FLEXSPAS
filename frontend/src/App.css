@@ -99,7 +99,23 @@ code {
 
 .flex-accent {
   color: #dc2626;
-  font-weight: 700;
+  font-weight: 400;
+}
+
+/* Headers and titles */
+h1, h2, h3 {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Navigation and buttons text */
+.nav-text, .btn-text {
+  font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
+  font-weight: 400;
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 /* Login card specific styling */
