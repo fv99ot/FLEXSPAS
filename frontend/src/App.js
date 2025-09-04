@@ -341,9 +341,10 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="search" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="search">Customer Management</TabsTrigger>
             <TabsTrigger value="active">Active Check-ins</TabsTrigger>
+            <TabsTrigger value="qr">QR Code</TabsTrigger>
           </TabsList>
 
           <TabsContent value="search" className="space-y-6">
