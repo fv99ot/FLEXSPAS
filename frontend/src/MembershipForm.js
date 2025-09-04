@@ -45,7 +45,7 @@ const MembershipForm = () => {
     setError('');
 
     try {
-      await axios.post(`${API}/customers`, formData);
+      await axios.post(`${API}/customers/public`, formData);
       setSubmitted(true);
     } catch (error) {
       setError(error.response?.data?.detail || 'Error submitting form. Please try again.');
