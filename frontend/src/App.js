@@ -185,7 +185,16 @@ const Dashboard = () => {
   });
 
   const [availableRooms, setAvailableRooms] = useState([]);
+  const [roomDetails, setRoomDetails] = useState([]);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentData, setPaymentData] = useState({
+    checkInId: '',
+    customerName: '',
+    totalAmount: 0,
+    paymentMethod: '',
+    additionalItems: []
+  });
 
   useEffect(() => {
     fetchActiveCheckins();
