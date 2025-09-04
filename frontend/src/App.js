@@ -290,9 +290,19 @@ const Dashboard = () => {
         ...checkinForm
       };
 
-      await axios.post(`${API}/checkin`, checkInData);
+      const response = await axios.post(`${API}/checkin`, checkInData);
+      
+      // Set up payment data
+      setPaymentData({
+        checkInId: response.data.id,
+        customerName: `${selectedCustomer.first_name} ${selectedCustomer.last_name}`,
+        totalAmount: response.data.total_amount,
+        paymentMethod: '',
+        additionalItems: []
+      });
       
       setShowCheckIn(false);
+      setShowPayment(true);
       setSelectedCustomer(null);
       setCheckinForm({
         membership_type: '',
@@ -300,12 +310,23 @@ const Dashboard = () => {
         room_number: ''
       });
       
-      fetchActiveCheckins();
     } catch (error) {
       console.error('Error checking in customer:', error);
       alert(error.response?.data?.detail || 'Error checking in customer');
     }
     setLoading(false);
+  };
+
+  const handlePaymentComplete = () => {
+    setShowPayment(false);
+    setPaymentData({
+      checkInId: '',
+      customerName: '',
+      totalAmount: 0,
+      paymentMethod: '',
+      additionalItems: []
+    });
+    fetchActiveCheckins();
   };
 
   const handleCheckOut = async (checkinId) => {
