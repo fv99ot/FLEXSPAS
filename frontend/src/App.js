@@ -305,6 +305,45 @@ const Dashboard = () => {
     setLoading(false);
   };
 
+  const fetchAdditionalItems = async () => {
+    try {
+      const response = await axios.get(`${API}/additional-items`);
+      setAdditionalItems(response.data);
+    } catch (error) {
+      console.error('Error fetching additional items:', error);
+    }
+  };
+
+  const addAdditionalItem = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await axios.post(`${API}/additional-items`, {
+        name: itemForm.name,
+        price: parseFloat(itemForm.price),
+        category: itemForm.category
+      });
+      setItemForm({ name: '', price: '', category: 'general' });
+      setShowAddItem(false);
+      fetchAdditionalItems();
+    } catch (error) {
+      console.error('Error adding item:', error);
+      alert(error.response?.data?.detail || 'Error adding item');
+    }
+    setLoading(false);
+  };
+
+  const deleteAdditionalItem = async (itemId) => {
+    try {
+      await axios.delete(`${API}/additional-items/${itemId}`);
+      fetchAdditionalItems();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Error deleting item');
+    }
+  };
+
   const fetchRoomMap = async () => {
     try {
       const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes] = await Promise.all([
