@@ -233,7 +233,33 @@ async def search_customers(q: Optional[str] = None, current_user: User = Depends
     
     return [Customer(**customer) for customer in customers]
 
-@api_router.post("/customers/public", response_model=Customer)
+# Pending Customer Model
+class PendingCustomer(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    first_name: str
+    last_name: str
+    id_number: str
+    date_of_birth: str
+    id_expiration_date: str
+    state_of_id: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    status: str = "pending"  # pending, approved, rejected
+
+class PendingCustomerCreate(BaseModel):
+    first_name: str
+    last_name: str
+    id_number: str
+    date_of_birth: str
+    id_expiration_date: str
+    state_of_id: str
+
+# Pending Customers Management
+@api_router.get("/pending-customers", response_model=List[PendingCustomer])
+async def get_pending_customers(current_user: User = Depends(get_current_user)):
+    pending = await db.pending_customers.find({"status": "pending"}).to_list(1000)
+    return [PendingCustomer(**customer) for customer in pending]
+
+@api_router.post("/customers/public", response_model=PendingCustomer)
 async def create_customer_public(customer_create: CustomerCreate):
     """Public endpoint for QR code form submissions - no authentication required"""
     # Check if customer with same ID number already exists
