@@ -88,9 +88,9 @@ const MembershipForm = () => {
           
           <CardContent className="p-6">
             <div className="mb-6">
-              <Alert className="bg-blue-50 border-blue-200">
-                <AlertTriangle className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-800">
+              <Alert className="bg-blue-500/20 border-blue-500/50">
+                <AlertTriangle className="h-4 w-4 text-blue-400" />
+                <AlertDescription className="text-blue-200">
                   Please fill out this form completely and accurately. All information is required for membership processing.
                 </AlertDescription>
               </Alert>
@@ -99,7 +99,7 @@ const MembershipForm = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     First Name *
                   </label>
                   <Input
@@ -109,12 +109,12 @@ const MembershipForm = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your first name"
                     required
-                    className="w-full"
+                    className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Last Name *
                   </label>
                   <Input
@@ -124,13 +124,13 @@ const MembershipForm = () => {
                     onChange={handleInputChange}
                     placeholder="Enter your last name"
                     required
-                    className="w-full"
+                    className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   ID Number *
                 </label>
                 <Input
@@ -140,13 +140,13 @@ const MembershipForm = () => {
                   onChange={handleInputChange}
                   placeholder="Driver's License or State ID Number"
                   required
-                  className="w-full"
+                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     Date of Birth *
                   </label>
                   <Input
@@ -155,12 +155,12 @@ const MembershipForm = () => {
                     value={formData.date_of_birth}
                     onChange={handleInputChange}
                     required
-                    className="w-full"
+                    className="w-full bg-white/10 border-white/20 text-white"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
                     ID Expiration Date *
                   </label>
                   <Input
@@ -169,13 +169,13 @@ const MembershipForm = () => {
                     value={formData.id_expiration_date}
                     onChange={handleInputChange}
                     required
-                    className="w-full"
+                    className="w-full bg-white/10 border-white/20 text-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                   State of ID *
                 </label>
                 <Input
@@ -186,15 +186,15 @@ const MembershipForm = () => {
                   placeholder="e.g., CA, NY, TX"
                   maxLength="2"
                   required
-                  className="w-full"
+                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 />
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg border">
-                <h3 className="font-semibold text-gray-800 mb-3">
+              <div className="bg-black/40 p-4 rounded-lg border border-white/20">
+                <h3 className="font-semibold text-white mb-3">
                   MEMBERSHIP AGREEMENT & LIABILITY WAIVER
                 </h3>
-                <div className="text-sm text-gray-700 space-y-3 max-h-64 overflow-y-auto">
+                <div className="text-sm text-gray-300 space-y-3 max-h-64 overflow-y-auto">
                   <p>
                     I am fully aware that this is a gay men's private club, which promotes exclusively the social, political, spiritual, health and fitness requirements of our members in a non-threatening environment, and I am not offended by any homosexual activities. ALL persons who are NOT gay or bi-sexual are violating our rights to privacy, freedom to associate, to promote our minority-group's interests and we insist that you not patronize this establishment.
                   </p>
@@ -212,17 +212,17 @@ const MembershipForm = () => {
                   id="agreement"
                   checked={agreed}
                   onCheckedChange={setAgreed}
-                  className="mt-1"
+                  className="mt-1 border-white/20 data-[state=checked]:bg-red-600"
                 />
-                <label htmlFor="agreement" className="text-sm text-gray-700 cursor-pointer">
+                <label htmlFor="agreement" className="text-sm text-gray-300 cursor-pointer">
                   I have read, understood, and agree to all terms and conditions stated above. I acknowledge that I am at least 18 years of age and am entering this establishment voluntarily.
                 </label>
               </div>
 
               {error && (
-                <Alert className="bg-red-50 border-red-200">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-800">{error}</AlertDescription>
+                <Alert className="bg-red-500/20 border-red-500/50">
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                  <AlertDescription className="text-red-200">{error}</AlertDescription>
                 </Alert>
               )}
 
@@ -230,7 +230,7 @@ const MembershipForm = () => {
                 <Button
                   type="submit"
                   disabled={loading || !agreed}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3"
+                  className="flex-1 flex-button font-semibold py-3"
                 >
                   {loading ? 'Submitting...' : 'Submit Membership Form'}
                 </Button>
