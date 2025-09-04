@@ -1122,6 +1122,10 @@ const Dashboard = () => {
             <DialogDescription className="text-gray-300">
               {selectedCustomer && `Check in ${selectedCustomer.first_name} ${selectedCustomer.last_name}`}
             </DialogDescription>
+            {/* Debug info - remove in production */}
+            <div className="text-xs text-gray-400 mt-2">
+              Debug: {JSON.stringify(checkinForm)}
+            </div>
           </DialogHeader>
           <form onSubmit={handleCheckIn}>
             <div className="grid gap-4 py-4" style={{position: 'relative', zIndex: 1}}>
