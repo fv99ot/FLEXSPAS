@@ -405,12 +405,19 @@ const Dashboard = () => {
     setLoading(true);
 
     try {
+      // Prepare check-in data with proper room_type for backend
       const checkInData = {
         customer_id: selectedCustomer.id,
-        ...checkinForm
+        membership_type: checkinForm.membership_type,
+        room_type: checkinForm.room_type || (checkinForm.accommodation_type === 'locker' ? 'locker' : checkinForm.room_type),
+        room_number: checkinForm.room_number
       };
 
+      console.log('Sending check-in data:', checkInData); // Debug log
+
       const response = await axios.post(`${API}/checkin`, checkInData);
+      
+      console.log('Check-in response:', response.data); // Debug log
       
       // Set up payment data
       setPaymentData({
