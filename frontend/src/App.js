@@ -701,9 +701,17 @@ const Dashboard = () => {
                     <SelectValue placeholder="Select Room Number" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableRooms.map((roomNum) => (
-                      <SelectItem key={roomNum} value={roomNum.toString()}>
-                        Room #{roomNum}
+                    {roomDetails.map((room) => (
+                      <SelectItem key={room.number} value={room.number.toString()}>
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-3 h-3 rounded-full ${
+                            room.color === 'blue' ? 'bg-blue-500' :
+                            room.color === 'green' ? 'bg-green-500' :
+                            room.color === 'purple' ? 'bg-purple-500' :
+                            room.color === 'gold' ? 'bg-yellow-500' : 'bg-gray-500'
+                          }`}></div>
+                          <span>{room.label}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
