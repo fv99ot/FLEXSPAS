@@ -669,6 +669,206 @@ const Dashboard = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="map" className="space-y-6">
+            {/* Room Map */}
+            <Card className="dashboard-card">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  Room & Locker Availability Map
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Real-time view of all rooms and lockers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="flex space-x-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-green-500 rounded"></div>
+                      <span className="text-gray-300">Available</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-red-500 rounded"></div>
+                      <span className="text-gray-300">Occupied</span>
+                    </div>
+                  </div>
+
+                  <Button onClick={fetchRoomMap} className="flex-button mb-4">
+                    Refresh Map
+                  </Button>
+
+                  {/* Lockers Section */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+                      <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                      LOCKERS (40-153)
+                    </h3>
+                    <div className="grid grid-cols-12 gap-1">
+                      {roomMap.lockers.map((locker) => (
+                        <div
+                          key={locker.number}
+                          className={`relative p-2 text-xs text-center rounded border cursor-pointer ${
+                            locker.available 
+                              ? 'bg-green-600 border-green-400 text-white' 
+                              : 'bg-red-600 border-red-400 text-white'
+                          }`}
+                          title={locker.customer ? `Occupied by: ${locker.customer}` : 'Available'}
+                        >
+                          {locker.number}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rooms Section */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+                      <div className="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                      ROOMS
+                    </h3>
+                    
+                    {/* Small Rooms */}
+                    <div className="mb-4">
+                      <h4 className="text-lg text-green-400 mb-2">Small Rooms (No TV) - 7-24</h4>
+                      <div className="grid grid-cols-9 gap-2">
+                        {roomMap.rooms.filter(room => room.type === 'small_room').map((room) => (
+                          <div
+                            key={room.number}
+                            className={`relative p-3 text-sm text-center rounded border cursor-pointer ${
+                              room.available 
+                                ? 'bg-green-600 border-green-400 text-white' 
+                                : 'bg-red-600 border-red-400 text-white'
+                            }`}
+                            title={room.customer ? `Occupied by: ${room.customer}` : 'Available'}
+                          >
+                            {room.number}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Regular Rooms */}
+                    <div className="mb-4">
+                      <h4 className="text-lg text-purple-400 mb-2">Regular Rooms (With TV) - 1-6, 25-32</h4>
+                      <div className="grid grid-cols-8 gap-2">
+                        {roomMap.rooms.filter(room => room.type === 'regular_room').map((room) => (
+                          <div
+                            key={room.number}
+                            className={`relative p-3 text-sm text-center rounded border cursor-pointer ${
+                              room.available 
+                                ? 'bg-green-600 border-green-400 text-white' 
+                                : 'bg-red-600 border-red-400 text-white'
+                            }`}
+                            title={room.customer ? `Occupied by: ${room.customer}` : 'Available'}
+                          >
+                            {room.number}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Deluxe Rooms */}
+                    <div>
+                      <h4 className="text-lg text-yellow-400 mb-2">Deluxe Rooms (With TV) - 34-39</h4>
+                      <div className="grid grid-cols-6 gap-2">
+                        {roomMap.rooms.filter(room => room.type === 'deluxe_room').map((room) => (
+                          <div
+                            key={room.number}
+                            className={`relative p-3 text-sm text-center rounded border cursor-pointer ${
+                              room.available 
+                                ? 'bg-green-600 border-green-400 text-white' 
+                                : 'bg-red-600 border-red-400 text-white'
+                            }`}
+                            title={room.customer ? `Occupied by: ${room.customer}` : 'Available'}
+                          >
+                            {room.number}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="employees" className="space-y-6">
+            {/* Employee Management */}
+            {user?.role === 'manager' && (
+              <Card className="dashboard-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-white">
+                    <Users className="h-5 w-5 mr-2" />
+                    Employee Management
+                  </CardTitle>
+                  <CardDescription className="text-gray-300">
+                    Add, view, and manage employee accounts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold text-white">Current Employees</h3>
+                      <Button onClick={() => setShowAddEmployee(true)} className="flex-button">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Employee
+                      </Button>
+                    </div>
+
+                    <Button onClick={fetchEmployees} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                      Refresh Employee List
+                    </Button>
+
+                    <div className="grid gap-4">
+                      {employees.map((employee) => (
+                        <div key={employee.id} className="flex items-center justify-between p-4 border border-white/20 rounded-lg bg-white/5">
+                          <div className="flex items-center space-x-4">
+                            <Avatar>
+                              <AvatarFallback className="bg-blue-600 text-white">
+                                {employee.username.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-semibold text-white">{employee.username}</h3>
+                              <p className="text-sm text-gray-300">Role: {employee.role}</p>
+                              <p className="text-xs text-gray-400">
+                                Created: {new Date(employee.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Badge className={employee.role === 'manager' ? 'badge-manager' : 'bg-blue-600'}>
+                              {employee.role.toUpperCase()}
+                            </Badge>
+                            {employee.id !== user.id && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={async () => {
+                                  if (window.confirm(`Are you sure you want to delete ${employee.username}?`)) {
+                                    try {
+                                      await axios.delete(`${API}/users/${employee.id}`);
+                                      fetchEmployees();
+                                    } catch (error) {
+                                      alert('Error deleting employee');
+                                    }
+                                  }
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           <TabsContent value="qr" className="space-y-6">
             {/* QR Code Section */}
             <Card className="dashboard-card">
