@@ -129,16 +129,17 @@ h1, h2, h3 {
 .login-card input {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  color: #ffffff !important;
 }
 
 .login-card input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .login-card input:focus {
   background: rgba(255, 255, 255, 0.15);
   border-color: #dc2626;
+  color: #ffffff !important;
 }
 
 /* Dashboard styling */
