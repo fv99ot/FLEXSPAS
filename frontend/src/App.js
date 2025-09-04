@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Avatar, AvatarFallback } from './components/ui/avatar';
 import { Search, Plus, LogOut, Users, Clock, DollarSign, AlertTriangle, User, MapPin, Calendar } from 'lucide-react';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://spa-manager.preview.emergentagent.com';
 const API = `${BACKEND_URL}/api`;
 
 // Auth Context
