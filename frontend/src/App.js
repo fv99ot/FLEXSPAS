@@ -318,6 +318,7 @@ const Dashboard = () => {
       setSelectedCustomer(null);
       setCheckinForm({
         membership_type: '',
+        accommodation_type: '',
         room_type: '',
         room_number: ''
       });
