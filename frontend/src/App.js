@@ -1127,7 +1127,7 @@ const Dashboard = () => {
               Debug: {JSON.stringify(checkinForm)}
             </div>
           </DialogHeader>
-          <form onSubmit={handleCheckIn}>
+          <div>
             <div className="grid gap-4 py-4" style={{position: 'relative', zIndex: 1}}>
               <div style={{zIndex: 10}}>
                 <Select 
