@@ -391,11 +391,15 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="search" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-transparent">
+          <TabsList className="grid w-full grid-cols-5 bg-transparent">
             <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
             <TabsTrigger value="active" className="tab-dark">Active Check-ins</TabsTrigger>
+            <TabsTrigger value="map" className="tab-dark">Room Map</TabsTrigger>
             <TabsTrigger value="qr" className="tab-dark">QR Code</TabsTrigger>
             <TabsTrigger value="reports" className="tab-dark">Sales Reports</TabsTrigger>
+            {user?.role === 'manager' && (
+              <TabsTrigger value="employees" className="tab-dark">Employees</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="search" className="space-y-6">
