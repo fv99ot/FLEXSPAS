@@ -213,7 +213,10 @@ const Dashboard = () => {
   useEffect(() => {
     fetchActiveCheckins();
     generateQRCode();
-  }, []);
+    if (user?.role === 'manager') {
+      fetchEmployees();
+    }
+  }, [user]);
 
   const generateQRCode = async () => {
     try {
