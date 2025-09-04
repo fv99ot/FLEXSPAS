@@ -180,6 +180,13 @@ const Dashboard = () => {
     lockers: [],
     rooms: []
   });
+  const [additionalItems, setAdditionalItems] = useState([]);
+  const [showAddItem, setShowAddItem] = useState(false);
+  const [itemForm, setItemForm] = useState({
+    name: '',
+    price: '',
+    category: 'general'
+  });
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
