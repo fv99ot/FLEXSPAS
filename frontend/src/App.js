@@ -307,6 +307,37 @@ const Dashboard = () => {
     setLoading(false);
   };
 
+  const fetchPendingCustomers = async () => {
+    try {
+      const response = await axios.get(`${API}/pending-customers`);
+      setPendingCustomers(response.data);
+    } catch (error) {
+      console.error('Error fetching pending customers:', error);
+    }
+  };
+
+  const approvePendingCustomer = async (customerId) => {
+    try {
+      await axios.post(`${API}/pending-customers/${customerId}/approve`);
+      fetchPendingCustomers(); // Refresh pending list
+      alert('Customer approved successfully!');
+    } catch (error) {
+      console.error('Error approving customer:', error);
+      alert(error.response?.data?.detail || 'Error approving customer');
+    }
+  };
+
+  const rejectPendingCustomer = async (customerId) => {
+    try {
+      await axios.delete(`${API}/pending-customers/${customerId}`);
+      fetchPendingCustomers(); // Refresh pending list
+      alert('Customer application rejected.');
+    } catch (error) {
+      console.error('Error rejecting customer:', error);
+      alert('Error rejecting customer');
+    }
+  };
+
   const fetchAdditionalItems = async () => {
     try {
       const response = await axios.get(`${API}/additional-items`);
