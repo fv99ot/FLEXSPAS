@@ -1053,7 +1053,7 @@ const Dashboard = () => {
               Enter customer information to create a new profile
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={addCustomer}>
+          <div>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <Input
