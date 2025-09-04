@@ -156,14 +156,24 @@ h1, h2, h3 {
 }
 
 .dashboard-card input,
-.dashboard-card select {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+.dashboard-card select,
+.dashboard-card textarea {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
 }
 
-.dashboard-card input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+.dashboard-card input::placeholder,
+.dashboard-card textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.dashboard-card input:focus,
+.dashboard-card select:focus,
+.dashboard-card textarea:focus {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: #dc2626 !important;
+  color: #ffffff !important;
 }
 
 /* Button styling */
