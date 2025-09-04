@@ -1110,7 +1110,7 @@ const Dashboard = () => {
                 Add Customer
               </Button>
             </DialogFooter>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
 
