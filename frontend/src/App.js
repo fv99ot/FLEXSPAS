@@ -475,7 +475,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-3xl font-bold text-white flex-brand">
-                FLEX<span className="flex-accent">_LA</span>
+                Flex Spa <span className="flex-accent">Los Angeles</span>
               </h1>
               <Badge variant="secondary" className="ml-3 badge-manager">
                 {user?.role === 'manager' ? 'Manager' : 'Employee'}
