@@ -466,9 +466,8 @@ const Dashboard = () => {
 
   const handleCheckIn = async (e) => {
     console.log('🚀 handleCheckIn function START');
-    console.log('🔍 Event object:', e);
     
-    if (e && e.preventDefault) {
+    if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
     }
     
@@ -477,8 +476,8 @@ const Dashboard = () => {
 
     try {
       // Debug logging
-      console.log('📋 Form state before submission:', checkinForm);
-      console.log('👤 Selected customer:', selectedCustomer);
+      console.log('📋 Form state before submission:', JSON.stringify(checkinForm, null, 2));
+      console.log('👤 Selected customer:', JSON.stringify(selectedCustomer, null, 2));
 
       // Validate required fields
       if (!checkinForm.membership_type) {
@@ -505,19 +504,26 @@ const Dashboard = () => {
         return;
       }
 
+      // Determine room_type properly
+      let finalRoomType = checkinForm.room_type;
+      if (!finalRoomType && checkinForm.accommodation_type === 'locker') {
+        finalRoomType = 'locker';
+      }
+
       // Prepare check-in data with proper room_type for backend
       const checkInData = {
         customer_id: selectedCustomer.id,
         membership_type: checkinForm.membership_type,
-        room_type: checkinForm.room_type || (checkinForm.accommodation_type === 'locker' ? 'locker' : checkinForm.room_type),
+        room_type: finalRoomType,
         room_number: parseInt(checkinForm.room_number)
       };
 
-      console.log('📤 Sending check-in data:', checkInData);
+      console.log('📤 Sending check-in data:', JSON.stringify(checkInData, null, 2));
+      console.log('🌐 API endpoint:', `${API}/checkin`);
 
       const response = await axios.post(`${API}/checkin`, checkInData);
       
-      console.log('✅ Check-in response received:', response.data);
+      console.log('✅ Check-in response received:', JSON.stringify(response.data, null, 2));
       
       // Set up payment data
       const paymentInfo = {
@@ -528,7 +534,7 @@ const Dashboard = () => {
         additionalItems: []
       };
 
-      console.log('💰 Setting payment data:', paymentInfo);
+      console.log('💰 Setting payment data:', JSON.stringify(paymentInfo, null, 2));
       
       setPaymentData(paymentInfo);
       
@@ -536,13 +542,14 @@ const Dashboard = () => {
       console.log('🔄 Closing check-in dialog...');
       setShowCheckIn(false);
       
-      // Small delay to ensure dialog state updates properly
+      // Use a longer delay to ensure state updates properly
       setTimeout(() => {
         console.log('💳 Opening payment dialog...');
         setShowPayment(true);
-        console.log('✅ Payment dialog should be open now');
-      }, 200);
+        console.log('✅ Payment dialog state should be true now');
+      }, 300);
       
+      // Clear form and customer selection
       setSelectedCustomer(null);
       setCheckinForm({
         membership_type: '',
@@ -555,8 +562,17 @@ const Dashboard = () => {
       
     } catch (error) {
       console.error('💥 Error checking in customer:', error);
+      console.error('💥 Error response:', error.response);
       console.error('💥 Error details:', error.response?.data);
-      alert(error.response?.data?.detail || 'Error checking in customer: ' + error.message);
+      
+      let errorMessage = 'Error checking in customer';
+      if (error.response?.data?.detail) {
+        errorMessage += ': ' + error.response.data.detail;
+      } else if (error.message) {
+        errorMessage += ': ' + error.message;
+      }
+      
+      alert(errorMessage);
     }
     
     console.log('⏳ Setting loading to false');
