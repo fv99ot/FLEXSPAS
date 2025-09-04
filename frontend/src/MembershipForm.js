@@ -1,0 +1,249 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
+import { Textarea } from './components/ui/textarea';
+import { Checkbox } from './components/ui/checkbox';
+import { Alert, AlertDescription } from './components/ui/alert';
+import { CheckCircle, AlertTriangle } from 'lucide-react';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://spa-manager.preview.emergentagent.com';
+const API = `${BACKEND_URL}/api`;
+
+const MembershipForm = () => {
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    id_number: '',
+    date_of_birth: '',
+    id_expiration_date: '',
+    state_of_id: ''
+  });
+  
+  const [agreed, setAgreed] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!agreed) {
+      setError('You must agree to the terms and conditions to proceed.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      await axios.post(`${API}/customers`, formData);
+      setSubmitted(true);
+    } catch (error) {
+      setError(error.response?.data?.detail || 'Error submitting form. Please try again.');
+    }
+    
+    setLoading(false);
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md text-center">
+          <CardContent className="pt-6">
+            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-green-700 mb-2">Form Submitted Successfully!</h2>
+            <p className="text-gray-600 mb-4">
+              Thank you for pre-registering. Please proceed to the front desk to complete your check-in process.
+            </p>
+            <p className="text-sm text-gray-500">
+              Reference ID: {formData.id_number}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        <Card className="shadow-lg">
+          <CardHeader className="text-center bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+            <CardTitle className="text-3xl font-bold">FLEX_LA</CardTitle>
+            <CardDescription className="text-purple-100">
+              Membership Registration Form
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="p-6">
+            <div className="mb-6">
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertTriangle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  Please fill out this form completely and accurately. All information is required for membership processing.
+                </AlertDescription>
+              </Alert>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    First Name *
+                  </label>
+                  <Input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                    placeholder="Enter your first name"
+                    required
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Name *
+                  </label>
+                  <Input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    placeholder="Enter your last name"
+                    required
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ID Number *
+                </label>
+                <Input
+                  type="text"
+                  name="id_number"
+                  value={formData.id_number}
+                  onChange={handleInputChange}
+                  placeholder="Driver's License or State ID Number"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date of Birth *
+                  </label>
+                  <Input
+                    type="date"
+                    name="date_of_birth"
+                    value={formData.date_of_birth}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ID Expiration Date *
+                  </label>
+                  <Input
+                    type="date"
+                    name="id_expiration_date"
+                    value={formData.id_expiration_date}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  State of ID *
+                </label>
+                <Input
+                  type="text"
+                  name="state_of_id"
+                  value={formData.state_of_id}
+                  onChange={handleInputChange}
+                  placeholder="e.g., CA, NY, TX"
+                  maxLength="2"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <h3 className="font-semibold text-gray-800 mb-3">
+                  MEMBERSHIP AGREEMENT & LIABILITY WAIVER
+                </h3>
+                <div className="text-sm text-gray-700 space-y-3 max-h-64 overflow-y-auto">
+                  <p>
+                    I am fully aware that this is a gay men's private club, which promotes exclusively the social, political, spiritual, health and fitness requirements of our members in a non-threatening environment, and I am not offended by any homosexual activities. ALL persons who are NOT gay or bi-sexual are violating our rights to privacy, freedom to associate, to promote our minority-group's interests and we insist that you not patronize this establishment.
+                  </p>
+                  <p>
+                    <strong>THIS IS A WAIVER OF ALL LIABILITY CLAIMS</strong>, whether personal body injury, real property damage or stolen property claims. For money/other consideration received. I AM RELEASING FLEXECO INC. AND ALL EMPLOYEES OF SAME OF/FROM ANY AND ALL RESPONSIBILITY OR LIABILITY CLAIMS OR LAWSUITS. I received $1 minimum for waiver. For H.I.V. testing schedule and condom availability please check postings throughout the club.
+                  </p>
+                  <p>
+                    I have hereby been advised to consult an attorney and physician before joining, I understand and accept ALL of the conditions stated on both sides of this card and I agree to use these facilities at my own risk. I AGREE TO L.A. CO. HEALTH SAFE-SEX Practices Policy, and understand that the use of drugs and alcohol is strictly prohibited. I understand that failure to follow these rules will result in my suspension from the facility for a minimum of six months and a maximum of life.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="agreement"
+                  checked={agreed}
+                  onCheckedChange={setAgreed}
+                  className="mt-1"
+                />
+                <label htmlFor="agreement" className="text-sm text-gray-700 cursor-pointer">
+                  I have read, understood, and agree to all terms and conditions stated above. I acknowledge that I am at least 18 years of age and am entering this establishment voluntarily.
+                </label>
+              </div>
+
+              {error && (
+                <Alert className="bg-red-50 border-red-200">
+                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex space-x-4">
+                <Button
+                  type="submit"
+                  disabled={loading || !agreed}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3"
+                >
+                  {loading ? 'Submitting...' : 'Submit Membership Form'}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+        
+        <div className="mt-4 text-center text-sm text-gray-500">
+          <p>Today's Date: {new Date().toLocaleDateString()}</p>
+          <p className="mt-2">Questions? Please speak with staff at the front desk.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default MembershipForm;
