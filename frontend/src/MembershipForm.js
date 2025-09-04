@@ -239,7 +239,7 @@ const MembershipForm = () => {
           </CardContent>
         </Card>
         
-        <div className="mt-4 text-center text-sm text-gray-500">
+        <div className="mt-4 text-center text-sm text-gray-400">
           <p>Today's Date: {new Date().toLocaleDateString()}</p>
           <p className="mt-2">Questions? Please speak with staff at the front desk.</p>
         </div>
