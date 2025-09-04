@@ -391,30 +391,30 @@ const Dashboard = () => {
 
             {/* Search Results */}
             {customers.length > 0 && (
-              <Card>
+              <Card className="dashboard-card">
                 <CardHeader>
-                  <CardTitle>Search Results</CardTitle>
+                  <CardTitle className="text-white">Search Results</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
                     {customers.map((customer) => (
                       <div
                         key={customer.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                        className="flex items-center justify-between p-4 border border-white/20 rounded-lg hover:bg-white/5 cursor-pointer interactive-card"
                         onClick={() => setSelectedCustomer(customer)}
                       >
                         <div className="flex items-center space-x-4">
                           <Avatar>
-                            <AvatarFallback>
+                            <AvatarFallback className="bg-red-600 text-white">
                               {customer.first_name.charAt(0)}{customer.last_name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-semibold">
+                            <h3 className="font-semibold text-white">
                               {customer.first_name} {customer.last_name}
                             </h3>
-                            <p className="text-sm text-gray-600">ID: {customer.id_number}</p>
-                            <p className="text-sm text-gray-600">DOB: {customer.date_of_birth}</p>
+                            <p className="text-sm text-gray-300">ID: {customer.id_number}</p>
+                            <p className="text-sm text-gray-300">DOB: {customer.date_of_birth}</p>
                           </div>
                         </div>
                         <div className="flex space-x-2">
@@ -429,6 +429,7 @@ const Dashboard = () => {
                               setShowCheckIn(true);
                             }}
                             disabled={customer.is_banned}
+                            className="flex-button"
                           >
                             Check In
                           </Button>
