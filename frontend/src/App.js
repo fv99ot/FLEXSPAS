@@ -1128,7 +1128,10 @@ const Dashboard = () => {
               <div style={{zIndex: 10}}>
                 <Select 
                   value={checkinForm.membership_type} 
-                  onValueChange={(value) => setCheckinForm({...checkinForm, membership_type: value})}
+                  onValueChange={(value) => {
+                    console.log('Membership type selected:', value);
+                    setCheckinForm({...checkinForm, membership_type: value});
+                  }}
                 >
                   <SelectTrigger className="bg-white/10 border-white/20 text-white" style={{zIndex: 10}}>
                     <SelectValue placeholder="Select Membership Type" />
@@ -1144,6 +1147,7 @@ const Dashboard = () => {
                 <Select 
                   value={checkinForm.accommodation_type} 
                   onValueChange={(value) => {
+                    console.log('Accommodation type selected:', value);
                     setCheckinForm({...checkinForm, accommodation_type: value, room_type: '', room_number: ''});
                     setAvailableRooms([]);
                     setRoomDetails([]);
@@ -1164,10 +1168,14 @@ const Dashboard = () => {
                   <Select 
                     value={checkinForm.room_number} 
                     onValueChange={(value) => {
+                      console.log('Locker number selected:', value);
                       setCheckinForm({...checkinForm, room_type: 'locker', room_number: value});
                     }}
                     onOpenChange={(open) => {
-                      if (open) fetchAvailableRooms('locker');
+                      if (open) {
+                        console.log('Loading available lockers...');
+                        fetchAvailableRooms('locker');
+                      }
                     }}
                   >
                     <SelectTrigger className="bg-white/10 border-white/20 text-white" style={{zIndex: 8}}>
