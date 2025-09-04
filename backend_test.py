@@ -467,6 +467,143 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_pending_customer_approval_system(self):
+        """Test the NEW customer approval system for QR form submissions"""
+        print("\n🔄 Testing NEW Customer Approval System...")
+        
+        all_success = True
+        
+        # Test 1: Public customer submission (QR form)
+        test_customer_data = {
+            "first_name": "Test",
+            "last_name": "Customer",
+            "id_number": "QR123APPROVE",
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2026-01-01",
+            "state_of_id": "CA"
+        }
+        
+        created_pending_id = None
+        
+        try:
+            # Submit via public endpoint (no auth required)
+            response = requests.post(
+                f"{self.api_url}/customers/public",
+                json=test_customer_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['status'] == 'pending':
+                    created_pending_id = data['id']
+                    self.log_test("QR Form Submission", True, f"Pending ID: {data['id']}")
+                else:
+                    self.log_test("QR Form Submission", False, "Invalid response data")
+                    all_success = False
+            else:
+                self.log_test("QR Form Submission", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("QR Form Submission", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Get pending customers (requires auth)
+        if not self.token:
+            self.log_test("Get Pending Customers", False, "No authentication token")
+            all_success = False
+        else:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/pending-customers",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if isinstance(data, list):
+                        # Check if our test customer is in the list
+                        found_customer = any(customer.get('id_number') == 'QR123APPROVE' for customer in data)
+                        self.log_test("Get Pending Customers", found_customer, f"Found {len(data)} pending customers")
+                        if not found_customer:
+                            all_success = False
+                    else:
+                        self.log_test("Get Pending Customers", False, "Invalid response format")
+                        all_success = False
+                else:
+                    self.log_test("Get Pending Customers", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Get Pending Customers", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 3: Approve pending customer
+        if created_pending_id and self.token:
+            try:
+                response = requests.post(
+                    f"{self.api_url}/pending-customers/{created_pending_id}/approve",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'id' in data and data['first_name'] == 'Test':
+                        self.log_test("Approve Pending Customer", True, f"Approved customer ID: {data['id']}")
+                        
+                        # Verify customer is now in main customer list
+                        search_response = requests.get(
+                            f"{self.api_url}/customers?q=Test",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if search_response.status_code == 200:
+                            customers = search_response.json()
+                            found_approved = any(c.get('first_name') == 'Test' and c.get('last_name') == 'Customer' for c in customers)
+                            self.log_test("Approved Customer in Main List", found_approved, f"Found in customer search: {found_approved}")
+                            if not found_approved:
+                                all_success = False
+                        else:
+                            self.log_test("Approved Customer in Main List", False, "Could not search customers")
+                            all_success = False
+                    else:
+                        self.log_test("Approve Pending Customer", False, "Invalid approval response")
+                        all_success = False
+                else:
+                    self.log_test("Approve Pending Customer", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Approve Pending Customer", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 4: Test duplicate prevention for pending customers
+        try:
+            # Try to submit the same customer again
+            response = requests.post(
+                f"{self.api_url}/customers/public",
+                json=test_customer_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            # Should fail with 400 status (already exists)
+            success = response.status_code == 400
+            self.log_test("Duplicate Pending Prevention", success, f"Status: {response.status_code}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Duplicate Pending Prevention", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def test_business_rules(self):
         """Test business rules like duplicate ID prevention"""
         print("\n📋 Testing Business Rules...")
