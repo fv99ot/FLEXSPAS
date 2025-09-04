@@ -56,15 +56,15 @@ const MembershipForm = () => {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md text-center membership-form">
           <CardContent className="pt-6">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-green-700 mb-2">Form Submitted Successfully!</h2>
-            <p className="text-gray-600 mb-4">
+            <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-green-400 mb-2">Form Submitted Successfully!</h2>
+            <p className="text-gray-300 mb-4">
               Thank you for pre-registering. Please proceed to the front desk to complete your check-in process.
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-400">
               Reference ID: {formData.id_number}
             </p>
           </CardContent>
