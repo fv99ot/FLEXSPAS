@@ -99,11 +99,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Card className="backdrop-blur-sm bg-white/10 border-white/20 shadow-2xl">
+        <Card className="login-card shadow-2xl">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-white mb-2">FLEX_LA</CardTitle>
+            <CardTitle className="text-4xl font-bold text-white mb-2 flex-brand">
+              FLEX<span className="flex-accent">_LA</span>
+            </CardTitle>
             <CardDescription className="text-gray-300">
               Bathhouse Management System
             </CardDescription>
@@ -138,7 +140,7 @@ const Login = () => {
               )}
               <Button 
                 type="submit" 
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold"
+                className="w-full flex-button font-semibold py-3"
                 disabled={loading}
               >
                 {loading ? 'Signing In...' : 'Sign In'}
