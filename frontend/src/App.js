@@ -316,23 +316,27 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="header-dark shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-gray-900">FLEX_LA</h1>
-              <Badge variant="secondary" className="ml-3">
+              <h1 className="text-3xl font-bold text-white flex-brand">
+                FLEX<span className="flex-accent">_LA</span>
+              </h1>
+              <Badge variant="secondary" className="ml-3 badge-manager">
                 {user?.role === 'manager' ? 'Manager' : 'Employee'}
               </Badge>
             </div>
             <div className="flex items-center space-x-4">
               <Avatar>
-                <AvatarFallback>{user?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="bg-red-600 text-white">
+                  {user?.username?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-gray-700">{user?.username}</span>
-              <Button variant="outline" size="sm" onClick={logout}>
+              <span className="text-sm text-gray-300">{user?.username}</span>
+              <Button variant="outline" size="sm" onClick={logout} className="border-white/20 text-white hover:bg-white/10">
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
@@ -343,10 +347,10 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="search" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="search">Customer Management</TabsTrigger>
-            <TabsTrigger value="active">Active Check-ins</TabsTrigger>
-            <TabsTrigger value="qr">QR Code</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-transparent">
+            <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
+            <TabsTrigger value="active" className="tab-dark">Active Check-ins</TabsTrigger>
+            <TabsTrigger value="qr" className="tab-dark">QR Code</TabsTrigger>
           </TabsList>
 
           <TabsContent value="search" className="space-y-6">
