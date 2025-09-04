@@ -195,6 +195,8 @@ const Dashboard = () => {
     paymentMethod: '',
     additionalItems: []
   });
+  const [salesReport, setSalesReport] = useState(null);
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     fetchActiveCheckins();
