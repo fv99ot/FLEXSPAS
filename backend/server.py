@@ -233,6 +233,23 @@ async def search_customers(q: Optional[str] = None, current_user: User = Depends
     
     return [Customer(**customer) for customer in customers]
 
+@api_router.post("/customers/public", response_model=Customer)
+async def create_customer_public(customer_create: CustomerCreate):
+    """Public endpoint for QR code form submissions - no authentication required"""
+    # Check if customer with same ID number already exists
+    existing_customer = await db.customers.find_one({"id_number": customer_create.id_number})
+    if existing_customer:
+        raise HTTPException(status_code=400, detail="Customer with this ID number already exists")
+    
+    customer_doc = customer_create.dict()
+    customer_doc["id"] = str(uuid.uuid4())
+    customer_doc["created_at"] = datetime.now(timezone.utc)
+    customer_doc["notes"] = ""
+    customer_doc["is_banned"] = False
+    
+    await db.customers.insert_one(customer_doc)
+    return Customer(**customer_doc)
+
 @api_router.post("/customers", response_model=Customer)
 async def create_customer(customer_create: CustomerCreate, current_user: User = Depends(get_current_user)):
     # Check if customer with same ID number already exists
