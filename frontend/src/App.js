@@ -496,7 +496,7 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="search" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-transparent">
+          <TabsList className={`grid w-full ${user?.role === 'manager' ? 'grid-cols-6' : 'grid-cols-5'} bg-transparent`}>
             <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
             <TabsTrigger value="active" className="tab-dark">Active Check-ins</TabsTrigger>
             <TabsTrigger value="map" className="tab-dark">Room Map</TabsTrigger>
