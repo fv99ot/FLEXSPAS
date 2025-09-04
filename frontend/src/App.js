@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from './components/ui/alert';
 import { Textarea } from './components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Avatar, AvatarFallback } from './components/ui/avatar';
-import { Search, Plus, LogOut, Users, Clock, DollarSign, AlertTriangle, User, MapPin, Calendar } from 'lucide-react';
+import { Search, Plus, LogOut, Users, Clock, DollarSign, AlertTriangle, User, MapPin, Calendar, BarChart3 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://spa-manager.preview.emergentagent.com';
 const API = `${BACKEND_URL}/api`;
@@ -164,8 +164,11 @@ const Dashboard = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [showCheckIn, setShowCheckIn] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [activeCheckins, setActiveCheckins] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [salesReport, setSalesReport] = useState(null);
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
@@ -187,7 +190,6 @@ const Dashboard = () => {
   const [availableRooms, setAvailableRooms] = useState([]);
   const [roomDetails, setRoomDetails] = useState([]);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [showPayment, setShowPayment] = useState(false);
   const [paymentData, setPaymentData] = useState({
     checkInId: '',
     customerName: '',
@@ -195,8 +197,6 @@ const Dashboard = () => {
     paymentMethod: '',
     additionalItems: []
   });
-  const [salesReport, setSalesReport] = useState(null);
-  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     fetchActiveCheckins();
@@ -242,6 +242,15 @@ const Dashboard = () => {
       setActiveCheckins(response.data);
     } catch (error) {
       console.error('Error fetching active check-ins:', error);
+    }
+  };
+
+  const fetchSalesReport = async (date = reportDate) => {
+    try {
+      const response = await axios.get(`${API}/reports/daily-sales?date=${date}`);
+      setSalesReport(response.data);
+    } catch (error) {
+      console.error('Error fetching sales report:', error);
     }
   };
 
@@ -329,15 +338,6 @@ const Dashboard = () => {
       additionalItems: []
     });
     fetchActiveCheckins();
-  };
-
-  const fetchSalesReport = async (date = reportDate) => {
-    try {
-      const response = await axios.get(`${API}/reports/daily-sales?date=${date}`);
-      setSalesReport(response.data);
-    } catch (error) {
-      console.error('Error fetching sales report:', error);
-    }
   };
 
   const handleCheckOut = async (checkinId) => {
@@ -487,13 +487,13 @@ const Dashboard = () => {
 
           <TabsContent value="active" className="space-y-6">
             {/* Active Check-ins */}
-            <Card>
+            <Card className="dashboard-card">
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-white">
                   <Clock className="h-5 w-5 mr-2" />
                   Active Check-ins ({activeCheckins.length})
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-300">
                   Currently checked-in customers and their remaining time
                 </CardDescription>
               </CardHeader>
@@ -505,20 +505,20 @@ const Dashboard = () => {
                     {activeCheckins.map((checkin) => (
                       <div
                         key={checkin.id}
-                        className={`p-4 border rounded-lg ${checkin.is_overtime ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                        className={`p-4 border rounded-lg ${checkin.is_overtime ? 'border-red-300 bg-red-900/20' : 'border-white/20 bg-white/5'}`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <Avatar>
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-red-600 text-white">
                                 {checkin.customer?.first_name?.charAt(0)}{checkin.customer?.last_name?.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <h3 className="font-semibold">
+                              <h3 className="font-semibold text-white">
                                 {checkin.customer?.first_name} {checkin.customer?.last_name}
                               </h3>
-                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                              <div className="flex items-center space-x-4 text-sm text-gray-300">
                                 <span className="flex items-center">
                                   <MapPin className="h-4 w-4 mr-1" />
                                   {checkin.room_type.replace('_', ' ').toUpperCase()} #{checkin.room_number}
@@ -533,10 +533,10 @@ const Dashboard = () => {
                           </div>
                           <div className="flex items-center space-x-4">
                             <div className="text-right">
-                              <div className={`font-semibold ${checkin.is_overtime ? 'text-red-600' : 'text-green-600'}`}>
+                              <div className={`font-semibold ${checkin.is_overtime ? 'text-red-400' : 'text-green-400'}`}>
                                 {formatRemainingTime(checkin.remaining_hours)}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-gray-400">
                                 Checked in: {new Date(checkin.check_in_time).toLocaleTimeString()}
                               </div>
                             </div>
@@ -544,6 +544,7 @@ const Dashboard = () => {
                               size="sm"
                               variant={checkin.is_overtime ? "destructive" : "outline"}
                               onClick={() => handleCheckOut(checkin.id)}
+                              className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
                             >
                               Check Out
                             </Button>
@@ -556,6 +557,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
           <TabsContent value="qr" className="space-y-6">
             {/* QR Code Section */}
             <Card className="dashboard-card">
@@ -595,15 +597,109 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="reports" className="space-y-6">
+            {/* Sales Reports */}
+            <Card className="dashboard-card">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <BarChart3 className="h-5 w-5 mr-2" />
+                  Daily Sales Report
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  View daily sales summary and breakdown
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex space-x-4">
+                    <Input
+                      type="date"
+                      value={reportDate}
+                      onChange={(e) => setReportDate(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white"
+                    />
+                    <Button onClick={() => fetchSalesReport(reportDate)} className="flex-button">
+                      Generate Report
+                    </Button>
+                  </div>
+
+                  {salesReport && (
+                    <div className="grid gap-4">
+                      {/* Summary Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-green-600/20 p-4 rounded-lg border border-green-500/50">
+                          <h3 className="text-green-400 font-semibold">Total Revenue</h3>
+                          <p className="text-2xl font-bold text-white">${salesReport.total_revenue}</p>
+                        </div>
+                        <div className="bg-blue-600/20 p-4 rounded-lg border border-blue-500/50">
+                          <h3 className="text-blue-400 font-semibold">Total Check-ins</h3>
+                          <p className="text-2xl font-bold text-white">{salesReport.total_checkins}</p>
+                        </div>
+                        <div className="bg-purple-600/20 p-4 rounded-lg border border-purple-500/50">
+                          <h3 className="text-purple-400 font-semibold">Average per Check-in</h3>
+                          <p className="text-2xl font-bold text-white">${salesReport.average_per_checkin.toFixed(2)}</p>
+                        </div>
+                      </div>
+
+                      {/* Breakdowns */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Room Type Breakdown */}
+                        <div className="bg-black/40 p-4 rounded-lg border border-white/20">
+                          <h3 className="text-white font-semibold mb-3">Room Type Breakdown</h3>
+                          {Object.entries(salesReport.room_breakdown).map(([type, data]) => (
+                            <div key={type} className="flex justify-between text-sm text-gray-300 mb-2">
+                              <span className="flex items-center">
+                                <div className={`w-3 h-3 rounded-full mr-2 ${
+                                  type === 'locker' ? 'bg-blue-500' :
+                                  type === 'small_room' ? 'bg-green-500' :
+                                  type === 'regular_room' ? 'bg-purple-500' :
+                                  type === 'deluxe_room' ? 'bg-yellow-500' : 'bg-gray-500'
+                                }`}></div>
+                                {type.replace('_', ' ').toUpperCase()}: {data.count}
+                              </span>
+                              <span className="text-white">${data.revenue}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Membership Breakdown */}
+                        <div className="bg-black/40 p-4 rounded-lg border border-white/20">
+                          <h3 className="text-white font-semibold mb-3">Membership Breakdown</h3>
+                          {Object.entries(salesReport.membership_breakdown).map(([type, data]) => (
+                            <div key={type} className="flex justify-between text-sm text-gray-300 mb-2">
+                              <span>{type === '1_day' ? '1-Day Pass' : '6-Month Pass'}: {data.count}</span>
+                              <span className="text-white">${data.revenue}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Employee Performance */}
+                      <div className="bg-black/40 p-4 rounded-lg border border-white/20">
+                        <h3 className="text-white font-semibold mb-3">Employee Performance</h3>
+                        {Object.entries(salesReport.employee_breakdown).map(([empId, data]) => (
+                          <div key={empId} className="flex justify-between text-sm text-gray-300 mb-2">
+                            <span>{salesReport.employee_names[empId]}: {data.count} check-ins</span>
+                            <span className="text-white">${data.revenue}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
       {/* Add Customer Dialog */}
       <Dialog open={showAddCustomer} onOpenChange={setShowAddCustomer}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] dashboard-card">
           <DialogHeader>
-            <DialogTitle>Add New Customer</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Add New Customer</DialogTitle>
+            <DialogDescription className="text-gray-300">
               Enter customer information to create a new profile
             </DialogDescription>
           </DialogHeader>
@@ -615,12 +711,14 @@ const Dashboard = () => {
                   value={customerForm.first_name}
                   onChange={(e) => setCustomerForm({...customerForm, first_name: e.target.value})}
                   required
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 />
                 <Input
                   placeholder="Last Name"
                   value={customerForm.last_name}
                   onChange={(e) => setCustomerForm({...customerForm, last_name: e.target.value})}
                   required
+                  className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 />
               </div>
               <Input
@@ -628,6 +726,7 @@ const Dashboard = () => {
                 value={customerForm.id_number}
                 onChange={(e) => setCustomerForm({...customerForm, id_number: e.target.value})}
                 required
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
               />
               <Input
                 type="date"
@@ -635,6 +734,7 @@ const Dashboard = () => {
                 value={customerForm.date_of_birth}
                 onChange={(e) => setCustomerForm({...customerForm, date_of_birth: e.target.value})}
                 required
+                className="bg-white/10 border-white/20 text-white"
               />
               <Input
                 type="date"
@@ -642,19 +742,21 @@ const Dashboard = () => {
                 value={customerForm.id_expiration_date}
                 onChange={(e) => setCustomerForm({...customerForm, id_expiration_date: e.target.value})}
                 required
+                className="bg-white/10 border-white/20 text-white"
               />
               <Input
                 placeholder="State of ID"
                 value={customerForm.state_of_id}
                 onChange={(e) => setCustomerForm({...customerForm, state_of_id: e.target.value})}
                 required
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowAddCustomer(false)}>
+              <Button type="button" variant="outline" onClick={() => setShowAddCustomer(false)} className="border-white/20 text-white hover:bg-white/10">
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} className="flex-button">
                 Add Customer
               </Button>
             </DialogFooter>
@@ -664,10 +766,10 @@ const Dashboard = () => {
 
       {/* Check-in Dialog */}
       <Dialog open={showCheckIn} onOpenChange={setShowCheckIn}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] dashboard-card">
           <DialogHeader>
-            <DialogTitle>Check In Customer</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Check In Customer</DialogTitle>
+            <DialogDescription className="text-gray-300">
               {selectedCustomer && `Check in ${selectedCustomer.first_name} ${selectedCustomer.last_name}`}
             </DialogDescription>
           </DialogHeader>
@@ -677,7 +779,7 @@ const Dashboard = () => {
                 value={checkinForm.membership_type} 
                 onValueChange={(value) => setCheckinForm({...checkinForm, membership_type: value})}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Select Membership Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -693,14 +795,14 @@ const Dashboard = () => {
                   fetchAvailableRooms(value);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Select Room Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="locker">Locker ($25/$28)</SelectItem>
-                  <SelectItem value="small_room">Small Room - No TV ($33/$36)</SelectItem>
-                  <SelectItem value="regular_room">Regular Room - With TV ($40/$45)</SelectItem>
-                  <SelectItem value="deluxe_room">Deluxe Room - With TV ($45/$50)</SelectItem>
+                  <SelectItem value="locker">🔵 Locker ($25/$28)</SelectItem>
+                  <SelectItem value="small_room">🟢 Small Room - No TV ($33/$36)</SelectItem>
+                  <SelectItem value="regular_room">🟣 Regular Room - With TV ($40/$45)</SelectItem>
+                  <SelectItem value="deluxe_room">🟡 Deluxe Room - With TV ($45/$50)</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -709,7 +811,7 @@ const Dashboard = () => {
                   value={checkinForm.room_number} 
                   onValueChange={(value) => setCheckinForm({...checkinForm, room_number: value})}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Select Room Number" />
                   </SelectTrigger>
                   <SelectContent>
@@ -731,15 +833,17 @@ const Dashboard = () => {
               )}
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowCheckIn(false)}>
+              <Button type="button" variant="outline" onClick={() => setShowCheckIn(false)} className="border-white/20 text-white hover:bg-white/10">
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading || !checkinForm.room_number}>
+              <Button type="submit" disabled={loading || !checkinForm.room_number} className="flex-button">
                 Check In
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
+      </Dialog>
+
       {/* Payment Dialog */}
       <Dialog open={showPayment} onOpenChange={setShowPayment}>
         <DialogContent className="sm:max-w-[500px] dashboard-card">
@@ -792,6 +896,7 @@ const Dashboard = () => {
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <Button 
+                  type="button"
                   variant="outline" 
                   size="sm"
                   className="border-white/20 text-white hover:bg-white/10"
@@ -813,6 +918,7 @@ const Dashboard = () => {
                   🩴 Sandals (+$15)
                 </Button>
                 <Button 
+                  type="button"
                   variant="outline" 
                   size="sm"
                   className="border-white/20 text-white hover:bg-white/10"
@@ -832,6 +938,7 @@ const Dashboard = () => {
                   🧽 Cleaning Fee (+$10)
                 </Button>
                 <Button 
+                  type="button"
                   variant="outline" 
                   size="sm"
                   className="border-white/20 text-white hover:bg-white/10"
@@ -851,6 +958,7 @@ const Dashboard = () => {
                   🔑 Lost Key Fee (+$25)
                 </Button>
                 <Button 
+                  type="button"
                   variant="outline" 
                   size="sm"
                   className="border-white/20 text-white hover:bg-white/10"
@@ -898,6 +1006,7 @@ const Dashboard = () => {
 
           <DialogFooter>
             <Button 
+              type="button"
               variant="outline" 
               onClick={() => setShowPayment(false)}
               className="border-white/20 text-white hover:bg-white/10"
