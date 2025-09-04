@@ -222,6 +222,7 @@ const Dashboard = () => {
     generateQRCode();
     if (user?.role === 'manager') {
       fetchEmployees();
+      fetchAdditionalItems();
     }
   }, [user]);
 
