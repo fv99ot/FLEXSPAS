@@ -355,13 +355,13 @@ const Dashboard = () => {
 
           <TabsContent value="search" className="space-y-6">
             {/* Search Section */}
-            <Card>
+            <Card className="dashboard-card">
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-white">
                   <Search className="h-5 w-5 mr-2" />
                   Customer Search
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-300">
                   Search by name or ID number, or add a new customer
                 </CardDescription>
               </CardHeader>
@@ -374,14 +374,14 @@ const Dashboard = () => {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && searchCustomers()}
-                      className="w-full"
+                      className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                     />
                   </div>
-                  <Button onClick={searchCustomers} disabled={loading}>
+                  <Button onClick={searchCustomers} disabled={loading} className="flex-button">
                     <Search className="h-4 w-4 mr-2" />
                     Search
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddCustomer(true)}>
+                  <Button variant="outline" onClick={() => setShowAddCustomer(true)} className="border-white/20 text-white hover:bg-white/10">
                     <Plus className="h-4 w-4 mr-2" />
                     Add New
                   </Button>
