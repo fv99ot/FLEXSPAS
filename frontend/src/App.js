@@ -1273,7 +1273,7 @@ const Dashboard = () => {
                 {loading ? 'Processing...' : 'Check In'}
               </Button>
             </DialogFooter>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
 
