@@ -1087,7 +1087,7 @@ const Dashboard = () => {
 
       {/* Check-in Dialog */}
       <Dialog open={showCheckIn} onOpenChange={setShowCheckIn}>
-        <DialogContent className="sm:max-w-[425px] dashboard-card">
+        <DialogContent className="sm:max-w-[425px] dashboard-card" style={{zIndex: 8888}}>
           <DialogHeader>
             <DialogTitle className="text-white">Check In Customer</DialogTitle>
             <DialogDescription className="text-gray-300">
@@ -1095,105 +1095,115 @@ const Dashboard = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleCheckIn}>
-            <div className="grid gap-4 py-4">
-              <Select 
-                value={checkinForm.membership_type} 
-                onValueChange={(value) => setCheckinForm({...checkinForm, membership_type: value})}
-              >
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Select Membership Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1_day">1-Day Pass ($10)</SelectItem>
-                  <SelectItem value="6_month">6-Month Pass ($25)</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select 
-                value={checkinForm.accommodation_type} 
-                onValueChange={(value) => {
-                  setCheckinForm({...checkinForm, accommodation_type: value, room_type: '', room_number: ''});
-                  setAvailableRooms([]);
-                  setRoomDetails([]);
-                }}
-              >
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <SelectValue placeholder="Select Accommodation Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="locker">🔵 LOCKERS (40-153)</SelectItem>
-                  <SelectItem value="room">🏠 ROOMS (Various Types)</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {checkinForm.accommodation_type === 'locker' && (
+            <div className="grid gap-4 py-4" style={{position: 'relative', zIndex: 1}}>
+              <div style={{zIndex: 10}}>
                 <Select 
-                  value={checkinForm.room_number} 
-                  onValueChange={(value) => {
-                    setCheckinForm({...checkinForm, room_type: 'locker', room_number: value});
-                  }}
-                  onOpenChange={(open) => {
-                    if (open) fetchAvailableRooms('locker');
-                  }}
+                  value={checkinForm.membership_type} 
+                  onValueChange={(value) => setCheckinForm({...checkinForm, membership_type: value})}
                 >
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                    <SelectValue placeholder="Select Locker Number" />
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white" style={{zIndex: 10}}>
+                    <SelectValue placeholder="Select Membership Type" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {roomDetails.filter(room => room.type === 'locker').map((room) => (
-                      <SelectItem key={room.number} value={room.number.toString()}>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                          <span>Locker #{room.number}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                  <SelectContent style={{zIndex: 9999}}>
+                    <SelectItem value="1_day">1-Day Pass ($10)</SelectItem>
+                    <SelectItem value="6_month">6-Month Pass ($25)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div style={{zIndex: 9}}>
+                <Select 
+                  value={checkinForm.accommodation_type} 
+                  onValueChange={(value) => {
+                    setCheckinForm({...checkinForm, accommodation_type: value, room_type: '', room_number: ''});
+                    setAvailableRooms([]);
+                    setRoomDetails([]);
+                  }}
+                >
+                  <SelectTrigger className="bg-white/10 border-white/20 text-white" style={{zIndex: 9}}>
+                    <SelectValue placeholder="Select Accommodation Type" />
+                  </SelectTrigger>
+                  <SelectContent style={{zIndex: 9999}}>
+                    <SelectItem value="locker">🔵 LOCKERS (40-153)</SelectItem>
+                    <SelectItem value="room">🏠 ROOMS (Various Types)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {checkinForm.accommodation_type === 'locker' && (
+                <div style={{zIndex: 8}}>
+                  <Select 
+                    value={checkinForm.room_number} 
+                    onValueChange={(value) => {
+                      setCheckinForm({...checkinForm, room_type: 'locker', room_number: value});
+                    }}
+                    onOpenChange={(open) => {
+                      if (open) fetchAvailableRooms('locker');
+                    }}
+                  >
+                    <SelectTrigger className="bg-white/10 border-white/20 text-white" style={{zIndex: 8}}>
+                      <SelectValue placeholder="Select Locker Number" />
+                    </SelectTrigger>
+                    <SelectContent style={{zIndex: 9999}}>
+                      {roomDetails.filter(room => room.type === 'locker').map((room) => (
+                        <SelectItem key={room.number} value={room.number.toString()}>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                            <span>Locker #{room.number}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
               {checkinForm.accommodation_type === 'room' && (
                 <>
-                  <Select 
-                    value={checkinForm.room_type} 
-                    onValueChange={(value) => {
-                      setCheckinForm({...checkinForm, room_type: value, room_number: ''});
-                      fetchAvailableRooms(value);
-                    }}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue placeholder="Select Room Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small_room">🟢 Small Room - No TV ($33/$36)</SelectItem>
-                      <SelectItem value="regular_room">🟣 Regular Room - With TV ($40/$45)</SelectItem>
-                      <SelectItem value="deluxe_room">🟡 Deluxe Room - With TV ($45/$50)</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {checkinForm.room_type && (
+                  <div style={{zIndex: 8}}>
                     <Select 
-                      value={checkinForm.room_number} 
-                      onValueChange={(value) => setCheckinForm({...checkinForm, room_number: value})}
+                      value={checkinForm.room_type} 
+                      onValueChange={(value) => {
+                        setCheckinForm({...checkinForm, room_type: value, room_number: ''});
+                        fetchAvailableRooms(value);
+                      }}
                     >
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue placeholder="Select Room Number" />
+                      <SelectTrigger className="bg-white/10 border-white/20 text-white" style={{zIndex: 8}}>
+                        <SelectValue placeholder="Select Room Type" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {roomDetails.filter(room => room.type === checkinForm.room_type).map((room) => (
-                          <SelectItem key={room.number} value={room.number.toString()}>
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-3 h-3 rounded-full ${
-                                room.color === 'green' ? 'bg-green-500' :
-                                room.color === 'purple' ? 'bg-purple-500' :
-                                room.color === 'gold' ? 'bg-yellow-500' : 'bg-gray-500'
-                              }`}></div>
-                              <span>{room.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
+                      <SelectContent style={{zIndex: 9999}}>
+                        <SelectItem value="small_room">🟢 Small Room - No TV ($33/$36)</SelectItem>
+                        <SelectItem value="regular_room">🟣 Regular Room - With TV ($40/$45)</SelectItem>
+                        <SelectItem value="deluxe_room">🟡 Deluxe Room - With TV ($45/$50)</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {checkinForm.room_type && (
+                    <div style={{zIndex: 7}}>
+                      <Select 
+                        value={checkinForm.room_number} 
+                        onValueChange={(value) => setCheckinForm({...checkinForm, room_number: value})}
+                      >
+                        <SelectTrigger className="bg-white/10 border-white/20 text-white" style={{zIndex: 7}}>
+                          <SelectValue placeholder="Select Room Number" />
+                        </SelectTrigger>
+                        <SelectContent style={{zIndex: 9999}}>
+                          {roomDetails.filter(room => room.type === checkinForm.room_type).map((room) => (
+                            <SelectItem key={room.number} value={room.number.toString()}>
+                              <div className="flex items-center space-x-2">
+                                <div className={`w-3 h-3 rounded-full ${
+                                  room.color === 'green' ? 'bg-green-500' :
+                                  room.color === 'purple' ? 'bg-purple-500' :
+                                  room.color === 'gold' ? 'bg-yellow-500' : 'bg-gray-500'
+                                }`}></div>
+                                <span>{room.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   )}
                 </>
               )}
