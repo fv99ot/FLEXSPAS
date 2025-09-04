@@ -640,6 +640,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/membership" element={<MembershipForm />} />
           <Route path="/" element={
             <ProtectedRoute>
               <Dashboard />
