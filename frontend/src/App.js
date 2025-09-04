@@ -266,6 +266,100 @@ const Dashboard = () => {
     }
   };
 
+  const fetchEmployees = async () => {
+    try {
+      const response = await axios.get(`${API}/users`);
+      setEmployees(response.data);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    }
+  };
+
+  const addEmployee = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await axios.post(`${API}/users`, employeeForm);
+      setEmployeeForm({
+        username: '',
+        password: '',
+        role: 'employee'
+      });
+      setShowAddEmployee(false);
+      fetchEmployees();
+    } catch (error) {
+      console.error('Error adding employee:', error);
+      alert(error.response?.data?.detail || 'Error adding employee');
+    }
+    setLoading(false);
+  };
+
+  const fetchRoomMap = async () => {
+    try {
+      const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes] = await Promise.all([
+        axios.get(`${API}/rooms/available/locker`),
+        axios.get(`${API}/rooms/available/small_room`),
+        axios.get(`${API}/rooms/available/regular_room`),
+        axios.get(`${API}/rooms/available/deluxe_room`)
+      ]);
+
+      const activeCheckinsRes = await axios.get(`${API}/checkins/active`);
+      const occupiedRooms = activeCheckinsRes.data.map(checkin => ({
+        number: checkin.room_number,
+        type: checkin.room_type,
+        customer: `${checkin.customer?.first_name} ${checkin.customer?.last_name}`
+      }));
+
+      // Create complete room map
+      const allLockers = Array.from({length: 114}, (_, i) => i + 40); // 40-153
+      const allSmallRooms = Array.from({length: 18}, (_, i) => i + 7); // 7-24
+      const allRegularRooms = [...Array.from({length: 6}, (_, i) => i + 1), ...Array.from({length: 8}, (_, i) => i + 25)]; // 1-6, 25-32
+      const allDeluxeRooms = Array.from({length: 6}, (_, i) => i + 34); // 34-39
+
+      const mapLockers = allLockers.map(num => ({
+        number: num,
+        type: 'locker',
+        available: lockersRes.data.available_rooms.includes(num),
+        customer: occupiedRooms.find(r => r.number === num && r.type === 'locker')?.customer || null
+      }));
+
+      const mapRooms = [
+        ...allSmallRooms.map(num => ({
+          number: num,
+          type: 'small_room',
+          label: 'Small Room (No TV)',
+          available: smallRoomsRes.data.available_rooms.includes(num),
+          customer: occupiedRooms.find(r => r.number === num && r.type === 'small_room')?.customer || null,
+          color: 'green'
+        })),
+        ...allRegularRooms.map(num => ({
+          number: num,
+          type: 'regular_room',
+          label: 'Regular Room (With TV)',
+          available: regularRoomsRes.data.available_rooms.includes(num),
+          customer: occupiedRooms.find(r => r.number === num && r.type === 'regular_room')?.customer || null,
+          color: 'purple'
+        })),
+        ...allDeluxeRooms.map(num => ({
+          number: num,
+          type: 'deluxe_room',
+          label: 'Deluxe Room (With TV)',
+          available: deluxeRoomsRes.data.available_rooms.includes(num),
+          customer: occupiedRooms.find(r => r.number === num && r.type === 'deluxe_room')?.customer || null,
+          color: 'gold'
+        }))
+      ];
+
+      setRoomMap({
+        lockers: mapLockers,
+        rooms: mapRooms.sort((a, b) => a.number - b.number)
+      });
+    } catch (error) {
+      console.error('Error fetching room map:', error);
+    }
+  };
+
   const addCustomer = async (e) => {
     e.preventDefault();
     setLoading(true);
