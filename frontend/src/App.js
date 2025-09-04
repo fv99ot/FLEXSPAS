@@ -77,6 +77,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -85,7 +86,10 @@ const Login = () => {
 
     const result = await login(username, password);
     
-    if (!result.success) {
+    if (result.success) {
+      // Navigate to dashboard on successful login
+      navigate('/', { replace: true });
+    } else {
       setError(result.error);
     }
     
