@@ -447,6 +447,52 @@ async def delete_user(user_id: str, current_user: User = Depends(get_current_use
     
     return {"message": "User deleted successfully"}
 
+# Additional Items Management
+class AdditionalItem(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    price: float
+    category: str = "general"
+    active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AdditionalItemCreate(BaseModel):
+    name: str
+    price: float
+    category: str = "general"
+
+# Additional Items Management
+@api_router.get("/additional-items", response_model=List[AdditionalItem])
+async def get_additional_items(current_user: User = Depends(get_current_user)):
+    items = await db.additional_items.find({"active": True}).to_list(1000)
+    return [AdditionalItem(**item) for item in items]
+
+@api_router.post("/additional-items", response_model=AdditionalItem)
+async def create_additional_item(item_create: AdditionalItemCreate, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can create items")
+    
+    item_doc = item_create.dict()
+    item_doc["id"] = str(uuid.uuid4())
+    item_doc["active"] = True
+    item_doc["created_at"] = datetime.now(timezone.utc)
+    
+    await db.additional_items.insert_one(item_doc)
+    return AdditionalItem(**item_doc)
+
+@api_router.delete("/additional-items/{item_id}")
+async def delete_additional_item(item_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can delete items")
+    
+    result = await db.additional_items.update_one(
+        {"id": item_id},
+        {"$set": {"active": False}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Item deleted successfully"}
+
 @api_router.get("/reports/daily-sales")
 async def get_daily_sales_report(date: str = None, current_user: User = Depends(get_current_user)):
     # If no date provided, use today
