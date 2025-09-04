@@ -390,6 +390,8 @@ async def get_active_checkins(current_user: User = Depends(get_current_user)):
         check_in_time = checkin["check_in_time"]
         if isinstance(check_in_time, str):
             check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
+        elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
+            check_in_time = check_in_time.replace(tzinfo=timezone.utc)
         
         eight_hours_later = check_in_time + timedelta(hours=8)
         remaining_time = eight_hours_later - datetime.now(timezone.utc)
