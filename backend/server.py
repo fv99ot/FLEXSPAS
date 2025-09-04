@@ -260,21 +260,67 @@ async def get_pending_customers(current_user: User = Depends(get_current_user)):
     return [PendingCustomer(**customer) for customer in pending]
 
 @api_router.post("/customers/public", response_model=PendingCustomer)
-async def create_customer_public(customer_create: CustomerCreate):
-    """Public endpoint for QR code form submissions - no authentication required"""
-    # Check if customer with same ID number already exists
+@api_router.post("/customers/public", response_model=PendingCustomer)
+async def create_pending_customer_public(customer_create: PendingCustomerCreate):
+    """Public endpoint for QR code form submissions - creates pending customer for approval"""
+    # Check if customer with same ID number already exists in approved or pending
     existing_customer = await db.customers.find_one({"id_number": customer_create.id_number})
+    existing_pending = await db.pending_customers.find_one({"id_number": customer_create.id_number, "status": "pending"})
+    
     if existing_customer:
         raise HTTPException(status_code=400, detail="Customer with this ID number already exists")
+    if existing_pending:
+        raise HTTPException(status_code=400, detail="Application with this ID number is already pending approval")
     
-    customer_doc = customer_create.dict()
-    customer_doc["id"] = str(uuid.uuid4())
-    customer_doc["created_at"] = datetime.now(timezone.utc)
-    customer_doc["notes"] = ""
-    customer_doc["is_banned"] = False
+    pending_doc = customer_create.dict()
+    pending_doc["id"] = str(uuid.uuid4())
+    pending_doc["created_at"] = datetime.now(timezone.utc)
+    pending_doc["status"] = "pending"
+    
+    await db.pending_customers.insert_one(pending_doc)
+    return PendingCustomer(**pending_doc)
+
+@api_router.post("/pending-customers/{customer_id}/approve", response_model=Customer)
+async def approve_pending_customer(customer_id: str, current_user: User = Depends(get_current_user)):
+    """Approve a pending customer and move to main customer list"""
+    pending = await db.pending_customers.find_one({"id": customer_id, "status": "pending"})
+    if not pending:
+        raise HTTPException(status_code=404, detail="Pending customer not found")
+    
+    # Create approved customer
+    customer_doc = {
+        "id": str(uuid.uuid4()),
+        "first_name": pending["first_name"],
+        "last_name": pending["last_name"],
+        "id_number": pending["id_number"],
+        "date_of_birth": pending["date_of_birth"],
+        "id_expiration_date": pending["id_expiration_date"],
+        "state_of_id": pending["state_of_id"],
+        "created_at": datetime.now(timezone.utc),
+        "notes": f"Approved by {current_user.username} on {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        "is_banned": False
+    }
     
     await db.customers.insert_one(customer_doc)
+    
+    # Mark pending as approved
+    await db.pending_customers.update_one(
+        {"id": customer_id},
+        {"$set": {"status": "approved"}}
+    )
+    
     return Customer(**customer_doc)
+
+@api_router.delete("/pending-customers/{customer_id}")
+async def reject_pending_customer(customer_id: str, current_user: User = Depends(get_current_user)):
+    """Reject a pending customer application"""
+    result = await db.pending_customers.update_one(
+        {"id": customer_id, "status": "pending"},
+        {"$set": {"status": "rejected"}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Pending customer not found")
+    return {"message": "Customer application rejected"}
 
 @api_router.post("/customers", response_model=Customer)
 async def create_customer(customer_create: CustomerCreate, current_user: User = Depends(get_current_user)):
