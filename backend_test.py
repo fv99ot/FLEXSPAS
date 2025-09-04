@@ -286,6 +286,187 @@ class BathhouseAPITester:
         except Exception as e:
             return self.log_test("Customer Check-out", False, f"Exception: {str(e)}")
 
+    def test_user_management(self):
+        """Test new user management endpoints (Manager only)"""
+        print("\n👥 Testing User Management (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("User Management", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test GET /users (list all employees)
+        try:
+            response = requests.get(
+                f"{self.api_url}/users",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_test("Get Users List", True, f"Found {len(data)} users")
+                else:
+                    self.log_test("Get Users List", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Users List", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Users List", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test POST /users (create new employee)
+        test_employee = {
+            "username": f"testuser_{datetime.now().strftime('%H%M%S')}",
+            "password": "testpass123",
+            "role": "employee"
+        }
+        
+        created_user_id = None
+        try:
+            response = requests.post(
+                f"{self.api_url}/users",
+                json=test_employee,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['username'] == test_employee['username']:
+                    created_user_id = data['id']
+                    self.log_test("Create Employee", True, f"Created user: {data['username']} (Role: {data['role']})")
+                else:
+                    self.log_test("Create Employee", False, "Invalid response data")
+                    all_success = False
+            else:
+                self.log_test("Create Employee", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Employee", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test DELETE /users/{user_id} (remove employee)
+        if created_user_id:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/users/{created_user_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    success = 'message' in data
+                    self.log_test("Delete Employee", success, f"Message: {data.get('message', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Delete Employee", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Delete Employee", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
+    def test_sales_reports(self):
+        """Test sales report generation (NEW FEATURE)"""
+        print("\n📊 Testing Sales Reports (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Sales Reports", False, "No authentication token")
+        
+        try:
+            # Test daily sales report for today
+            today = datetime.now().strftime('%Y-%m-%d')
+            response = requests.get(
+                f"{self.api_url}/reports/daily-sales?date={today}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['date', 'total_revenue', 'total_checkins', 'average_per_checkin', 
+                                 'room_breakdown', 'membership_breakdown', 'employee_breakdown']
+                
+                has_all_fields = all(field in data for field in required_fields)
+                if has_all_fields:
+                    return self.log_test("Daily Sales Report", True, 
+                                       f"Revenue: ${data['total_revenue']}, Check-ins: {data['total_checkins']}")
+                else:
+                    missing = [f for f in required_fields if f not in data]
+                    return self.log_test("Daily Sales Report", False, f"Missing fields: {missing}")
+            else:
+                return self.log_test("Daily Sales Report", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            return self.log_test("Daily Sales Report", False, f"Exception: {str(e)}")
+
+    def test_room_availability_detailed(self):
+        """Test detailed room availability with new room info (NEW FEATURE)"""
+        print("\n🏠 Testing Detailed Room Availability (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Detailed Room Availability", False, "No authentication token")
+        
+        room_types = ["locker", "small_room", "regular_room", "deluxe_room"]
+        expected_ranges = {
+            "locker": list(range(40, 154)),  # 40-153
+            "small_room": list(range(7, 25)),  # 7-24
+            "regular_room": list(range(1, 7)) + list(range(25, 33)),  # 1-6 & 25-32
+            "deluxe_room": list(range(34, 40))  # 34-39
+        }
+        
+        all_success = True
+        
+        for room_type in room_types:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/rooms/available/{room_type}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'available_rooms' in data and 'room_details' in data:
+                        available_rooms = data['available_rooms']
+                        room_details = data['room_details']
+                        
+                        # Check if room numbers are in expected range
+                        expected_range = expected_ranges[room_type]
+                        valid_range = all(room in expected_range for room in available_rooms)
+                        
+                        # Check if room_details has proper structure
+                        has_details = all('number' in detail and 'label' in detail and 'color' in detail 
+                                        for detail in room_details)
+                        
+                        success = valid_range and has_details
+                        details = f"Available: {len(available_rooms)}, Range valid: {valid_range}, Details: {has_details}"
+                        self.log_test(f"Detailed {room_type.replace('_', ' ').title()} Rooms", success, details)
+                        
+                        if not success:
+                            all_success = False
+                    else:
+                        self.log_test(f"Detailed {room_type.replace('_', ' ').title()} Rooms", False, "Missing room_details")
+                        all_success = False
+                else:
+                    self.log_test(f"Detailed {room_type.replace('_', ' ').title()} Rooms", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Detailed {room_type.replace('_', ' ').title()} Rooms", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
     def test_business_rules(self):
         """Test business rules like duplicate ID prevention"""
         print("\n📋 Testing Business Rules...")
