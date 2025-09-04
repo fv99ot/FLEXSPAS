@@ -176,6 +176,36 @@ h1, h2, h3 {
   color: #ffffff !important;
 }
 
+/* Fix Select dropdown z-index issues */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+[data-radix-select-content] {
+  z-index: 9999 !important;
+  background: rgba(0, 0, 0, 0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-radix-select-item] {
+  color: #ffffff !important;
+}
+
+[data-radix-select-item]:hover {
+  background: rgba(220, 38, 38, 0.2) !important;
+  color: #ffffff !important;
+}
+
+[data-radix-select-trigger] {
+  z-index: 10 !important;
+}
+
+/* Dialog content z-index */
+[data-radix-dialog-content] {
+  z-index: 8888 !important;
+}
+
 /* Button styling */
 .flex-button {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
