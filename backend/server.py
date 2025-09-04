@@ -495,75 +495,95 @@ async def delete_additional_item(item_id: str, current_user: User = Depends(get_
 
 @api_router.get("/reports/daily-sales")
 async def get_daily_sales_report(date: str = None, current_user: User = Depends(get_current_user)):
-    # If no date provided, use today
-    if not date:
-        date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    
-    # Parse the date and get start/end of day
-    report_date = datetime.fromisoformat(date).replace(tzinfo=timezone.utc)
-    start_of_day = report_date.replace(hour=0, minute=0, second=0, microsecond=0)
-    end_of_day = report_date.replace(hour=23, minute=59, second=59, microsecond=999999)
-    
-    # Get all check-ins for the day
-    checkins = await db.check_ins.find({
-        "check_in_time": {
-            "$gte": start_of_day,
-            "$lte": end_of_day
+    try:
+        # If no date provided, use today
+        if not date:
+            date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        
+        # Parse the date and get start/end of day
+        try:
+            report_date = datetime.fromisoformat(date).replace(tzinfo=timezone.utc)
+        except ValueError:
+            # If date parsing fails, use today
+            report_date = datetime.now(timezone.utc)
+            
+        start_of_day = report_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = report_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        # Get all check-ins for the day
+        checkins = await db.check_ins.find({
+            "check_in_time": {
+                "$gte": start_of_day,
+                "$lte": end_of_day
+            }
+        }).to_list(1000)
+        
+        total_revenue = 0
+        total_checkins = len(checkins)
+        
+        # Breakdown by room type
+        room_breakdown = {}
+        membership_breakdown = {}
+        employee_breakdown = {}
+        
+        for checkin in checkins:
+            room_type = checkin.get("room_type", "unknown")
+            membership_type = checkin.get("membership_type", "unknown")
+            employee_id = checkin.get("employee_id")
+            amount = checkin.get("total_amount", 0)
+            
+            # Handle amount conversion
+            if isinstance(amount, str):
+                try:
+                    amount = float(amount)
+                except ValueError:
+                    amount = 0
+            
+            total_revenue += amount
+            
+            # Room type breakdown
+            if room_type not in room_breakdown:
+                room_breakdown[room_type] = {"count": 0, "revenue": 0}
+            room_breakdown[room_type]["count"] += 1
+            room_breakdown[room_type]["revenue"] += amount
+            
+            # Membership breakdown
+            if membership_type not in membership_breakdown:
+                membership_breakdown[membership_type] = {"count": 0, "revenue": 0}
+            membership_breakdown[membership_type]["count"] += 1
+            membership_breakdown[membership_type]["revenue"] += amount
+            
+            # Employee breakdown
+            if employee_id:
+                if employee_id not in employee_breakdown:
+                    employee_breakdown[employee_id] = {"count": 0, "revenue": 0}
+                employee_breakdown[employee_id]["count"] += 1
+                employee_breakdown[employee_id]["revenue"] += amount
+        
+        # Get employee names
+        employee_names = {}
+        for emp_id in employee_breakdown.keys():
+            try:
+                employee = await db.users.find_one({"id": emp_id})
+                employee_names[emp_id] = employee["username"] if employee else "Unknown"
+            except:
+                employee_names[emp_id] = "Unknown"
+        
+        return {
+            "date": date,
+            "total_revenue": round(total_revenue, 2),
+            "total_checkins": total_checkins,
+            "average_per_checkin": round(total_revenue / total_checkins, 2) if total_checkins > 0 else 0,
+            "room_breakdown": room_breakdown,
+            "membership_breakdown": membership_breakdown,
+            "employee_breakdown": employee_breakdown,
+            "employee_names": employee_names,
+            "checkins": checkins
         }
-    }).to_list(1000)
-    
-    # Get all transactions (would be added to payment system)
-    # For now, we'll calculate from check-ins
-    
-    total_revenue = sum(checkin.get("total_amount", 0) for checkin in checkins)
-    total_checkins = len(checkins)
-    
-    # Breakdown by room type
-    room_breakdown = {}
-    membership_breakdown = {}
-    employee_breakdown = {}
-    
-    for checkin in checkins:
-        room_type = checkin.get("room_type", "unknown")
-        membership_type = checkin.get("membership_type", "unknown")
-        employee_id = checkin.get("employee_id")
-        
-        # Room type breakdown
-        if room_type not in room_breakdown:
-            room_breakdown[room_type] = {"count": 0, "revenue": 0}
-        room_breakdown[room_type]["count"] += 1
-        room_breakdown[room_type]["revenue"] += checkin.get("total_amount", 0)
-        
-        # Membership breakdown
-        if membership_type not in membership_breakdown:
-            membership_breakdown[membership_type] = {"count": 0, "revenue": 0}
-        membership_breakdown[membership_type]["count"] += 1
-        membership_breakdown[membership_type]["revenue"] += checkin.get("total_amount", 0)
-        
-        # Employee breakdown
-        if employee_id:
-            if employee_id not in employee_breakdown:
-                employee_breakdown[employee_id] = {"count": 0, "revenue": 0}
-            employee_breakdown[employee_id]["count"] += 1
-            employee_breakdown[employee_id]["revenue"] += checkin.get("total_amount", 0)
-    
-    # Get employee names
-    employee_names = {}
-    for emp_id in employee_breakdown.keys():
-        employee = await db.users.find_one({"id": emp_id})
-        employee_names[emp_id] = employee["username"] if employee else "Unknown"
-    
-    return {
-        "date": date,
-        "total_revenue": total_revenue,
-        "total_checkins": total_checkins,
-        "average_per_checkin": total_revenue / total_checkins if total_checkins > 0 else 0,
-        "room_breakdown": room_breakdown,
-        "membership_breakdown": membership_breakdown,
-        "employee_breakdown": employee_breakdown,
-        "employee_names": employee_names,
-        "checkins": checkins
-    }
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Sales report error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating sales report: {str(e)}")
 
 # Include the router in the main app
 app.include_router(api_router)
