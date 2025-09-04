@@ -104,7 +104,7 @@ const Login = () => {
         <Card className="login-card shadow-2xl">
           <CardHeader className="text-center">
             <CardTitle className="text-4xl font-bold text-white mb-2 flex-brand">
-              FLEX<span className="flex-accent">_LA</span>
+              Flex Spa <span className="flex-accent">Los Angeles</span>
             </CardTitle>
             <CardDescription className="text-gray-300">
               Bathhouse Management System
