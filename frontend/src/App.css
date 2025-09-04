@@ -206,6 +206,24 @@ h1, h2, h3 {
   z-index: 8888 !important;
 }
 
+/* Fix overlay issues - ensure overlays close properly */
+[data-radix-dialog-overlay] {
+  z-index: 8887 !important;
+}
+
+/* Ensure select overlays don't persist */
+[data-radix-select-content][data-state="closed"] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Force close lingering overlays */
+.radix-overlay-cleanup {
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
 /* Button styling */
 .flex-button {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
