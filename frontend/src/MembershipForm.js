@@ -79,7 +79,7 @@ const MembershipForm = () => {
         <Card className="shadow-lg membership-form">
           <CardHeader className="text-center flex-button">
             <CardTitle className="text-4xl font-bold text-white flex-brand">
-              FLEX<span className="flex-accent">_LA</span>
+              Flex Spa <span className="flex-accent">Los Angeles</span>
             </CardTitle>
             <CardDescription className="text-gray-300">
               Membership Registration Form
