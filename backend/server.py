@@ -425,6 +425,28 @@ async def get_active_checkins(current_user: User = Depends(get_current_user)):
     
     return result
 
+@api_router.get("/users", response_model=List[User])
+async def get_users(current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can view users")
+    
+    users = await db.users.find({}).to_list(1000)
+    return [User(**{k: v for k, v in user.items() if k != "password"}) for user in users]
+
+@api_router.delete("/users/{user_id}")
+async def delete_user(user_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can delete users")
+    
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    
+    result = await db.users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "User deleted successfully"}
+
 @api_router.get("/reports/daily-sales")
 async def get_daily_sales_report(date: str = None, current_user: User = Depends(get_current_user)):
     # If no date provided, use today
