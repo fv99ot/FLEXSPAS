@@ -1281,7 +1281,6 @@ const Dashboard = () => {
               </Button>
               <Button 
                 type="button"
-                disabled={loading || !checkinForm.room_number || !checkinForm.membership_type} 
                 className="flex-button"
                 onClick={() => {
                   console.log('🔥 SIMPLE BUTTON CLICK TEST');
