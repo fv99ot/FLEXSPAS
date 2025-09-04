@@ -183,6 +183,7 @@ const Dashboard = () => {
   // Check-in form data
   const [checkinForm, setCheckinForm] = useState({
     membership_type: '',
+    accommodation_type: '', // 'locker' or 'room'
     room_type: '',
     room_number: ''
   });
