@@ -599,13 +599,13 @@ class AdditionalItemCreate(BaseModel):
 # Discount Management
 @api_router.get("/discounts", response_model=List[Discount])
 async def get_discounts(current_user: User = Depends(get_current_user)):
-    """Get active discounts (excludes ghost discounts from regular view)"""
-    discounts = await db.discounts.find({"active": True, "is_ghost": {"$ne": True}}).to_list(1000)
+    """Get active discounts"""
+    discounts = await db.discounts.find({"active": True}).to_list(1000)
     return [Discount(**discount) for discount in discounts]
 
 @api_router.get("/admin/discounts", response_model=List[Discount])
 async def get_all_discounts(current_user: User = Depends(get_current_user)):
-    """Get all discounts including ghost ones for admin management"""
+    """Get all discounts for admin management"""
     if current_user.role != UserRole.MANAGER:
         raise HTTPException(status_code=403, detail="Only managers can view all discounts")
     
