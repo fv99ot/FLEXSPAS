@@ -467,6 +467,134 @@ const Dashboard = () => {
     }
   };
 
+  // Admin Settings Functions
+  const fetchAdminDiscounts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/admin/discounts`, { headers });
+      setAdminDiscounts(response.data);
+    } catch (error) {
+      console.error('Error fetching admin discounts:', error);
+    }
+  };
+
+  const fetchAdminItems = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/admin/additional-items`, { headers });
+      setAdminItems(response.data);
+    } catch (error) {
+      console.error('Error fetching admin items:', error);
+    }
+  };
+
+  const addDiscount = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.post(`${API}/discounts`, {
+        name: discountForm.name,
+        amount: parseFloat(discountForm.amount),
+        description: discountForm.description
+      }, { headers });
+      
+      setDiscountForm({ name: '', amount: '', description: '' });
+      setShowAddDiscount(false);
+      fetchAdminDiscounts();
+      alert('Discount created successfully!');
+    } catch (error) {
+      console.error('Error adding discount:', error);
+      alert(error.response?.data?.detail || 'Error adding discount');
+    }
+    setLoading(false);
+  };
+
+  const toggleDiscount = async (discountId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.put(`${API}/discounts/${discountId}/toggle`, {}, { headers });
+      fetchAdminDiscounts();
+      alert('Discount status updated!');
+    } catch (error) {
+      console.error('Error toggling discount:', error);
+      alert('Error updating discount');
+    }
+  };
+
+  const deleteDiscount = async (discountId) => {
+    if (window.confirm('Are you sure you want to delete this discount?')) {
+      try {
+        const token = localStorage.getItem('token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        await axios.delete(`${API}/discounts/${discountId}`, { headers });
+        fetchAdminDiscounts();
+        alert('Discount deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting discount:', error);
+        alert('Error deleting discount');
+      }
+    }
+  };
+
+  const updateAdminItem = async (itemId, itemData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.put(`${API}/additional-items/${itemId}`, itemData, { headers });
+      fetchAdminItems();
+      setEditingItem(null);
+      alert('Item updated successfully!');
+    } catch (error) {
+      console.error('Error updating item:', error);
+      alert('Error updating item');
+    }
+  };
+
+  const toggleAdminItem = async (itemId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.put(`${API}/additional-items/${itemId}/toggle`, {}, { headers });
+      fetchAdminItems();
+      alert('Item status updated!');
+    } catch (error) {
+      console.error('Error toggling item:', error);
+      alert('Error updating item status');
+    }
+  };
+
+  const seedDefaultItems = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.post(`${API}/admin/seed-default-items`, {}, { headers });
+      fetchAdminItems();
+      alert(response.data.message);
+    } catch (error) {
+      console.error('Error seeding items:', error);
+      alert('Error seeding default items');
+    }
+  };
+
+  const applySecretDiscount = async (secretCode) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.post(`${API}/apply-secret-discount`, { code: secretCode }, { headers });
+      setSecretCodeActive(true);
+      return response.data;
+    } catch (error) {
+      console.error('Error applying secret discount:', error);
+      return null;
+    }
+  };
+
   const fetchRoomMap = async () => {
     try {
       const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes] = await Promise.all([
