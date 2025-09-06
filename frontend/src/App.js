@@ -2392,7 +2392,13 @@ const Dashboard = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   New Room Type *
                 </label>
-                <Select value={upgradeForm.new_room_type} onValueChange={(value) => setUpgradeForm({...upgradeForm, new_room_type: value, new_room_number: ''})}>
+                <Select value={upgradeForm.new_room_type} onValueChange={async (value) => {
+                  setUpgradeForm({...upgradeForm, new_room_type: value, new_room_number: ''});
+                  // Fetch available rooms for the selected type
+                  if (value) {
+                    await fetchAvailableRooms(value);
+                  }
+                }}>
                   <SelectTrigger className="w-full bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Select room type" />
                   </SelectTrigger>
@@ -2414,7 +2420,7 @@ const Dashboard = () => {
                       <SelectValue placeholder="Select room number" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableRooms[upgradeForm.new_room_type]?.map(room => (
+                      {availableRooms?.map(room => (
                         <SelectItem key={room} value={room.toString()}>{room}</SelectItem>
                       ))}
                     </SelectContent>
