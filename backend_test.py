@@ -473,12 +473,15 @@ class BathhouseAPITester:
         
         all_success = True
         
+        # Generate unique ID to avoid conflicts
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+        
         # Test 1: Public customer submission (QR form)
         test_customer_data = {
-            "first_name": "Test",
-            "last_name": "Customer",
-            "id_number": "QR123APPROVE",
-            "date_of_birth": "1990-01-01",
+            "first_name": "Maria",
+            "last_name": "Rodriguez",
+            "id_number": f"QR{unique_timestamp}",
+            "date_of_birth": "1985-03-15",
             "id_expiration_date": "2026-01-01",
             "state_of_id": "CA"
         }
