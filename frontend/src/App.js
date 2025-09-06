@@ -904,8 +904,12 @@ const Dashboard = () => {
                                 size="sm"
                                 className="bg-green-600 hover:bg-green-700 text-white"
                                 onClick={() => {
+                                  console.log('Approve button clicked for customer:', customer.id, customer.first_name, customer.last_name);
                                   if (window.confirm(`Approve ${customer.first_name} ${customer.last_name}? Make sure you have verified their physical ID.`)) {
+                                    console.log('User confirmed approval, calling approvePendingCustomer');
                                     approvePendingCustomer(customer.id);
+                                  } else {
+                                    console.log('User cancelled approval');
                                   }
                                 }}
                               >
