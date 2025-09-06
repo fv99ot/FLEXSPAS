@@ -1347,6 +1347,13 @@ class BathhouseAPITester:
         # Test specific user-reported issue
         self.test_user_reported_approval_issue()
         
+        # NEW ADMIN FEATURES TESTING
+        self.test_admin_discount_management()
+        self.test_secret_ghost_discount()
+        self.test_additional_items_management()
+        self.test_room_upgrade_system()
+        self.test_waitlist_system()
+        
         # Business rules tests
         self.test_business_rules()
         
