@@ -1708,6 +1708,70 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
+                {/* Password Management */}
+                <Card className="dashboard-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-white">
+                      <Key className="h-5 w-5 mr-2" />
+                      Password Management
+                    </CardTitle>
+                    <CardDescription className="text-gray-300">
+                      Change your password or reset employee passwords
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Change Own Password */}
+                      <div className="flex justify-between items-center p-4 border border-blue-500/50 rounded-lg bg-blue-600/10">
+                        <div>
+                          <h3 className="font-semibold text-white">Your Password</h3>
+                          <p className="text-sm text-gray-300">Change your current login password</p>
+                        </div>
+                        <Button
+                          onClick={() => setShowChangePassword(true)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          Change Password
+                        </Button>
+                      </div>
+
+                      {/* Employee Password Management */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-white mb-3">Employee Password Reset</h3>
+                        <div className="grid gap-4">
+                          {employees.map((employee) => (
+                            <div key={employee.id} className="flex items-center justify-between p-4 border border-purple-500/50 rounded-lg bg-purple-600/10">
+                              <div>
+                                <h3 className="font-semibold text-white">{employee.username}</h3>
+                                <p className="text-sm text-gray-300">Role: {employee.role}</p>
+                                <p className="text-xs text-gray-400">Created: {new Date(employee.created_at).toLocaleDateString()}</p>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                                  onClick={() => {
+                                    setSelectedUserForReset(employee);
+                                    setShowResetUserPassword(true);
+                                  }}
+                                >
+                                  Reset Password
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => removeEmployee(employee.id)}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
               </div>
             )}
