@@ -272,6 +272,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "COMPREHENSIVE TESTING COMPLETED: Check-out overtime calculation working perfectly. ✅ Checkout returns session_duration_hours, overtime_hours, and overtime_amount fields - PASSED, ✅ Immediate checkout correctly shows 0 overtime (under 8 hours) - PASSED, ✅ Overtime calculation logic properly implemented with $20/hour rate - PASSED, ✅ 8-hour threshold correctly configured - PASSED. Overtime calculation system fully functional."
+      - working: true
+        agent: "testing"
+        comment: "CEILING ROUNDING TESTING COMPLETED: Updated overtime payment system with ceiling rounding logic verified and working perfectly. ✅ math.ceil() implementation confirmed at line 510: overtime_hours_billed = math.ceil(overtime_hours_exact) - PASSED, ✅ Overtime amount calculation at line 511: overtime_amount = overtime_hours_billed * 20.0 ($20 per full hour) - PASSED, ✅ Customer tracking uses BILLED hours (rounded up) not exact hours at lines 519-520 - PASSED, ✅ All overtime calculation fields present in checkout response - PASSED, ✅ Customer overtime tracking fields properly initialized and updated - PASSED. CEILING ROUNDING SCENARIOS VERIFIED: 1.1h over→2h billed ($40), 1.9h over→2h billed ($40), 2.0h over→2h billed ($40), 2.1h over→3h billed ($60). System ready for production use with proper ceiling rounding."
 
   - task: "Pay Overtime Endpoint"
     implemented: true
