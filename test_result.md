@@ -101,3 +101,91 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Fix the customer approval issue - customers can't be approved after they submit their QR code form. The system has a QR membership form that creates pending customers, but the approval process is not working properly."
+
+backend:
+  - task: "Pending Customer Creation via QR Form"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"  
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Backend endpoint /api/customers/public exists and creates pending customers correctly. PendingCustomer model and PendingCustomerCreate model are properly defined."
+
+  - task: "Pending Customer Approval Endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high" 
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Backend endpoint /api/pending-customers/{customer_id}/approve exists. Code looks correct - creates new customer, updates pending status. Needs testing to verify it works."
+
+  - task: "Get Pending Customers Endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Backend endpoint /api/pending-customers exists to fetch pending customers. Code looks correct but needs testing."
+
+frontend:
+  - task: "QR Membership Form Submission"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/MembershipForm.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "MembershipForm submits to /api/customers/public endpoint. Form looks complete with all required fields and proper error handling."
+
+  - task: "Pending Customer Approval UI"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported: 'won't let me approve a customer after they submit their QR code form'"
+      - working: "NA"
+        agent: "main"
+        comment: "Frontend has approvePendingCustomer function that calls POST /api/pending-customers/{customerId}/approve. UI shows Pending Approvals tab with approve/reject buttons. Needs testing to identify the issue."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Pending Customer Approval Endpoint"
+    - "Get Pending Customers Endpoint" 
+    - "Pending Customer Approval UI"
+    - "QR Membership Form Submission"
+  stuck_tasks:
+    - "Pending Customer Approval UI"
+  test_all: false
+  test_priority: "stuck_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Investigating customer approval issue reported by user. Need to test the complete flow: QR form submission -> pending queue -> approval process. Backend endpoints exist and look correct, but approval functionality is not working according to user feedback."
