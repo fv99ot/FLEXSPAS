@@ -817,6 +817,9 @@ class BathhouseAPITester:
         # NEW FEATURE: Customer approval system tests
         self.test_pending_customer_approval_system()
         
+        # Test specific user-reported issue
+        self.test_user_reported_approval_issue()
+        
         # Business rules tests
         self.test_business_rules()
         
