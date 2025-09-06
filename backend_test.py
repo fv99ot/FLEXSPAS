@@ -736,6 +736,533 @@ class BathhouseAPITester:
             print(f"   🚨 CRITICAL: Exception during approval - this could be the issue!")
             return False
 
+    def test_admin_discount_management(self):
+        """Test NEW admin discount management system"""
+        print("\n💰 Testing Admin Discount Management (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Admin Discount Management", False, "No authentication token")
+        
+        all_success = True
+        created_discount_id = None
+        
+        # Test 1: Create new discount with whole amounts
+        discount_data = {
+            "name": "FREE LOCKER SPECIAL",
+            "amount": 25.0,  # Whole amount, not percentage
+            "description": "Free locker promotion",
+            "code": None,
+            "is_ghost": False
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json=discount_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['name'] == discount_data['name']:
+                    created_discount_id = data['id']
+                    self.log_test("Create Discount", True, f"Created: {data['name']} - ${data['amount']}")
+                else:
+                    self.log_test("Create Discount", False, "Invalid response data")
+                    all_success = False
+            else:
+                self.log_test("Create Discount", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Discount", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Get regular discounts (should exclude ghost discounts)
+        try:
+            response = requests.get(
+                f"{self.api_url}/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_discount = any(d.get('id') == created_discount_id for d in data)
+                    self.log_test("Get Regular Discounts", found_discount, f"Found {len(data)} discounts")
+                    if not found_discount:
+                        all_success = False
+                else:
+                    self.log_test("Get Regular Discounts", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Regular Discounts", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Regular Discounts", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Get admin discounts (should include all discounts)
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_discount = any(d.get('id') == created_discount_id for d in data)
+                    self.log_test("Get Admin Discounts", found_discount, f"Found {len(data)} admin discounts")
+                    if not found_discount:
+                        all_success = False
+                else:
+                    self.log_test("Get Admin Discounts", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Admin Discounts", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Admin Discounts", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Toggle discount on/off
+        if created_discount_id:
+            try:
+                response = requests.put(
+                    f"{self.api_url}/discounts/{created_discount_id}/toggle",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    success = 'message' in data
+                    self.log_test("Toggle Discount", success, f"Message: {data.get('message', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Toggle Discount", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Toggle Discount", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
+    def test_secret_ghost_discount(self):
+        """Test NEW secret ghost discount system"""
+        print("\n👻 Testing Secret Ghost Discount (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Secret Ghost Discount", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test 1: Apply secret code "!)" (shift+1+0)
+        try:
+            response = requests.post(
+                f"{self.api_url}/apply-secret-discount",
+                json={"code": "!)"},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data.get('is_ghost') == True and data.get('name') == 'GHOST_DISCOUNT':
+                    self.log_test("Apply Secret Code", True, f"Ghost discount created: {data['amount']}")
+                else:
+                    self.log_test("Apply Secret Code", False, "Invalid ghost discount response")
+                    all_success = False
+            else:
+                self.log_test("Apply Secret Code", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Apply Secret Code", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Test invalid secret code
+        try:
+            response = requests.post(
+                f"{self.api_url}/apply-secret-discount",
+                json={"code": "wrong"},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 400
+            self.log_test("Invalid Secret Code", success, f"Status: {response.status_code}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid Secret Code", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Verify ghost discount doesn't appear in regular discount list
+        try:
+            response = requests.get(
+                f"{self.api_url}/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                has_ghost = any(d.get('is_ghost') == True for d in data)
+                success = not has_ghost  # Ghost discounts should NOT appear in regular list
+                self.log_test("Ghost Discount Hidden", success, f"Ghost in regular list: {has_ghost}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Ghost Discount Hidden", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Ghost Discount Hidden", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_additional_items_management(self):
+        """Test NEW additional items management system"""
+        print("\n🛍️ Testing Additional Items Management (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Additional Items Management", False, "No authentication token")
+        
+        all_success = True
+        created_item_id = None
+        
+        # Test 1: Seed default items
+        try:
+            response = requests.post(
+                f"{self.api_url}/admin/seed-default-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data
+                self.log_test("Seed Default Items", success, f"Message: {data.get('message', '')}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Seed Default Items", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Seed Default Items", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Create new additional item
+        item_data = {
+            "name": "Test Item",
+            "price": 12.50,
+            "category": "test"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/additional-items",
+                json=item_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['name'] == item_data['name']:
+                    created_item_id = data['id']
+                    self.log_test("Create Additional Item", True, f"Created: {data['name']} - ${data['price']}")
+                else:
+                    self.log_test("Create Additional Item", False, "Invalid response data")
+                    all_success = False
+            else:
+                self.log_test("Create Additional Item", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Additional Item", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Get active additional items (regular endpoint)
+        try:
+            response = requests.get(
+                f"{self.api_url}/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_item = any(item.get('id') == created_item_id for item in data)
+                    expected_items = ['Condoms', 'Dildos', 'Cleaning Fee', 'Lost Key Fee']
+                    has_defaults = all(any(item.get('name') == expected for item in data) for expected in expected_items)
+                    self.log_test("Get Active Items", found_item and has_defaults, f"Found {len(data)} items, defaults: {has_defaults}")
+                    if not (found_item and has_defaults):
+                        all_success = False
+                else:
+                    self.log_test("Get Active Items", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Active Items", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Active Items", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Get all additional items (admin endpoint)
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_item = any(item.get('id') == created_item_id for item in data)
+                    self.log_test("Get Admin Items", found_item, f"Found {len(data)} admin items")
+                    if not found_item:
+                        all_success = False
+                else:
+                    self.log_test("Get Admin Items", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Admin Items", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Admin Items", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 5: Toggle item on/off
+        if created_item_id:
+            try:
+                response = requests.put(
+                    f"{self.api_url}/additional-items/{created_item_id}/toggle",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    success = 'message' in data
+                    self.log_test("Toggle Item", success, f"Message: {data.get('message', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Toggle Item", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Toggle Item", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
+    def test_room_upgrade_system(self):
+        """Test NEW room upgrade system"""
+        print("\n🔄 Testing Room Upgrade System (NEW FEATURE)...")
+        
+        if not self.token or not self.created_customer_id:
+            return self.log_test("Room Upgrade System", False, "No token or customer ID")
+        
+        all_success = True
+        
+        # First, we need to create a new check-in for upgrade testing
+        try:
+            # Get available locker
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code != 200:
+                return self.log_test("Room Upgrade System", False, "Could not get available rooms")
+            
+            available_lockers = rooms_response.json()['available_rooms']
+            if not available_lockers:
+                return self.log_test("Room Upgrade System", False, "No available lockers")
+            
+            # Create check-in for upgrade testing
+            checkin_data = {
+                "customer_id": self.created_customer_id,
+                "membership_type": "1_day",
+                "room_type": "locker",
+                "room_number": available_lockers[0]
+            }
+            
+            checkin_response = requests.post(
+                f"{self.api_url}/checkin",
+                json=checkin_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if checkin_response.status_code != 200:
+                return self.log_test("Room Upgrade System", False, "Could not create check-in for upgrade")
+            
+            upgrade_checkin_id = checkin_response.json()['id']
+            
+            # Get available regular room for upgrade
+            regular_rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/regular_room",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if regular_rooms_response.status_code != 200:
+                return self.log_test("Room Upgrade System", False, "Could not get available regular rooms")
+            
+            available_regular = regular_rooms_response.json()['available_rooms']
+            if not available_regular:
+                return self.log_test("Room Upgrade System", False, "No available regular rooms")
+            
+            # Test upgrade from locker to regular room (should include cleaning fee)
+            upgrade_data = {
+                "new_room_type": "regular_room",
+                "new_room_number": available_regular[0]
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/checkin/{upgrade_checkin_id}/upgrade",
+                json=upgrade_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['upgrade_id', 'additional_cost', 'upgrade_fee', 'cleaning_fee']
+                has_all_fields = all(field in data for field in required_fields)
+                
+                # Should have cleaning fee since upgrading to a room
+                has_cleaning_fee = data.get('cleaning_fee', 0) == 5.0
+                
+                success = has_all_fields and has_cleaning_fee
+                details = f"Cost: ${data.get('additional_cost', 0)}, Cleaning: ${data.get('cleaning_fee', 0)}"
+                self.log_test("Room Upgrade with Cleaning Fee", success, details)
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Room Upgrade with Cleaning Fee", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Room Upgrade with Cleaning Fee", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_waitlist_system(self):
+        """Test NEW waitlist management system"""
+        print("\n⏳ Testing Waitlist System (NEW FEATURE)...")
+        
+        if not self.token or not self.created_customer_id:
+            return self.log_test("Waitlist System", False, "No token or customer ID")
+        
+        all_success = True
+        created_waitlist_id = None
+        
+        # Test 1: Add customer to waitlist for specific room type
+        waitlist_data = {
+            "customer_id": self.created_customer_id,
+            "room_type": "deluxe_room",
+            "membership_type": "1_day"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/waitlist",
+                json=waitlist_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['customer_id'] == self.created_customer_id:
+                    created_waitlist_id = data['id']
+                    self.log_test("Add to Waitlist", True, f"Added customer to waitlist: {data['id']}")
+                else:
+                    self.log_test("Add to Waitlist", False, "Invalid response data")
+                    all_success = False
+            else:
+                self.log_test("Add to Waitlist", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Add to Waitlist", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Get waitlist entries
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_entry = any(entry.get('id') == created_waitlist_id for entry in data)
+                    has_customer_data = any(entry.get('customer') is not None for entry in data)
+                    self.log_test("Get Waitlist", found_entry and has_customer_data, f"Found {len(data)} entries")
+                    if not (found_entry and has_customer_data):
+                        all_success = False
+                else:
+                    self.log_test("Get Waitlist", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Waitlist", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Waitlist", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Remove from waitlist
+        if created_waitlist_id:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/waitlist/{created_waitlist_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    success = 'message' in data
+                    self.log_test("Remove from Waitlist", success, f"Message: {data.get('message', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Remove from Waitlist", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Remove from Waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
     def test_business_rules(self):
         """Test business rules like duplicate ID prevention"""
         print("\n📋 Testing Business Rules...")
