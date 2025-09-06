@@ -1924,6 +1924,379 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_customer_profile_system(self):
+        """Test NEW customer profile system with visit history and membership expiration"""
+        print("\n👤 Testing Customer Profile System (NEW FEATURE)...")
+        
+        if not self.token or not self.created_customer_id:
+            return self.log_test("Customer Profile System", False, "No token or customer ID")
+        
+        all_success = True
+        
+        # Test 1: Get customer profile
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers/{self.created_customer_id}/profile",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ['customer', 'last_visit', 'membership_expiration', 'visit_history', 'total_visits']
+                has_all_fields = all(field in data for field in required_fields)
+                
+                # Check customer data structure
+                customer_data = data.get('customer', {})
+                has_customer_info = 'id' in customer_data and 'first_name' in customer_data
+                
+                # Check visit history structure
+                visit_history = data.get('visit_history', [])
+                visit_history_valid = isinstance(visit_history, list)
+                if visit_history:
+                    first_visit = visit_history[0]
+                    visit_fields = ['date', 'room_type', 'room_number', 'membership_type', 'total_amount']
+                    visit_history_valid = all(field in first_visit for field in visit_fields)
+                
+                success = has_all_fields and has_customer_info and visit_history_valid
+                details = f"Fields: {has_all_fields}, Customer: {has_customer_info}, Visits: {len(visit_history)}"
+                self.log_test("Get Customer Profile", success, details)
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Get Customer Profile", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Customer Profile", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Test with invalid customer ID
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers/invalid-id/profile",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 404
+            self.log_test("Profile - Invalid Customer ID", success, f"Status: {response.status_code}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Profile - Invalid Customer ID", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_customer_notes_update(self):
+        """Test NEW customer notes update functionality"""
+        print("\n📝 Testing Customer Notes Update (NEW FEATURE)...")
+        
+        if not self.token or not self.created_customer_id:
+            return self.log_test("Customer Notes Update", False, "No token or customer ID")
+        
+        all_success = True
+        
+        # Test 1: Update customer notes with regular text
+        test_notes = "Customer prefers deluxe rooms. VIP member since 2023. Always pays with card."
+        
+        try:
+            response = requests.put(
+                f"{self.api_url}/customers/{self.created_customer_id}/notes",
+                json={"notes": test_notes},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data and data.get('notes') == test_notes
+                details = f"Message: {data.get('message', '')}, Notes saved: {len(data.get('notes', ''))}"
+                self.log_test("Update Customer Notes", success, details)
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Update Customer Notes", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Update Customer Notes", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Update with empty notes
+        try:
+            response = requests.put(
+                f"{self.api_url}/customers/{self.created_customer_id}/notes",
+                json={"notes": ""},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data and data.get('notes') == ""
+                self.log_test("Update Notes - Empty", success, f"Empty notes accepted: {success}")
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Update Notes - Empty", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Update Notes - Empty", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Update with long text
+        long_notes = "This is a very long note. " * 50  # 1250 characters
+        
+        try:
+            response = requests.put(
+                f"{self.api_url}/customers/{self.created_customer_id}/notes",
+                json={"notes": long_notes},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data and len(data.get('notes', '')) > 1000
+                self.log_test("Update Notes - Long Text", success, f"Long notes ({len(long_notes)} chars) accepted")
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Update Notes - Long Text", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Update Notes - Long Text", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Test with invalid customer ID
+        try:
+            response = requests.put(
+                f"{self.api_url}/customers/invalid-id/notes",
+                json={"notes": "test"},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 404
+            self.log_test("Notes - Invalid Customer ID", success, f"Status: {response.status_code}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Notes - Invalid Customer ID", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_password_management_system(self):
+        """Test NEW password management system - change own password and admin reset"""
+        print("\n🔐 Testing Password Management System (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Password Management System", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test 1: Change own password (PUT /api/users/me/password)
+        try:
+            # First, try with wrong current password
+            response = requests.put(
+                f"{self.api_url}/users/me/password",
+                json={
+                    "current_password": "wrongpassword",
+                    "new_password": "newpass123"
+                },
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 400
+            self.log_test("Change Password - Wrong Current", success, f"Status: {response.status_code}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Change Password - Wrong Current", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Change password with too short new password
+        try:
+            response = requests.put(
+                f"{self.api_url}/users/me/password",
+                json={
+                    "current_password": "admin123",
+                    "new_password": "123"  # Too short
+                },
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 400
+            self.log_test("Change Password - Too Short", success, f"Status: {response.status_code}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Change Password - Too Short", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Valid password change (then change back)
+        try:
+            # Change to new password
+            response = requests.put(
+                f"{self.api_url}/users/me/password",
+                json={
+                    "current_password": "admin123",
+                    "new_password": "newadmin123"
+                },
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data
+                self.log_test("Change Own Password - Valid", success, f"Message: {data.get('message', '')}")
+                
+                if success:
+                    # Test login with new password
+                    login_response = requests.post(
+                        f"{self.api_url}/login",
+                        json={"username": "admin", "password": "newadmin123"},
+                        headers={'Content-Type': 'application/json'},
+                        timeout=10
+                    )
+                    
+                    if login_response.status_code == 200:
+                        # Update token
+                        new_token = login_response.json()['access_token']
+                        self.headers['Authorization'] = f'Bearer {new_token}'
+                        self.log_test("Login with New Password", True, "Successfully logged in with new password")
+                        
+                        # Change back to original password
+                        change_back_response = requests.put(
+                            f"{self.api_url}/users/me/password",
+                            json={
+                                "current_password": "newadmin123",
+                                "new_password": "admin123"
+                            },
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if change_back_response.status_code == 200:
+                            # Login with original password to restore token
+                            restore_login = requests.post(
+                                f"{self.api_url}/login",
+                                json={"username": "admin", "password": "admin123"},
+                                headers={'Content-Type': 'application/json'},
+                                timeout=10
+                            )
+                            if restore_login.status_code == 200:
+                                self.token = restore_login.json()['access_token']
+                                self.headers['Authorization'] = f'Bearer {self.token}'
+                                self.log_test("Restore Original Password", True, "Password restored successfully")
+                            else:
+                                self.log_test("Restore Original Password", False, "Could not restore password")
+                                all_success = False
+                        else:
+                            self.log_test("Restore Original Password", False, "Could not change back")
+                            all_success = False
+                    else:
+                        self.log_test("Login with New Password", False, "Could not login with new password")
+                        all_success = False
+                else:
+                    all_success = False
+            else:
+                self.log_test("Change Own Password - Valid", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Change Own Password - Valid", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Admin reset user password (create test user first)
+        test_user_id = None
+        try:
+            # Create test user
+            user_data = {
+                "username": f"testuser_{datetime.now().strftime('%H%M%S')}",
+                "password": "testpass123",
+                "role": "employee"
+            }
+            
+            create_response = requests.post(
+                f"{self.api_url}/users",
+                json=user_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if create_response.status_code == 200:
+                test_user_id = create_response.json()['id']
+                
+                # Test admin password reset
+                reset_response = requests.put(
+                    f"{self.api_url}/users/{test_user_id}/password",
+                    json={"new_password": "resetpass123"},
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if reset_response.status_code == 200:
+                    data = reset_response.json()
+                    success = 'message' in data
+                    self.log_test("Admin Reset User Password", success, f"Message: {data.get('message', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Admin Reset User Password", False, f"Status: {reset_response.status_code}")
+                    all_success = False
+                
+                # Clean up - delete test user
+                delete_response = requests.delete(
+                    f"{self.api_url}/users/{test_user_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+            else:
+                self.log_test("Admin Reset User Password", False, "Could not create test user")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Admin Reset User Password", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 5: Test password reset with invalid user ID
+        try:
+            response = requests.put(
+                f"{self.api_url}/users/invalid-id/password",
+                json={"new_password": "newpass123"},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 404
+            self.log_test("Reset Password - Invalid User", success, f"Status: {response.status_code}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Reset Password - Invalid User", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🧪 Starting FLEX_LA Bathhouse API Tests...")
