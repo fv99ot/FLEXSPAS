@@ -1172,14 +1172,26 @@ const Dashboard = () => {
                                 Checked in: {new Date(checkin.check_in_time).toLocaleTimeString()}
                               </div>
                             </div>
-                            <Button
-                              size="sm"
-                              variant={checkin.is_overtime ? "destructive" : "outline"}
-                              onClick={() => handleCheckOut(checkin.id)}
-                              className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
-                            >
-                              Check Out
-                            </Button>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                onClick={() => {
+                                  setSelectedCheckin(checkin);
+                                  setShowUpgrade(true);
+                                }}
+                              >
+                                Upgrade
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={checkin.is_overtime ? "destructive" : "outline"}
+                                onClick={() => handleCheckOut(checkin.id)}
+                                className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
+                              >
+                                Check Out
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>
