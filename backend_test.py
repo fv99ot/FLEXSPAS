@@ -1732,6 +1732,10 @@ class BathhouseAPITester:
         self.test_room_upgrade_system()
         self.test_waitlist_system()
         
+        # NEW OVERTIME PAYMENT SYSTEM TESTING
+        self.test_overtime_payment_system()
+        self.test_overtime_integration_workflow()
+        
         # Business rules tests
         self.test_business_rules()
         
