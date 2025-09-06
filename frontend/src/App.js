@@ -631,6 +631,81 @@ const Dashboard = () => {
     }
   };
 
+  // Password Management Functions
+  const changeMyPassword = async (e) => {
+    e.preventDefault();
+    
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      alert('New passwords do not match');
+      return;
+    }
+    
+    if (passwordForm.new_password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      await axios.put(`${API}/users/me/password`, {
+        current_password: passwordForm.current_password,
+        new_password: passwordForm.new_password
+      }, { headers });
+      
+      alert('Your password has been updated successfully!');
+      setShowChangePassword(false);
+      setPasswordForm({
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
+      });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      alert(error.response?.data?.detail || 'Error changing password');
+    }
+  };
+
+  const resetUserPassword = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedUserForReset) {
+      alert('No user selected');
+      return;
+    }
+    
+    if (resetPasswordForm.new_password !== resetPasswordForm.confirm_password) {
+      alert('Passwords do not match');
+      return;
+    }
+    
+    if (resetPasswordForm.new_password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      await axios.put(`${API}/users/${selectedUserForReset.id}/password`, {
+        new_password: resetPasswordForm.new_password
+      }, { headers });
+      
+      alert(`Password updated successfully for ${selectedUserForReset.username}!`);
+      setShowResetUserPassword(false);
+      setSelectedUserForReset(null);
+      setResetPasswordForm({
+        new_password: '',
+        confirm_password: ''
+      });
+    } catch (error) {
+      console.error('Error resetting user password:', error);
+      alert(error.response?.data?.detail || 'Error resetting password');
+    }
+  };
+
   const fetchRoomMap = async () => {
     try {
       const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes] = await Promise.all([
