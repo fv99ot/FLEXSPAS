@@ -1760,7 +1760,20 @@ const Dashboard = () => {
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  onClick={() => removeEmployee(employee.id)}
+                                  onClick={async () => {
+                                    if (window.confirm(`Are you sure you want to delete ${employee.username}?`)) {
+                                      try {
+                                        const token = localStorage.getItem('token');
+                                        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                                        await axios.delete(`${API}/users/${employee.id}`, { headers });
+                                        fetchEmployees();
+                                        alert('Employee deleted successfully');
+                                      } catch (error) {
+                                        console.error('Error deleting employee:', error);
+                                        alert('Error deleting employee');
+                                      }
+                                    }
+                                  }}
                                 >
                                   Remove
                                 </Button>
