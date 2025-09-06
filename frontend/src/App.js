@@ -702,11 +702,16 @@ const Dashboard = () => {
 
   const fetchAvailableRooms = async (roomType) => {
     try {
-      const response = await axios.get(`${API}/rooms/available/${roomType}`);
-      setAvailableRooms(response.data.available_rooms);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      console.log(`🏠 Fetching available rooms for type: ${roomType}`);
+      const response = await axios.get(`${API}/rooms/available/${roomType}`, { headers });
+      console.log(`🏠 Available rooms response:`, response.data);
+      setAvailableRooms(response.data.available_rooms || []);
       setRoomDetails(response.data.room_details || []);
     } catch (error) {
       console.error('Error fetching available rooms:', error);
+      setAvailableRooms([]);
     }
   };
 
