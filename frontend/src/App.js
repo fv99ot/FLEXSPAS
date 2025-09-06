@@ -1171,10 +1171,20 @@ const Dashboard = () => {
                           </Avatar>
                           <div>
                             <h3 className="font-semibold text-white">
-                              {customer.first_name} {customer.last_name}
+                              <button 
+                                className="hover:text-blue-300 underline cursor-pointer text-left"
+                                onClick={() => openCustomerProfile(customer)}
+                              >
+                                {customer.first_name} {customer.last_name}
+                              </button>
                             </h3>
                             <p className="text-sm text-gray-300">ID: {customer.id_number}</p>
                             <p className="text-sm text-gray-300">DOB: {customer.date_of_birth}</p>
+                            {customer.notes && (
+                              <p className="text-sm text-blue-300 italic mt-1">
+                                📝 {customer.notes.length > 50 ? customer.notes.substring(0, 50) + '...' : customer.notes}
+                              </p>
+                            )}
                             {customer.unpaid_overtime_amount > 0 && (
                               <p className="text-sm text-red-400 font-semibold">
                                 ⏰ Unpaid Overtime: ${customer.unpaid_overtime_amount.toFixed(2)} ({customer.unpaid_overtime_hours.toFixed(1)}h)
