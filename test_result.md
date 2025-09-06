@@ -347,12 +347,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Customer Model Overtime Fields"
-    - "Check-in Blocking for Unpaid Overtime"
-    - "Check-out Overtime Calculation"
-    - "Pay Overtime Endpoint"
-    - "Overtime Integration Workflow"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
