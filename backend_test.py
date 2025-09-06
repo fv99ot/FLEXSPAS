@@ -2314,6 +2314,11 @@ class BathhouseAPITester:
         self.test_search_customers()
         self.test_get_customer()
         
+        # NEW FEATURES TESTING - Customer Profile and Password Management (PRIORITY)
+        self.test_customer_profile_system()
+        self.test_customer_notes_update()
+        self.test_password_management_system()
+        
         # NEW FEATURE: User management tests
         self.test_user_management()
         
