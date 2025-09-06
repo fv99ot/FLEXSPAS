@@ -98,6 +98,7 @@ class CheckIn(BaseModel):
     room_fee: float
     is_weekend: bool
     session_count: int = 1  # Track session number for the day
+    payment_method: str = "cash"  # "cash" or "card"
 
 class Room(BaseModel):
     number: int
