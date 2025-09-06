@@ -267,11 +267,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Pending Customer Approval UI"
-  stuck_tasks:
-    - "Pending Customer Approval UI"
+    - "Admin Discount Management System"
+    - "Secret Ghost Discount System"
+    - "Additional Items Management System"
+    - "Room Upgrade System"
+    - "Waitlist Management System"
+  stuck_tasks: []
   test_all: false
-  test_priority: "stuck_first"
+  test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
@@ -282,3 +285,5 @@ agent_communication:
     message: "FRONTEND TESTING COMPLETE - CRITICAL ISSUE FOUND: Comprehensive end-to-end testing completed. FINDINGS: ✅ QR membership form submission works perfectly - customers successfully created as pending, ✅ Admin login and navigation to Pending Approvals tab works, ✅ Pending customers display correctly with visible Approve buttons, ❌ CRITICAL ISSUE: Approve button onClick handler is NOT WORKING - no API calls triggered when clicked, no confirmation dialog appears, customers remain in pending list indefinitely. This exactly matches user report. ROOT CAUSE: The approve button click event is not executing the approvePendingCustomer function. Backend is confirmed working perfectly. Issue is in frontend JavaScript event handling for the approval process."
   - agent: "main"
     message: "CUSTOMER APPROVAL SYSTEM FIXED: Successfully resolved the user-reported issue. ROOT CAUSE was missing explicit Authorization headers in frontend API calls. SOLUTION: Added explicit Bearer token headers to fetchPendingCustomers() and approvePendingCustomer() functions. TESTING RESULTS: ✅ Complete end-to-end workflow tested: QR form submission → pending customer creation → admin approval → customer moved to main collection. ✅ Approval process working perfectly: confirmation dialog appears, API calls succeed, UI updates correctly. ✅ User can now successfully approve customers after QR form submission. The critical customer approval functionality is now fully operational."
+  - agent: "testing"
+    message: "NEW ADMIN FEATURES TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of all new admin settings and advanced features completed with 100% success rate (47/47 tests passed). ✅ Admin Discount Management: Create discounts with whole amounts, toggle on/off, admin-only access - ALL WORKING, ✅ Secret Ghost Discount: Secret code '!)' creates 100% ghost discount, hidden from regular lists - ALL WORKING, ✅ Additional Items Management: Create, update, enable/disable items, seed defaults (condoms, dildos, cleaning fees, lost key fees) - ALL WORKING, ✅ Room Upgrade System: Upgrade between room types with proper cleaning fee calculations - ALL WORKING, ✅ Waitlist System: Add/remove customers for specific room types with full management - ALL WORKING. All new backend endpoints functioning flawlessly with proper authentication, role-based access, and business logic implementation."
