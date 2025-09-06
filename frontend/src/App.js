@@ -609,9 +609,6 @@ const Dashboard = () => {
       setShowOvertimePayment(false);
       setOvertimeCustomer(null);
       
-      // Re-fetch customers to update the display
-      fetchCustomers();
-      
       return true;
     } catch (error) {
       console.error('Error paying overtime fees:', error);
