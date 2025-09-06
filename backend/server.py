@@ -982,6 +982,7 @@ async def get_daily_sales_report(date: str = None, current_user: User = Depends(
             "membership_breakdown": membership_breakdown,
             "employee_breakdown": employee_breakdown,
             "employee_names": employee_names,
+            "payment_breakdown": payment_breakdown,
             "checkins": clean_checkins
         }
     except Exception as e:
