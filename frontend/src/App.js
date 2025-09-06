@@ -250,36 +250,7 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  // Secret code listener for shift+1+0 combination
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (event.shiftKey && event.key === '1') {
-        // User pressed shift+1, listen for 0
-        const handleNext = (nextEvent) => {
-          if (nextEvent.key === '0') {
-            // Secret code activated: shift+1+0 = "!)"
-            applySecretDiscount("!)").then(discount => {
-              if (discount) {
-                alert('Ghost discount activated! 🙈');
-              }
-            });
-          }
-          document.removeEventListener('keydown', handleNext);
-        };
-        document.addEventListener('keydown', handleNext);
-        
-        // Remove listener after 2 seconds if no follow-up
-        setTimeout(() => {
-          document.removeEventListener('keydown', handleNext);
-        }, 2000);
-      }
-    };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
 
   const generateQRCode = async () => {
     try {
