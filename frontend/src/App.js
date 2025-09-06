@@ -596,6 +596,32 @@ const Dashboard = () => {
     }
   };
 
+  // Overtime Payment Functions
+  const payOvertimeFees = async (customerId, paymentMethod) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.post(`${API}/customers/${customerId}/pay-overtime`, {
+        payment_method: paymentMethod
+      }, { headers });
+      
+      alert(`Overtime fees paid successfully! Amount: $${response.data.amount_paid.toFixed(2)}`);
+      setShowOvertimePayment(false);
+      setOvertimeCustomer(null);
+      
+      // Re-fetch customers to update the display
+      if (searchQuery) {
+        handleSearch();
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error paying overtime fees:', error);
+      alert(error.response?.data?.detail || 'Error processing overtime payment');
+      return false;
+    }
+  };
+
   const fetchRoomMap = async () => {
     try {
       const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes] = await Promise.all([
