@@ -607,6 +607,135 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_user_reported_approval_issue(self):
+        """Test the specific user-reported issue: 'won't let me approve a customer after they submit their QR code form'"""
+        print("\n🚨 Testing User-Reported Approval Issue...")
+        
+        if not self.token:
+            self.log_test("User Issue Test", False, "No authentication token")
+            return False
+        
+        # Generate unique ID to avoid conflicts
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+        
+        # Step 1: Simulate QR form submission (public endpoint)
+        qr_customer_data = {
+            "first_name": "Carlos",
+            "last_name": "Martinez", 
+            "id_number": f"ISSUE{unique_timestamp}",
+            "date_of_birth": "1992-07-20",
+            "id_expiration_date": "2027-05-15",
+            "state_of_id": "TX"
+        }
+        
+        pending_customer_id = None
+        
+        try:
+            print("   Step 1: Submitting QR form (public endpoint)...")
+            response = requests.post(
+                f"{self.api_url}/customers/public",
+                json=qr_customer_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                pending_customer_id = data.get('id')
+                self.log_test("Step 1: QR Form Submission", True, f"Created pending customer: {pending_customer_id}")
+            else:
+                self.log_test("Step 1: QR Form Submission", False, f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Step 1: QR Form Submission", False, f"Exception: {str(e)}")
+            return False
+        
+        # Step 2: Admin fetches pending customers
+        try:
+            print("   Step 2: Admin fetching pending customers...")
+            response = requests.get(
+                f"{self.api_url}/pending-customers",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                pending_customers = response.json()
+                found_customer = any(c.get('id') == pending_customer_id for c in pending_customers)
+                self.log_test("Step 2: Fetch Pending Customers", found_customer, f"Found {len(pending_customers)} pending, target found: {found_customer}")
+                
+                if not found_customer:
+                    return False
+            else:
+                self.log_test("Step 2: Fetch Pending Customers", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Step 2: Fetch Pending Customers", False, f"Exception: {str(e)}")
+            return False
+        
+        # Step 3: Admin attempts to approve the customer (this is where the issue occurs)
+        try:
+            print("   Step 3: Admin attempting to approve customer...")
+            response = requests.post(
+                f"{self.api_url}/pending-customers/{pending_customer_id}/approve",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                approved_customer = response.json()
+                self.log_test("Step 3: Customer Approval", True, f"Successfully approved: {approved_customer.get('id')}")
+                
+                # Step 4: Verify the customer is now in the main customers collection
+                try:
+                    print("   Step 4: Verifying customer moved to main collection...")
+                    search_response = requests.get(
+                        f"{self.api_url}/customers?q=Carlos",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if search_response.status_code == 200:
+                        customers = search_response.json()
+                        found_in_main = any(c.get('first_name') == 'Carlos' and c.get('last_name') == 'Martinez' for c in customers)
+                        self.log_test("Step 4: Customer in Main Collection", found_in_main, f"Found in main customers: {found_in_main}")
+                        
+                        # Step 5: Verify pending customer is no longer in pending list
+                        pending_check = requests.get(
+                            f"{self.api_url}/pending-customers",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if pending_check.status_code == 200:
+                            remaining_pending = pending_check.json()
+                            still_pending = any(c.get('id') == pending_customer_id for c in remaining_pending)
+                            self.log_test("Step 5: Removed from Pending", not still_pending, f"Still in pending: {still_pending}")
+                            
+                            return found_in_main and not still_pending
+                        else:
+                            self.log_test("Step 5: Removed from Pending", False, "Could not check pending list")
+                            return False
+                    else:
+                        self.log_test("Step 4: Customer in Main Collection", False, "Could not search customers")
+                        return False
+                        
+                except Exception as e:
+                    self.log_test("Step 4: Customer in Main Collection", False, f"Exception: {str(e)}")
+                    return False
+            else:
+                self.log_test("Step 3: Customer Approval", False, f"Status: {response.status_code}, Response: {response.text}")
+                print(f"   🚨 CRITICAL: This is likely the user-reported issue!")
+                print(f"   Response details: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Step 3: Customer Approval", False, f"Exception: {str(e)}")
+            print(f"   🚨 CRITICAL: Exception during approval - this could be the issue!")
+            return False
+
     def test_business_rules(self):
         """Test business rules like duplicate ID prevention"""
         print("\n📋 Testing Business Rules...")
