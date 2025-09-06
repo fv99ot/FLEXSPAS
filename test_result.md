@@ -173,10 +173,13 @@ backend:
       - working: true
         agent: "testing"
         comment: "COMPREHENSIVE TESTING COMPLETED: Admin discount management system working perfectly. ✅ Create discounts with whole amounts (not percentages) - PASSED, ✅ Toggle discounts on/off - PASSED, ✅ Admin-only access to discount management - PASSED, ✅ Regular vs admin discount endpoints working correctly - PASSED. All discount CRUD operations functioning as expected."
+      - working: true
+        agent: "testing"
+        comment: "POST-GHOST-REMOVAL TESTING COMPLETED: Regular discount management system working perfectly after ghost functionality removal. ✅ Create new discounts with whole amounts - PASSED, ✅ Toggle discounts on/off - PASSED, ✅ Delete discounts - PASSED, ✅ GET /api/discounts (active discounts) - PASSED, ✅ GET /api/admin/discounts (all discounts for managers) - PASSED, ✅ PUT /api/discounts/{id}/toggle - PASSED, ✅ DELETE /api/discounts/{id} - PASSED. All regular discount features fully functional."
 
   - task: "Secret Ghost Discount System"
-    implemented: true
-    working: true
+    implemented: false
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
@@ -185,6 +188,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "COMPREHENSIVE TESTING COMPLETED: Secret ghost discount system working perfectly. ✅ Secret code '!)' (shift+1+0) correctly triggers ghost discount creation - PASSED, ✅ Ghost discount provides 100% discount (999999.0 amount) - PASSED, ✅ Ghost discounts hidden from regular discount list - PASSED, ✅ Invalid secret codes properly rejected - PASSED. Secret functionality working as designed."
+      - working: "NA"
+        agent: "testing"
+        comment: "GHOST FUNCTIONALITY REMOVAL VERIFIED: Ghost secret code functionality has been completely removed as requested. ✅ Ghost endpoint /api/apply-secret-discount no longer exists (404 response) - CONFIRMED, ✅ Discount model no longer has is_ghost field - CONFIRMED, ✅ All discounts now appear in regular listings (no ghost filtering) - CONFIRMED, ✅ No ghost-related code or endpoints remain - CONFIRMED. Ghost functionality successfully eliminated while preserving all regular discount features."
 
   - task: "Additional Items Management System"
     implemented: true
