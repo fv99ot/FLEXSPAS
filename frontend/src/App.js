@@ -226,6 +226,11 @@ const Dashboard = () => {
     new_password: '',
     confirm_password: ''
   });
+  
+  // Customer notes state
+  const [showCustomerNotes, setShowCustomerNotes] = useState(false);
+  const [selectedCustomerForNotes, setSelectedCustomerForNotes] = useState(null);
+  const [customerNotes, setCustomerNotes] = useState('');
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
