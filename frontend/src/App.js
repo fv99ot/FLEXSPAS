@@ -384,7 +384,9 @@ const Dashboard = () => {
 
   const fetchPendingCustomers = async () => {
     try {
-      const response = await axios.get(`${API}/pending-customers`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/pending-customers`, { headers });
       setPendingCustomers(response.data);
     } catch (error) {
       console.error('Error fetching pending customers:', error);
@@ -392,11 +394,10 @@ const Dashboard = () => {
   };
 
   const approvePendingCustomer = async (customerId) => {
-    console.log('approvePendingCustomer called with ID:', customerId);
     try {
-      console.log('Making API call to approve customer:', `${API}/pending-customers/${customerId}/approve`);
-      const response = await axios.post(`${API}/pending-customers/${customerId}/approve`);
-      console.log('Approval successful, response:', response.data);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.post(`${API}/pending-customers/${customerId}/approve`, {}, { headers });
       fetchPendingCustomers(); // Refresh pending list
       alert('Customer approved successfully!');
     } catch (error) {
