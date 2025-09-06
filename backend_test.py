@@ -529,7 +529,7 @@ class BathhouseAPITester:
                     data = response.json()
                     if isinstance(data, list):
                         # Check if our test customer is in the list
-                        found_customer = any(customer.get('id_number') == 'QR123APPROVE' for customer in data)
+                        found_customer = any(customer.get('id_number') == f"QR{unique_timestamp}" for customer in data)
                         self.log_test("Get Pending Customers", found_customer, f"Found {len(data)} pending customers")
                         if not found_customer:
                             all_success = False
