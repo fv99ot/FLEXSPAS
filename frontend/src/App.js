@@ -242,6 +242,7 @@ const Dashboard = () => {
     fetchActiveCheckins();
     generateQRCode();
     fetchPendingCustomers(); // All staff can see pending customers
+    fetchWaitlist(); // Fetch waitlist data
     if (user?.role === 'manager') {
       fetchEmployees();
       fetchAdditionalItems();
