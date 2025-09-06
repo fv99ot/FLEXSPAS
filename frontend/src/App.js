@@ -231,6 +231,12 @@ const Dashboard = () => {
   const [showCustomerNotes, setShowCustomerNotes] = useState(false);
   const [selectedCustomerForNotes, setSelectedCustomerForNotes] = useState(null);
   const [customerNotes, setCustomerNotes] = useState('');
+  
+  // Customer profile modal state
+  const [showCustomerProfile, setShowCustomerProfile] = useState(false);
+  const [selectedCustomerProfile, setSelectedCustomerProfile] = useState(null);
+  const [customerHistory, setCustomerHistory] = useState([]);
+  const [profileNotes, setProfileNotes] = useState('');
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
