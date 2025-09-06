@@ -999,11 +999,29 @@ const Dashboard = () => {
                             </h3>
                             <p className="text-sm text-gray-300">ID: {customer.id_number}</p>
                             <p className="text-sm text-gray-300">DOB: {customer.date_of_birth}</p>
+                            {customer.unpaid_overtime_amount > 0 && (
+                              <p className="text-sm text-red-400 font-semibold">
+                                ⏰ Unpaid Overtime: ${customer.unpaid_overtime_amount.toFixed(2)} ({customer.unpaid_overtime_hours.toFixed(1)}h)
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           {customer.is_banned && (
                             <Badge variant="destructive">Banned</Badge>
+                          )}
+                          {customer.unpaid_overtime_amount > 0 && (
+                            <Button 
+                              size="sm" 
+                              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOvertimeCustomer(customer);
+                                setShowOvertimePayment(true);
+                              }}
+                            >
+                              Pay Overtime
+                            </Button>
                           )}
                           <Button 
                             size="sm" 
@@ -1012,7 +1030,7 @@ const Dashboard = () => {
                               setSelectedCustomer(customer);
                               setShowCheckIn(true);
                             }}
-                            disabled={customer.is_banned}
+                            disabled={customer.is_banned || customer.unpaid_overtime_amount > 0}
                             className="flex-button"
                           >
                             Check In
