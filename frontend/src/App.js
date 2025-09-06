@@ -1345,6 +1345,75 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Waitlist Management */}
+            <Card className="dashboard-card">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <Clock className="h-5 w-5 mr-2" />
+                  Room Waitlist ({waitlist.length})
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Customers waiting for specific room types
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={fetchWaitlist} variant="outline" className="border-white/20 text-white hover:bg-white/10 mb-4">
+                  Refresh Waitlist
+                </Button>
+
+                {waitlist.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No customers on waitlist</p>
+                ) : (
+                  <div className="grid gap-4">
+                    {waitlist.map((entry) => (
+                      <div key={entry.id} className="p-4 border border-orange-500/50 rounded-lg bg-orange-600/10">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <Avatar>
+                              <AvatarFallback className="bg-orange-600 text-white">
+                                {entry.customer?.first_name?.charAt(0)}{entry.customer?.last_name?.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-semibold text-white">
+                                {entry.customer?.first_name} {entry.customer?.last_name}
+                              </h3>
+                              <div className="text-sm text-gray-300 space-y-1">
+                                <p>Waiting for: {entry.room_type ? entry.room_type.replace('_', ' ').toUpperCase() : 'Any Room'}</p>
+                                <p>Membership: {entry.membership_type.replace('_', ' ')}</p>
+                                <p className="text-xs text-gray-400">
+                                  Added: {new Date(entry.created_at).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => {
+                                // User can manually assign room from available ones
+                                alert('Please manually assign an available room from the map above, then remove from waitlist.');
+                              }}
+                            >
+                              ✓ Assign Room
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeFromWaitlist(entry.id)}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="employees" className="space-y-6">
