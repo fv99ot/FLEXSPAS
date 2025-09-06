@@ -1975,6 +1975,9 @@ class BathhouseAPITester:
         self.test_overtime_payment_system()
         self.test_overtime_integration_workflow()
         
+        # NEW OVERTIME CEILING ROUNDING TESTING (PRIORITY)
+        self.test_overtime_ceiling_rounding()
+        
         # Business rules tests
         self.test_business_rules()
         
