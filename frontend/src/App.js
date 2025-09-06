@@ -2516,9 +2516,12 @@ const Dashboard = () => {
             <div className="space-y-4">
               <div className="bg-red-600/20 p-4 rounded-lg border border-red-500/50">
                 <h3 className="text-red-300 font-semibold mb-2">Outstanding Overtime</h3>
-                <p className="text-white">Hours Over: {overtimeCustomer.unpaid_overtime_hours.toFixed(1)} hours</p>
-                <p className="text-white">Rate: $20.00 per hour</p>
+                <p className="text-white">Billed Hours: {overtimeCustomer.unpaid_overtime_hours.toFixed(0)} full hours</p>
+                <p className="text-white">Rate: $20.00 per full hour (rounded up)</p>
                 <p className="text-white text-lg font-bold">Total Due: ${overtimeCustomer.unpaid_overtime_amount.toFixed(2)}</p>
+                <p className="text-gray-300 text-xs mt-2">
+                  * Overtime is billed in full-hour increments. Any partial hour counts as a full hour.
+                </p>
               </div>
               
               <div>
