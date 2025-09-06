@@ -739,12 +739,57 @@ const Dashboard = () => {
       setSelectedCustomerForNotes(null);
       setCustomerNotes('');
       
-      // Refresh customer search if there's an active search
-      // This will update the notes display in search results
-      
     } catch (error) {
       console.error('Error updating customer notes:', error);
       alert(error.response?.data?.detail || 'Error updating customer notes');
+    }
+  };
+
+  // Customer Profile Functions
+  const openCustomerProfile = async (customer) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      const response = await axios.get(`${API}/customers/${customer.id}/profile`, { headers });
+      const profileData = response.data;
+      
+      setSelectedCustomerProfile(profileData);
+      setProfileNotes(profileData.customer.notes || '');
+      setCustomerHistory(profileData.visit_history || []);
+      setShowCustomerProfile(true);
+      
+    } catch (error) {
+      console.error('Error fetching customer profile:', error);
+      alert('Error loading customer profile');
+    }
+  };
+
+  const saveProfileNotes = async () => {
+    if (!selectedCustomerProfile) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      await axios.put(`${API}/customers/${selectedCustomerProfile.customer.id}/notes`, {
+        notes: profileNotes
+      }, { headers });
+      
+      alert('Notes saved successfully!');
+      
+      // Update the profile data
+      setSelectedCustomerProfile({
+        ...selectedCustomerProfile,
+        customer: {
+          ...selectedCustomerProfile.customer,
+          notes: profileNotes
+        }
+      });
+      
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      alert('Error saving notes');
     }
   };
 
