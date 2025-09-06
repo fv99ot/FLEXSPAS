@@ -207,6 +207,11 @@ const Dashboard = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [adminDiscounts, setAdminDiscounts] = useState([]);
   const [adminItems, setAdminItems] = useState([]);
+  
+  // Overtime payment state
+  const [showOvertimePayment, setShowOvertimePayment] = useState(false);
+  const [overtimeCustomer, setOvertimeCustomer] = useState(null);
+  const [overtimePaymentMethod, setOvertimePaymentMethod] = useState('cash');
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
