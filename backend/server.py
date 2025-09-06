@@ -907,15 +907,17 @@ async def get_daily_sales_report(date: str = None, current_user: User = Depends(
         total_revenue = 0
         total_checkins = len(checkins)
         
-        # Breakdown by room type
+        # Breakdown by room type, membership, employee, and payment method
         room_breakdown = {}
         membership_breakdown = {}
         employee_breakdown = {}
+        payment_breakdown = {"cash": {"count": 0, "revenue": 0}, "card": {"count": 0, "revenue": 0}}
         
         for checkin in checkins:
             room_type = checkin.get("room_type", "unknown")
             membership_type = checkin.get("membership_type", "unknown")
             employee_id = checkin.get("employee_id")
+            payment_method = checkin.get("payment_method", "cash")  # Default to cash for old records
             amount = checkin.get("total_amount", 0)
             
             # Handle amount conversion
@@ -938,6 +940,11 @@ async def get_daily_sales_report(date: str = None, current_user: User = Depends(
                 membership_breakdown[membership_type] = {"count": 0, "revenue": 0}
             membership_breakdown[membership_type]["count"] += 1
             membership_breakdown[membership_type]["revenue"] += amount
+            
+            # Payment method breakdown
+            if payment_method in payment_breakdown:
+                payment_breakdown[payment_method]["count"] += 1
+                payment_breakdown[payment_method]["revenue"] += amount
             
             # Employee breakdown
             if employee_id:
