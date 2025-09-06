@@ -486,14 +486,55 @@ async def check_out_customer(checkin_id: str, current_user: User = Depends(get_c
     if checkin["check_out_time"]:
         raise HTTPException(status_code=400, detail="Customer already checked out")
     
-    # Update check-out time
+    # Calculate overtime if applicable
     checkout_time = datetime.now(timezone.utc)
+    check_in_time = checkin["check_in_time"]
+    
+    # Ensure check_in_time is timezone-aware
+    if isinstance(check_in_time, str):
+        check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
+    elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
+        check_in_time = check_in_time.replace(tzinfo=timezone.utc)
+    
+    # Calculate session duration and overtime
+    session_duration = checkout_time - check_in_time
+    allowed_duration = timedelta(hours=8)
+    
+    overtime_hours = 0.0
+    overtime_amount = 0.0
+    
+    if session_duration > allowed_duration:
+        overtime_delta = session_duration - allowed_duration
+        overtime_hours = overtime_delta.total_seconds() / 3600  # Convert to hours
+        overtime_amount = overtime_hours * 20.0  # $20 per hour
+        
+        # Update customer's unpaid overtime
+        customer_id = checkin["customer_id"]
+        await db.customers.update_one(
+            {"id": customer_id},
+            {
+                "$inc": {
+                    "unpaid_overtime_hours": overtime_hours,
+                    "unpaid_overtime_amount": overtime_amount
+                }
+            }
+        )
+    
+    # Update check-out time
     await db.check_ins.update_one(
         {"id": checkin_id},
         {"$set": {"check_out_time": checkout_time}}
     )
     
-    return {"message": "Customer checked out successfully", "checkout_time": checkout_time}
+    result = {
+        "message": "Customer checked out successfully", 
+        "checkout_time": checkout_time,
+        "session_duration_hours": session_duration.total_seconds() / 3600,
+        "overtime_hours": overtime_hours,
+        "overtime_amount": overtime_amount
+    }
+    
+    return result
 
 @api_router.get("/checkins/active", response_model=List[dict])
 async def get_active_checkins(current_user: User = Depends(get_current_user)):
