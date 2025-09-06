@@ -212,6 +212,20 @@ const Dashboard = () => {
   const [showOvertimePayment, setShowOvertimePayment] = useState(false);
   const [overtimeCustomer, setOvertimeCustomer] = useState(null);
   const [overtimePaymentMethod, setOvertimePaymentMethod] = useState('cash');
+  
+  // Password management state
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showResetUserPassword, setShowResetUserPassword] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
+  });
+  const [resetPasswordForm, setResetPasswordForm] = useState({
+    new_password: '',
+    confirm_password: ''
+  });
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
