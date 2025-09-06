@@ -536,6 +536,36 @@ async def check_out_customer(checkin_id: str, current_user: User = Depends(get_c
     
     return result
 
+@api_router.post("/customers/{customer_id}/pay-overtime")
+async def pay_overtime_fees(customer_id: str, payment_data: dict, current_user: User = Depends(get_current_user)):
+    """Pay customer's outstanding overtime fees"""
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    unpaid_amount = customer.get("unpaid_overtime_amount", 0.0)
+    if unpaid_amount <= 0:
+        raise HTTPException(status_code=400, detail="No outstanding overtime fees")
+    
+    payment_method = payment_data.get("payment_method", "cash")  # "cash" or "card"
+    
+    # Clear the overtime debt
+    await db.customers.update_one(
+        {"id": customer_id},
+        {
+            "$set": {
+                "unpaid_overtime_hours": 0.0,
+                "unpaid_overtime_amount": 0.0
+            }
+        }
+    )
+    
+    return {
+        "message": "Overtime fees paid successfully",
+        "amount_paid": unpaid_amount,
+        "payment_method": payment_method
+    }
+
 @api_router.get("/checkins/active", response_model=List[dict])
 async def get_active_checkins(current_user: User = Depends(get_current_user)):
     active_checkins = await db.check_ins.find({"check_out_time": None}).to_list(1000)
