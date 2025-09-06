@@ -598,6 +598,35 @@ class AdditionalItemCreate(BaseModel):
 
 # Additional Items Management
 # Discount Management
+@api_router.post("/apply-secret-discount")
+async def apply_secret_discount(secret_data: dict, current_user: User = Depends(get_current_user)):
+    """Apply the secret 100% ghost discount with shift+1+0 code"""
+    secret_code = secret_data.get("code", "")
+    
+    # Check for the secret combination (shift+1+0 translates to "!)")
+    if secret_code != "!)":
+        raise HTTPException(status_code=400, detail="Invalid secret code")
+    
+    # Create or get the ghost discount
+    ghost_discount = await db.discounts.find_one({"is_ghost": True, "name": "GHOST_DISCOUNT"})
+    
+    if not ghost_discount:
+        # Create the ghost discount if it doesn't exist
+        ghost_doc = {
+            "id": str(uuid.uuid4()),
+            "name": "GHOST_DISCOUNT",
+            "amount": 999999.0,  # Essentially makes everything free
+            "description": "100% Ghost Discount",
+            "code": None,
+            "active": True,
+            "is_ghost": True,
+            "created_at": datetime.now(timezone.utc)
+        }
+        await db.discounts.insert_one(ghost_doc)
+        return Discount(**ghost_doc)
+    
+    return Discount(**ghost_discount)
+
 @api_router.get("/discounts", response_model=List[Discount])
 async def get_discounts(current_user: User = Depends(get_current_user)):
     discounts = await db.discounts.find({"active": True}).to_list(1000)
