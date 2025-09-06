@@ -303,6 +303,54 @@ backend:
         agent: "testing"
         comment: "COMPREHENSIVE TESTING COMPLETED: Admin login system working perfectly. ✅ LOGIN ENDPOINT: POST /api/login with admin credentials (username=admin, password=admin123) returns proper access_token, user info, and token_type - WORKING, ✅ TOKEN FORMAT: JWT token contains correct user_id, role=manager, and 8-hour expiration - WORKING, ✅ AUTHENTICATION: Token successfully accesses all protected endpoints with Bearer authorization - WORKING, ✅ ROLE-BASED ACCESS: Manager role accesses admin-only endpoints correctly - WORKING, ✅ PASSWORD SECURITY: Properly hashed, case-sensitive, rejects variations - WORKING, ✅ ERROR HANDLING: Wrong credentials return 401 with proper messages - WORKING, ✅ TOKEN VALIDATION: Invalid tokens rejected with 401 status - WORKING. Fixed minor JWT error handling issue. All 16 authentication tests passed (100% success rate)."
 
+  - task: "Customer Profile System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Customer profile endpoint (GET /api/customers/{customer_id}/profile) working perfectly. ✅ Returns complete customer data with overtime fields (unpaid_overtime_hours, unpaid_overtime_amount) - PASSED, ✅ Includes visit history with room details, amounts, and membership types - PASSED, ✅ Calculates membership expiration correctly for 1_day and 6_month types - PASSED, ✅ Handles customers with and without visit history - PASSED, ✅ Proper error handling for invalid customer IDs (404 status) - PASSED. All profile system requirements fully functional."
+
+  - task: "Customer Notes Update System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Customer notes update endpoint (PUT /api/customers/{customer_id}/notes) working perfectly. ✅ Updates notes correctly with regular text - PASSED, ✅ Handles empty notes (clearing notes) - PASSED, ✅ Supports long text (1000+ characters) - PASSED, ✅ Handles special characters and Unicode properly - PASSED, ✅ Returns both success message and updated notes in response - PASSED, ✅ Notes persist correctly in database - PASSED, ✅ Proper error handling for invalid customer IDs (404 status) - PASSED. Fixed duplicate endpoint definition issue. Notes system fully operational."
+
+  - task: "Change Own Password System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Change own password endpoint (PUT /api/users/me/password) working perfectly. ✅ Validates current password correctly (400 for wrong password) - PASSED, ✅ Enforces minimum password length (6 characters) - PASSED, ✅ Requires both current and new passwords - PASSED, ✅ Successfully changes password and hashes properly - PASSED, ✅ Login works with new password immediately - PASSED, ✅ Password restoration works correctly - PASSED. Fixed FastAPI route ordering issue (moved /users/me/password before /users/{user_id}/password). Password change system fully functional."
+
+  - task: "Admin Reset User Password System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Admin reset user password endpoint (PUT /api/users/{user_id}/password) working perfectly. ✅ Only managers can reset other users' passwords - PASSED, ✅ Enforces minimum password length (6 characters) - PASSED, ✅ Successfully resets password and hashes properly - PASSED, ✅ Login works with reset password immediately - PASSED, ✅ Proper error handling for invalid user IDs (404 status) - PASSED, ✅ Returns success message with username - PASSED. Admin password reset system fully operational."
+
   - task: "Overtime Integration Workflow"
     implemented: true
     working: true
