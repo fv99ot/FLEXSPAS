@@ -2823,6 +2823,129 @@ const Dashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Customer Profile Modal */}
+      <Dialog open={showCustomerProfile} onOpenChange={setShowCustomerProfile}>
+        <DialogContent className="sm:max-w-4xl admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">Customer Profile</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              {selectedCustomerProfile && `Complete profile for ${selectedCustomerProfile.customer.first_name} ${selectedCustomerProfile.customer.last_name}`}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCustomerProfile && (
+            <div className="space-y-6 max-h-96 overflow-y-auto">
+              {/* Customer Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-blue-600/20 p-4 rounded-lg border border-blue-500/50">
+                  <h3 className="text-blue-300 font-semibold mb-3">Customer Information</h3>
+                  <div className="space-y-2 text-white">
+                    <p><strong>Name:</strong> {selectedCustomerProfile.customer.first_name} {selectedCustomerProfile.customer.last_name}</p>
+                    <p><strong>ID Number:</strong> {selectedCustomerProfile.customer.id_number}</p>
+                    <p><strong>DOB:</strong> {selectedCustomerProfile.customer.date_of_birth}</p>
+                    <p><strong>ID Expires:</strong> {selectedCustomerProfile.customer.id_expiration_date}</p>
+                    <p><strong>State:</strong> {selectedCustomerProfile.customer.state_of_id}</p>
+                    <p><strong>Member Since:</strong> {new Date(selectedCustomerProfile.customer.created_at).toLocaleDateString()}</p>
+                    {selectedCustomerProfile.customer.unpaid_overtime_amount > 0 && (
+                      <p className="text-red-400"><strong>Unpaid Overtime:</strong> ${selectedCustomerProfile.customer.unpaid_overtime_amount.toFixed(2)}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-green-600/20 p-4 rounded-lg border border-green-500/50">
+                  <h3 className="text-green-300 font-semibold mb-3">Visit Information</h3>
+                  <div className="space-y-2 text-white">
+                    <p><strong>Total Visits:</strong> {selectedCustomerProfile.total_visits}</p>
+                    <p><strong>Last Visit:</strong> {
+                      selectedCustomerProfile.last_visit 
+                        ? new Date(selectedCustomerProfile.last_visit).toLocaleDateString() 
+                        : 'Never visited'
+                    }</p>
+                    <p><strong>Membership Expires:</strong> {
+                      selectedCustomerProfile.membership_expiration
+                        ? new Date(selectedCustomerProfile.membership_expiration).toLocaleDateString()
+                        : 'No active membership'
+                    }</p>
+                    <p className={`font-semibold ${
+                      selectedCustomerProfile.membership_expiration && new Date(selectedCustomerProfile.membership_expiration) > new Date()
+                        ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                      Status: {
+                        selectedCustomerProfile.membership_expiration && new Date(selectedCustomerProfile.membership_expiration) > new Date()
+                          ? 'Active Membership' : 'Membership Expired'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Customer Notes */}
+              <div className="bg-purple-600/20 p-4 rounded-lg border border-purple-500/50">
+                <h3 className="text-purple-300 font-semibold mb-3">Customer Notes</h3>
+                <textarea
+                  className="w-full h-20 p-3 bg-white/10 border border-white/20 rounded text-white placeholder:text-gray-400 resize-none"
+                  placeholder="Add notes about this customer..."
+                  value={profileNotes}
+                  onChange={(e) => setProfileNotes(e.target.value)}
+                />
+                <Button 
+                  onClick={saveProfileNotes}
+                  className="mt-2 bg-purple-600 hover:bg-purple-700 text-white"
+                  size="sm"
+                >
+                  Save Notes
+                </Button>
+              </div>
+
+              {/* Visit History */}
+              <div className="bg-gray-600/20 p-4 rounded-lg border border-gray-500/50">
+                <h3 className="text-gray-300 font-semibold mb-3">Recent Visit History</h3>
+                {customerHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    {customerHistory.slice(0, 5).map((visit, index) => (
+                      <div key={index} className="flex justify-between items-center p-2 bg-black/30 rounded">
+                        <div className="text-white">
+                          <span className="font-medium">{new Date(visit.date).toLocaleDateString()}</span>
+                          <span className="text-gray-300 ml-2">
+                            {visit.room_type.replace('_', ' ').toUpperCase()} #{visit.room_number}
+                          </span>
+                        </div>
+                        <div className="text-gray-300 text-sm">
+                          {visit.membership_type.replace('_', ' ')} - ${visit.total_amount.toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400">No visit history found</p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t border-white/20">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowCustomerProfile(false)}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Close
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setSelectedCustomer(selectedCustomerProfile.customer);
+                    setShowCustomerProfile(false);
+                    setShowCheckIn(true);
+                  }}
+                  disabled={selectedCustomerProfile.customer.is_banned || selectedCustomerProfile.customer.unpaid_overtime_amount > 0}
+                  className="flex-button"
+                >
+                  Check In Customer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
