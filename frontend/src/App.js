@@ -392,8 +392,11 @@ const Dashboard = () => {
   };
 
   const approvePendingCustomer = async (customerId) => {
+    console.log('approvePendingCustomer called with ID:', customerId);
     try {
-      await axios.post(`${API}/pending-customers/${customerId}/approve`);
+      console.log('Making API call to approve customer:', `${API}/pending-customers/${customerId}/approve`);
+      const response = await axios.post(`${API}/pending-customers/${customerId}/approve`);
+      console.log('Approval successful, response:', response.data);
       fetchPendingCustomers(); // Refresh pending list
       alert('Customer approved successfully!');
     } catch (error) {
