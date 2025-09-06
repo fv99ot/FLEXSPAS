@@ -228,6 +228,66 @@ backend:
         agent: "testing"
         comment: "COMPREHENSIVE TESTING COMPLETED: Waitlist management system working perfectly. ✅ Add customers to waitlist for specific room types - PASSED, ✅ Get waitlist entries with customer data enrichment - PASSED, ✅ Remove customers from waitlist - PASSED, ✅ Waitlist status management working correctly - PASSED. Full waitlist CRUD operations functioning correctly."
 
+  - task: "Customer Model Overtime Fields"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Customer model updated with unpaid_overtime_hours and unpaid_overtime_amount fields with default values of 0.0. Fields added to Customer class in lines 78-79. Needs testing to verify fields are properly initialized."
+
+  - task: "Check-in Blocking for Unpaid Overtime"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Check-in endpoint updated to block customers with unpaid overtime fees. Code in lines 427-433 checks unpaid_overtime_amount and returns 402 status with detailed error message. Needs testing to verify blocking works correctly."
+
+  - task: "Check-out Overtime Calculation"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Check-out endpoint updated to calculate overtime for sessions over 8 hours at $20/hour rate. Code in lines 506-521 calculates overtime and updates customer's unpaid amounts. Needs testing to verify calculations are correct."
+
+  - task: "Pay Overtime Endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Pay overtime endpoint implemented at POST /api/customers/{customer_id}/pay-overtime. Code in lines 539-567 clears unpaid overtime fees and supports both cash and card payment methods. Needs testing to verify payment processing works."
+
+  - task: "Overtime Integration Workflow"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Complete overtime workflow implemented: customer with overtime -> blocked from check-in -> pay fees -> allowed to check-in. All components integrated. Needs comprehensive end-to-end testing to verify full workflow."
+
 frontend:
   - task: "QR Membership Form Submission"
     implemented: true
