@@ -1777,6 +1777,24 @@ const Dashboard = () => {
                         </div>
                       </div>
 
+                      {/* Payment Method Breakdown */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-black/40 p-4 rounded-lg border border-white/20">
+                          <h3 className="text-white font-semibold mb-3">Payment Method Breakdown</h3>
+                          {salesReport.payment_breakdown && Object.entries(salesReport.payment_breakdown).map(([method, data]) => (
+                            <div key={method} className="flex justify-between text-sm text-gray-300 mb-2">
+                              <span className="flex items-center">
+                                <div className={`w-3 h-3 rounded-full mr-2 ${
+                                  method === 'cash' ? 'bg-green-500' : 'bg-blue-500'
+                                }`}></div>
+                                {method === 'cash' ? 'Cash' : 'Credit Card'}: {data.count} transactions
+                              </span>
+                              <span className="text-white">${data.revenue.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Employee Performance */}
                       <div className="bg-black/40 p-4 rounded-lg border border-white/20">
                         <h3 className="text-white font-semibold mb-3">Employee Performance</h3>
