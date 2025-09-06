@@ -196,7 +196,6 @@ const Dashboard = () => {
     new_room_type: '',
     new_room_number: ''
   });
-  const [secretCodeActive, setSecretCodeActive] = useState(false);
   
   // Admin settings state
   const [showAddDiscount, setShowAddDiscount] = useState(false);
