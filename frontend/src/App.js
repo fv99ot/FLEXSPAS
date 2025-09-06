@@ -2336,6 +2336,94 @@ const Dashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Room Upgrade Dialog */}
+      <Dialog open={showUpgrade} onOpenChange={setShowUpgrade}>
+        <DialogContent className="sm:max-w-md admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">Upgrade Room/Locker</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              {selectedCheckin && `Upgrade ${selectedCheckin.customer?.first_name} ${selectedCheckin.customer?.last_name} from ${selectedCheckin.room_type.replace('_', ' ').toUpperCase()} #${selectedCheckin.room_number}`}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedCheckin && (
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const token = localStorage.getItem('token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const response = await axios.post(`${API}/checkin/${selectedCheckin.id}/upgrade`, {
+                  new_room_type: upgradeForm.new_room_type,
+                  new_room_number: parseInt(upgradeForm.new_room_number)
+                }, { headers });
+                
+                alert(`Upgrade successful! Additional cost: $${response.data.additional_cost}`);
+                setShowUpgrade(false);
+                setUpgradeForm({ new_room_type: '', new_room_number: '' });
+                fetchActiveCheckins();
+              } catch (error) {
+                alert(error.response?.data?.detail || 'Error upgrading room');
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  New Room Type *
+                </label>
+                <Select value={upgradeForm.new_room_type} onValueChange={(value) => setUpgradeForm({...upgradeForm, new_room_type: value, new_room_number: ''})}>
+                  <SelectTrigger className="w-full bg-white/10 border-white/20 text-white">
+                    <SelectValue placeholder="Select room type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="locker">Locker ($25 weekday, $28 weekend)</SelectItem>
+                    <SelectItem value="small_room">Small Room ($33 weekday, $36 weekend)</SelectItem>
+                    <SelectItem value="regular_room">Regular Room ($40 weekday, $45 weekend)</SelectItem>
+                    <SelectItem value="deluxe_room">Deluxe Room ($45 weekday, $50 weekend)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {upgradeForm.new_room_type && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Available {upgradeForm.new_room_type.replace('_', ' ')} Numbers *
+                  </label>
+                  <Select value={upgradeForm.new_room_number} onValueChange={(value) => setUpgradeForm({...upgradeForm, new_room_number: value})}>
+                    <SelectTrigger className="w-full bg-white/10 border-white/20 text-white">
+                      <SelectValue placeholder="Select room number" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableRooms[upgradeForm.new_room_type]?.map(room => (
+                        <SelectItem key={room} value={room.toString()}>{room}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="bg-yellow-600/20 p-3 rounded-lg border border-yellow-500/50">
+                <p className="text-yellow-200 text-sm">
+                  <strong>Note:</strong> Cleaning fee of $5 applies when upgrading from or to a room (not locker).
+                </p>
+              </div>
+              <DialogFooter>
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  onClick={() => setShowUpgrade(false)}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={!upgradeForm.new_room_type || !upgradeForm.new_room_number}
+                  className="flex-button"
+                >
+                  Upgrade Room
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
