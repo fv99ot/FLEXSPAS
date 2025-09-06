@@ -623,6 +623,24 @@ async def change_my_password(password_data: dict, current_user: User = Depends(g
     
     return {"message": "Your password has been updated successfully"}
 
+@api_router.put("/customers/{customer_id}/notes")
+async def update_customer_notes(customer_id: str, notes_data: dict, current_user: User = Depends(get_current_user)):
+    """Update customer notes"""
+    notes = notes_data.get("notes", "").strip()
+    
+    # Find the customer
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Update the notes
+    await db.customers.update_one(
+        {"id": customer_id},
+        {"$set": {"notes": notes}}
+    )
+    
+    return {"message": "Customer notes updated successfully", "notes": notes}
+
 @api_router.get("/checkins/active", response_model=List[dict])
 async def get_active_checkins(current_user: User = Depends(get_current_user)):
     active_checkins = await db.check_ins.find({"check_out_time": None}).to_list(1000)
