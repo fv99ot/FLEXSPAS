@@ -752,7 +752,7 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="search" className="space-y-6">
-          <TabsList className={`grid w-full ${user?.role === 'manager' ? 'grid-cols-7' : 'grid-cols-6'} bg-transparent`}>
+          <TabsList className={`grid w-full ${user?.role === 'manager' ? 'grid-cols-8' : 'grid-cols-6'} bg-transparent`}>
             <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
             <TabsTrigger value="pending" className="tab-dark">
               Pending Approvals {pendingCustomers.length > 0 && (
@@ -765,6 +765,9 @@ const Dashboard = () => {
             <TabsTrigger value="reports" className="tab-dark">Sales Reports</TabsTrigger>
             {user?.role === 'manager' && (
               <TabsTrigger value="employees" className="tab-dark">Employees</TabsTrigger>
+            )}
+            {user?.role === 'manager' && (
+              <TabsTrigger value="admin" className="tab-dark">Admin Settings</TabsTrigger>
             )}
           </TabsList>
 
