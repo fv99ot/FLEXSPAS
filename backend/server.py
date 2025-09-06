@@ -545,7 +545,6 @@ class Discount(BaseModel):
     description: Optional[str] = None  # E.g., "FREE LOCKER", "FREE CHANGING ROOM"
     code: Optional[str] = None  # Optional discount code
     active: bool = True
-    is_ghost: bool = False  # Ghost discounts don't appear in reports
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class DiscountCreate(BaseModel):
@@ -553,7 +552,6 @@ class DiscountCreate(BaseModel):
     amount: float
     description: Optional[str] = None
     code: Optional[str] = None
-    is_ghost: bool = False
 
 # Waitlist Models
 class WaitlistEntry(BaseModel):
