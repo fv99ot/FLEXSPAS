@@ -506,8 +506,9 @@ async def check_out_customer(checkin_id: str, current_user: User = Depends(get_c
     
     if session_duration > allowed_duration:
         overtime_delta = session_duration - allowed_duration
-        overtime_hours = overtime_delta.total_seconds() / 3600  # Convert to hours
-        overtime_amount = overtime_hours * 20.0  # $20 per hour
+        overtime_hours_exact = overtime_delta.total_seconds() / 3600  # Exact overtime hours
+        overtime_hours_billed = math.ceil(overtime_hours_exact)  # Round up to nearest full hour
+        overtime_amount = overtime_hours_billed * 20.0  # $20 per full hour
         
         # Update customer's unpaid overtime
         customer_id = checkin["customer_id"]
@@ -515,7 +516,7 @@ async def check_out_customer(checkin_id: str, current_user: User = Depends(get_c
             {"id": customer_id},
             {
                 "$inc": {
-                    "unpaid_overtime_hours": overtime_hours,
+                    "unpaid_overtime_hours": overtime_hours_billed,  # Store billed hours, not exact
                     "unpaid_overtime_amount": overtime_amount
                 }
             }
