@@ -424,6 +424,14 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
     if customer.get("is_banned", False):
         raise HTTPException(status_code=403, detail="Customer is banned")
     
+    # Check if customer has unpaid overtime fees
+    unpaid_overtime = customer.get("unpaid_overtime_amount", 0.0)
+    if unpaid_overtime > 0:
+        raise HTTPException(
+            status_code=402, 
+            detail=f"Customer has unpaid overtime fees of ${unpaid_overtime:.2f}. Must pay before checking in again."
+        )
+    
     # Check if room is available
     existing_checkin = await db.check_ins.find_one({
         "room_number": room_number,
