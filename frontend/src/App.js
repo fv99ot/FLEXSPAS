@@ -2502,6 +2502,61 @@ const Dashboard = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Overtime Payment Dialog */}
+      <Dialog open={showOvertimePayment} onOpenChange={setShowOvertimePayment}>
+        <DialogContent className="sm:max-w-md admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">Pay Overtime Fees</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              {overtimeCustomer && `${overtimeCustomer.first_name} ${overtimeCustomer.last_name} has unpaid overtime fees`}
+            </DialogDescription>
+          </DialogHeader>
+          {overtimeCustomer && (
+            <div className="space-y-4">
+              <div className="bg-red-600/20 p-4 rounded-lg border border-red-500/50">
+                <h3 className="text-red-300 font-semibold mb-2">Outstanding Overtime</h3>
+                <p className="text-white">Hours Over: {overtimeCustomer.unpaid_overtime_hours.toFixed(1)} hours</p>
+                <p className="text-white">Rate: $20.00 per hour</p>
+                <p className="text-white text-lg font-bold">Total Due: ${overtimeCustomer.unpaid_overtime_amount.toFixed(2)}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Payment Method
+                </label>
+                <Select value={overtimePaymentMethod} onValueChange={setOvertimePaymentMethod}>
+                  <SelectTrigger className="w-full bg-white/10 border-white/20 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">💵 Cash</SelectItem>
+                    <SelectItem value="card">💳 Credit Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  onClick={() => setShowOvertimePayment(false)}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button"
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => payOvertimeFees(overtimeCustomer.id, overtimePaymentMethod)}
+                >
+                  Process Payment (${overtimeCustomer.unpaid_overtime_amount.toFixed(2)})
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
