@@ -197,6 +197,17 @@ const Dashboard = () => {
     new_room_number: ''
   });
   const [secretCodeActive, setSecretCodeActive] = useState(false);
+  
+  // Admin settings state
+  const [showAddDiscount, setShowAddDiscount] = useState(false);
+  const [discountForm, setDiscountForm] = useState({
+    name: '',
+    amount: '',
+    description: ''
+  });
+  const [editingItem, setEditingItem] = useState(null);
+  const [adminDiscounts, setAdminDiscounts] = useState([]);
+  const [adminItems, setAdminItems] = useState([]);
 
   // Customer form data
   const [customerForm, setCustomerForm] = useState({
