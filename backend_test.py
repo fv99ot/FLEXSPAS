@@ -856,16 +856,16 @@ class BathhouseAPITester:
         
         return all_success
 
-    def test_secret_ghost_discount(self):
-        """Test NEW secret ghost discount system"""
-        print("\n👻 Testing Secret Ghost Discount (NEW FEATURE)...")
+    def test_ghost_functionality_removed(self):
+        """Test that ghost discount functionality has been completely removed"""
+        print("\n🚫 Testing Ghost Functionality Removal...")
         
         if not self.token:
-            return self.log_test("Secret Ghost Discount", False, "No authentication token")
+            return self.log_test("Ghost Functionality Removal", False, "No authentication token")
         
         all_success = True
         
-        # Test 1: Apply secret code "!)" (shift+1+0)
+        # Test 1: Verify ghost endpoint no longer exists
         try:
             response = requests.post(
                 f"{self.api_url}/apply-secret-discount",
@@ -874,40 +874,17 @@ class BathhouseAPITester:
                 timeout=10
             )
             
-            if response.status_code == 200:
-                data = response.json()
-                if 'id' in data and data.get('is_ghost') == True and data.get('name') == 'GHOST_DISCOUNT':
-                    self.log_test("Apply Secret Code", True, f"Ghost discount created: {data['amount']}")
-                else:
-                    self.log_test("Apply Secret Code", False, "Invalid ghost discount response")
-                    all_success = False
-            else:
-                self.log_test("Apply Secret Code", False, f"Status: {response.status_code}, Response: {response.text}")
-                all_success = False
-                
-        except Exception as e:
-            self.log_test("Apply Secret Code", False, f"Exception: {str(e)}")
-            all_success = False
-        
-        # Test 2: Test invalid secret code
-        try:
-            response = requests.post(
-                f"{self.api_url}/apply-secret-discount",
-                json={"code": "wrong"},
-                headers=self.headers,
-                timeout=10
-            )
-            
-            success = response.status_code == 400
-            self.log_test("Invalid Secret Code", success, f"Status: {response.status_code}")
+            # Should return 404 or 405 since endpoint shouldn't exist
+            success = response.status_code in [404, 405]
+            self.log_test("Ghost Endpoint Removed", success, f"Status: {response.status_code} (endpoint should not exist)")
             if not success:
                 all_success = False
                 
         except Exception as e:
-            self.log_test("Invalid Secret Code", False, f"Exception: {str(e)}")
-            all_success = False
+            # Connection errors are also acceptable - endpoint doesn't exist
+            self.log_test("Ghost Endpoint Removed", True, f"Endpoint not found (expected): {str(e)}")
         
-        # Test 3: Verify ghost discount doesn't appear in regular discount list
+        # Test 2: Verify discounts don't have is_ghost field
         try:
             response = requests.get(
                 f"{self.api_url}/discounts",
@@ -917,17 +894,40 @@ class BathhouseAPITester:
             
             if response.status_code == 200:
                 data = response.json()
-                has_ghost = any(d.get('is_ghost') == True for d in data)
-                success = not has_ghost  # Ghost discounts should NOT appear in regular list
-                self.log_test("Ghost Discount Hidden", success, f"Ghost in regular list: {has_ghost}")
+                has_ghost_field = any('is_ghost' in discount for discount in data)
+                success = not has_ghost_field  # Should NOT have is_ghost field
+                self.log_test("No is_ghost Field", success, f"is_ghost field found: {has_ghost_field}")
                 if not success:
                     all_success = False
             else:
-                self.log_test("Ghost Discount Hidden", False, f"Status: {response.status_code}")
+                self.log_test("No is_ghost Field", False, f"Status: {response.status_code}")
                 all_success = False
                 
         except Exception as e:
-            self.log_test("Ghost Discount Hidden", False, f"Exception: {str(e)}")
+            self.log_test("No is_ghost Field", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Verify admin discounts also don't have is_ghost field
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                has_ghost_field = any('is_ghost' in discount for discount in data)
+                success = not has_ghost_field  # Should NOT have is_ghost field
+                self.log_test("Admin Discounts No is_ghost", success, f"is_ghost field found: {has_ghost_field}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Admin Discounts No is_ghost", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Admin Discounts No is_ghost", False, f"Exception: {str(e)}")
             all_success = False
         
         return all_success
