@@ -697,7 +697,12 @@ async def upgrade_room(checkin_id: str, upgrade_data: dict, current_user: User =
     old_room_fee = get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
     new_room_fee = get_room_pricing(RoomType(new_room_type), is_weekend)
     upgrade_fee = max(0, new_room_fee - old_room_fee)
-    cleaning_fee = 5.0 if checkin["room_type"] != "locker" or new_room_type != "locker" else 0
+    
+    # Cleaning fee only applies if customer is upgrading from or to a room (not locker)
+    old_is_room = checkin["room_type"] != "locker"  
+    new_is_room = new_room_type != "locker"
+    cleaning_fee = 5.0 if (old_is_room or new_is_room) else 0
+    
     total_additional_cost = upgrade_fee + cleaning_fee
     
     # Create upgrade record
