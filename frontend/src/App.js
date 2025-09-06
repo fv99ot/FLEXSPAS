@@ -711,6 +711,37 @@ const Dashboard = () => {
     }
   };
 
+  // Customer Notes Functions
+  const updateCustomerNotes = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedCustomerForNotes) {
+      alert('No customer selected');
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      await axios.put(`${API}/customers/${selectedCustomerForNotes.id}/notes`, {
+        notes: customerNotes
+      }, { headers });
+      
+      alert(`Notes updated successfully for ${selectedCustomerForNotes.first_name} ${selectedCustomerForNotes.last_name}!`);
+      setShowCustomerNotes(false);
+      setSelectedCustomerForNotes(null);
+      setCustomerNotes('');
+      
+      // Refresh customer search if there's an active search
+      // This will update the notes display in search results
+      
+    } catch (error) {
+      console.error('Error updating customer notes:', error);
+      alert(error.response?.data?.detail || 'Error updating customer notes');
+    }
+  };
+
   const fetchRoomMap = async () => {
     try {
       const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes] = await Promise.all([
