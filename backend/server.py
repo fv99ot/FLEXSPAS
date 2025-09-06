@@ -532,8 +532,8 @@ async def check_out_customer(checkin_id: str, current_user: User = Depends(get_c
         "message": "Customer checked out successfully", 
         "checkout_time": checkout_time,
         "session_duration_hours": session_duration.total_seconds() / 3600,
-        "overtime_hours": overtime_hours,
-        "overtime_amount": overtime_amount
+        "overtime_hours": overtime_hours_billed if session_duration > allowed_duration else 0.0,
+        "overtime_amount": overtime_amount if session_duration > allowed_duration else 0.0
     }
     
     return result
