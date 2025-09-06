@@ -812,7 +812,17 @@ async def seed_default_items(current_user: User = Depends(get_current_user)):
     return {"message": f"Created {len(created_items)} default items", "items": created_items}
 
 @api_router.get("/admin/additional-items", response_model=List[AdditionalItem])
+async def get_all_additional_items(current_user: User = Depends(get_current_user)):
+    """Get all additional items for admin management"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can view all items")
+    
+    items = await db.additional_items.find().to_list(1000)
+    return [AdditionalItem(**item) for item in items]
+
+@api_router.get("/additional-items", response_model=List[AdditionalItem])
 async def get_additional_items(current_user: User = Depends(get_current_user)):
+    """Get active additional items for regular use"""
     items = await db.additional_items.find({"active": True}).to_list(1000)
     return [AdditionalItem(**item) for item in items]
 
