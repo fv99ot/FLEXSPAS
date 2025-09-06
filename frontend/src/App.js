@@ -357,23 +357,7 @@ const Dashboard = () => {
     }
   };
 
-  // Secret code detection
-  const handleKeyDown = (e) => {
-    if (e.shiftKey && e.key === '!' && e.code === 'Digit1') {
-      // Shift + 1 + 0 sequence - we'll check for Shift + ! (which is Shift + 1)
-      setTimeout(() => {
-        if (e.shiftKey && e.key === ')') { // Shift + 0 is ')'
-          setSecretCodeActive(true);
-          console.log('🤫 Secret code activated - Ghost discount available');
-        }
-      }, 100);
-    }
-  };
 
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const fetchPendingCustomers = async () => {
     try {
