@@ -333,11 +333,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Admin Discount Management System"
-    - "Secret Ghost Discount System"
-    - "Additional Items Management System"
-    - "Room Upgrade System"
-    - "Waitlist Management System"
+    - "Customer Model Overtime Fields"
+    - "Check-in Blocking for Unpaid Overtime"
+    - "Check-out Overtime Calculation"
+    - "Pay Overtime Endpoint"
+    - "Overtime Integration Workflow"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
