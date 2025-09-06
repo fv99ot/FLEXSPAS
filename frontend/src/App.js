@@ -1390,6 +1390,174 @@ const Dashboard = () => {
             )}
           </TabsContent>
 
+          {/* Admin Settings Tab */}
+          <TabsContent value="admin" className="space-y-6">
+            {user?.role === 'manager' && (
+              <div className="space-y-6">
+                {/* Discount Management */}
+                <Card className="dashboard-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-white">
+                      <DollarSign className="h-5 w-5 mr-2" />
+                      Discount Management
+                    </CardTitle>
+                    <CardDescription className="text-gray-300">
+                      Create and manage discount options (whole amounts only)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-white">Active Discounts</h3>
+                        <Button onClick={() => setShowAddDiscount(true)} className="flex-button">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Discount
+                        </Button>
+                      </div>
+
+                      <Button onClick={fetchAdminDiscounts} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                        Refresh Discounts
+                      </Button>
+
+                      <div className="grid gap-4">
+                        {adminDiscounts.filter(d => !d.is_ghost).map((discount) => (
+                          <div key={discount.id} className="flex items-center justify-between p-4 border border-yellow-500/50 rounded-lg bg-yellow-600/10">
+                            <div>
+                              <h3 className="font-semibold text-white">{discount.name}</h3>
+                              <p className="text-sm text-gray-300">Amount: ${discount.amount}</p>
+                              {discount.description && (
+                                <p className="text-xs text-gray-400">{discount.description}</p>
+                              )}
+                              <p className="text-xs text-gray-400">
+                                Status: {discount.active ? 'Active' : 'Inactive'}
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                onClick={() => toggleDiscount(discount.id)}
+                                className={discount.active ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                              >
+                                {discount.active ? 'Disable' : 'Enable'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteDiscount(discount.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Additional Items Management */}
+                <Card className="dashboard-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-white">
+                      <Plus className="h-5 w-5 mr-2" />
+                      Additional Items Management
+                    </CardTitle>
+                    <CardDescription className="text-gray-300">
+                      Manage items available for purchase (condoms, accessories, fees, etc.)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-white">Available Items</h3>
+                        <div className="flex space-x-2">
+                          <Button onClick={seedDefaultItems} variant="outline" className="border-green-500/50 text-green-400 hover:bg-green-500/10">
+                            Seed Defaults
+                          </Button>
+                          <Button onClick={() => setShowAddItem(true)} className="flex-button">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Item
+                          </Button>
+                        </div>
+                      </div>
+
+                      <Button onClick={fetchAdminItems} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                        Refresh Items
+                      </Button>
+
+                      <div className="grid gap-4">
+                        {adminItems.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between p-4 border border-blue-500/50 rounded-lg bg-blue-600/10">
+                            <div>
+                              <h3 className="font-semibold text-white">{item.name}</h3>
+                              <p className="text-sm text-gray-300">Price: ${item.price}</p>
+                              <p className="text-xs text-gray-400">Category: {item.category}</p>
+                              <p className="text-xs text-gray-400">
+                                Status: {item.active ? 'Active' : 'Inactive'}
+                              </p>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                onClick={() => setEditingItem(item)}
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => toggleAdminItem(item.id)}
+                                className={item.active ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+                              >
+                                {item.active ? 'Disable' : 'Enable'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteAdditionalItem(item.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Secret Code Information */}
+                <Card className="dashboard-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-white">
+                      <AlertTriangle className="h-5 w-5 mr-2" />
+                      Secret Discount Code
+                    </CardTitle>
+                    <CardDescription className="text-gray-300">
+                      100% Ghost Discount activation
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-600/50">
+                      <p className="text-white font-medium mb-2">Secret Code: Shift + 1 + 0</p>
+                      <p className="text-gray-300 text-sm mb-2">
+                        Press and hold Shift, then press 1, then press 0 to activate the ghost discount.
+                      </p>
+                      <p className="text-yellow-300 text-xs">
+                        Ghost discounts are 100% off and do not appear in sales reports.
+                      </p>
+                      {secretCodeActive && (
+                        <div className="mt-3 p-2 bg-green-600/20 border border-green-500/50 rounded">
+                          <p className="text-green-300 text-sm">🙈 Ghost discount is currently active!</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="qr" className="space-y-6">
             {/* QR Code Section */}
             <Card className="dashboard-card">
