@@ -11,7 +11,7 @@ from datetime import datetime
 def test_membership_form_backend():
     """Test the public membership form endpoint directly"""
     
-    base_url = "https://spa-manager.preview.emergentagent.com"
+    base_url = "https://flexla-admin.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("🔍 Testing QR Membership Form Backend Directly")
@@ -60,7 +60,7 @@ def test_membership_form_backend():
 def test_cors_headers():
     """Test CORS headers for the membership endpoint"""
     
-    base_url = "https://spa-manager.preview.emergentagent.com"
+    base_url = "https://flexla-admin.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     print("\n🔍 Testing CORS Headers for Public Endpoint")
@@ -70,7 +70,7 @@ def test_cors_headers():
         response = requests.options(
             f"{api_url}/customers/public",
             headers={
-                'Origin': 'https://spa-manager.preview.emergentagent.com',
+                'Origin': 'https://flexla-admin.preview.emergentagent.com',
                 'Access-Control-Request-Method': 'POST',
                 'Access-Control-Request-Headers': 'Content-Type'
             },
