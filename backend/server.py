@@ -540,17 +540,19 @@ async def delete_user(user_id: str, current_user: User = Depends(get_current_use
 class Discount(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    percentage: float  # 0-100 percentage
-    amount: Optional[float] = None  # Fixed amount discount
+    amount: float  # Fixed amount discount (e.g., 25.0 for FREE LOCKER)
+    description: Optional[str] = None  # E.g., "FREE LOCKER", "FREE CHANGING ROOM"
     code: Optional[str] = None  # Optional discount code
     active: bool = True
+    is_ghost: bool = False  # Ghost discounts don't appear in reports
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class DiscountCreate(BaseModel):
     name: str
-    percentage: Optional[float] = None
-    amount: Optional[float] = None  
+    amount: float
+    description: Optional[str] = None
     code: Optional[str] = None
+    is_ghost: bool = False
 
 # Waitlist Models
 class WaitlistEntry(BaseModel):
