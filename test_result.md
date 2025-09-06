@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the new overtime payment system in the FLEX Spa system. Focus on testing customer model updates, check-in blocking for unpaid overtime, check-out overtime calculation, pay overtime endpoint, and integration testing."
+user_problem_statement: "Test the new customer profile and password management features: Customer Profile System (GET /api/customers/{customer_id}/profile with visit history and membership expiration), Customer Notes Update (PUT /api/customers/{customer_id}/notes), Change Own Password (PUT /api/users/me/password), and Reset User Password (Admin) (PUT /api/users/{user_id}/password). Use admin credentials: username=admin, password=admin123."
 
 backend:
   - task: "Pending Customer Creation via QR Form"
