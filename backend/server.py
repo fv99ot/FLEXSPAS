@@ -560,33 +560,6 @@ async def pay_overtime_fees(customer_id: str, payment_data: dict, current_user: 
         "payment_method": payment_method
     }
 
-@api_router.put("/users/{user_id}/password")
-async def change_user_password(user_id: str, password_data: dict, current_user: User = Depends(get_current_user)):
-    """Change password for a user (managers can change any user's password, users can change their own)"""
-    new_password = password_data.get("new_password")
-    if not new_password or len(new_password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
-    
-    # Check permissions
-    if current_user.role != UserRole.MANAGER and current_user.id != user_id:
-        raise HTTPException(status_code=403, detail="Only managers can change other users' passwords")
-    
-    # Find the user
-    user = await db.users.find_one({"id": user_id})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Hash the new password
-    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    
-    # Update the password
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {"password": hashed_password}}
-    )
-    
-    return {"message": f"Password updated successfully for {user['username']}"}
-
 @api_router.put("/users/me/password")
 async def change_my_password(password_data: dict, current_user: User = Depends(get_current_user)):
     """Change current user's own password"""
@@ -614,6 +587,33 @@ async def change_my_password(password_data: dict, current_user: User = Depends(g
     )
     
     return {"message": "Your password has been updated successfully"}
+
+@api_router.put("/users/{user_id}/password")
+async def change_user_password(user_id: str, password_data: dict, current_user: User = Depends(get_current_user)):
+    """Change password for a user (managers can change any user's password, users can change their own)"""
+    new_password = password_data.get("new_password")
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+    
+    # Check permissions
+    if current_user.role != UserRole.MANAGER and current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Only managers can change other users' passwords")
+    
+    # Find the user
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Hash the new password
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    # Update the password
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"password": hashed_password}}
+    )
+    
+    return {"message": f"Password updated successfully for {user['username']}"}
 
 @api_router.put("/customers/{customer_id}/notes")
 async def update_customer_notes(customer_id: str, notes_data: dict, current_user: User = Depends(get_current_user)):
