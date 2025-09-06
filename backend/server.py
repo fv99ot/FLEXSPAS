@@ -349,15 +349,7 @@ async def get_customer(customer_id: str, current_user: User = Depends(get_curren
         raise HTTPException(status_code=404, detail="Customer not found")
     return Customer(**customer)
 
-@api_router.put("/customers/{customer_id}/notes")
-async def update_customer_notes(customer_id: str, notes: dict, current_user: User = Depends(get_current_user)):
-    result = await db.customers.update_one(
-        {"id": customer_id},
-        {"$set": {"notes": notes.get("notes", "")}}
-    )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Customer not found")
-    return {"message": "Notes updated successfully"}
+# Duplicate endpoint removed - using the one at line 626 instead
 
 @api_router.put("/customers/{customer_id}/ban")
 async def ban_customer(customer_id: str, current_user: User = Depends(get_current_user)):
