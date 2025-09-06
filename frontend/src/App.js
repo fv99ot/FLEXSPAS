@@ -610,9 +610,7 @@ const Dashboard = () => {
       setOvertimeCustomer(null);
       
       // Re-fetch customers to update the display
-      if (searchQuery) {
-        handleSearch();
-      }
+      fetchCustomers();
       
       return true;
     } catch (error) {
