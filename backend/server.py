@@ -641,6 +641,63 @@ async def update_customer_notes(customer_id: str, notes_data: dict, current_user
     
     return {"message": "Customer notes updated successfully", "notes": notes}
 
+@api_router.get("/customers/{customer_id}/profile")
+async def get_customer_profile(customer_id: str, current_user: User = Depends(get_current_user)):
+    """Get detailed customer profile with visit history"""
+    # Get customer info
+    customer = await db.customers.find_one({"id": customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Get customer's check-in history (last 10 visits)
+    checkins = await db.check_ins.find({
+        "customer_id": customer_id,
+        "check_out_time": {"$ne": None}  # Only completed visits
+    }).sort("check_in_time", -1).limit(10).to_list(10)
+    
+    # Process check-in history
+    visit_history = []
+    last_visit = None
+    
+    for checkin in checkins:
+        visit_info = {
+            "date": checkin["check_in_time"],
+            "room_type": checkin["room_type"],
+            "room_number": checkin["room_number"],
+            "membership_type": checkin["membership_type"],
+            "total_amount": checkin["total_amount"],
+            "check_out_time": checkin.get("check_out_time")
+        }
+        visit_history.append(visit_info)
+        
+        if not last_visit or checkin["check_in_time"] > last_visit:
+            last_visit = checkin["check_in_time"]
+    
+    # Calculate membership expiration based on last visit and type
+    membership_expiration = None
+    if visit_history:
+        last_checkin = visit_history[0]
+        membership_type = last_checkin["membership_type"]
+        last_visit_date = last_checkin["date"]
+        
+        if isinstance(last_visit_date, str):
+            last_visit_date = datetime.fromisoformat(last_visit_date.replace('Z', '+00:00'))
+        elif isinstance(last_visit_date, datetime) and last_visit_date.tzinfo is None:
+            last_visit_date = last_visit_date.replace(tzinfo=timezone.utc)
+        
+        if membership_type == "6_month":
+            membership_expiration = last_visit_date + timedelta(days=180)
+        elif membership_type == "1_day":
+            membership_expiration = last_visit_date + timedelta(days=1)
+    
+    return {
+        "customer": Customer(**customer).dict(),
+        "last_visit": last_visit,
+        "membership_expiration": membership_expiration,
+        "visit_history": visit_history,
+        "total_visits": len(visit_history)
+    }
+
 @api_router.get("/checkins/active", response_model=List[dict])
 async def get_active_checkins(current_user: User = Depends(get_current_user)):
     active_checkins = await db.check_ins.find({"check_out_time": None}).to_list(1000)
