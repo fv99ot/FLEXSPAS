@@ -2172,6 +2172,158 @@ const Dashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Add Discount Dialog */}
+      <Dialog open={showAddDiscount} onOpenChange={setShowAddDiscount}>
+        <DialogContent className="sm:max-w-md admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">Add New Discount</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Create a new discount with a fixed amount (not percentage)
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={addDiscount} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Discount Name *
+              </label>
+              <Input
+                type="text"
+                value={discountForm.name}
+                onChange={(e) => setDiscountForm({...discountForm, name: e.target.value})}
+                placeholder="FREE LOCKER"
+                required
+                className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Discount Amount ($) *
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                value={discountForm.amount}
+                onChange={(e) => setDiscountForm({...discountForm, amount: e.target.value})}
+                placeholder="25.00"
+                required
+                className="w-full bg-white/10 border-white/20 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Description (Optional)
+              </label>
+              <Input
+                type="text"
+                value={discountForm.description}
+                onChange={(e) => setDiscountForm({...discountForm, description: e.target.value})}
+                placeholder="Free locker promotion"
+                className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => setShowAddDiscount(false)}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                disabled={loading}
+                className="flex-button"
+              >
+                {loading ? 'Creating...' : 'Create Discount'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Item Dialog */}
+      <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+        <DialogContent className="sm:max-w-md admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">Edit Item</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Update item details and pricing
+            </DialogDescription>
+          </DialogHeader>
+          {editingItem && (
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              updateAdminItem(editingItem.id, {
+                name: formData.get('name'),
+                price: parseFloat(formData.get('price')),
+                category: formData.get('category')
+              });
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Item Name *
+                </label>
+                <Input
+                  name="name"
+                  type="text"
+                  defaultValue={editingItem.name}
+                  required
+                  className="w-full bg-white/10 border-white/20 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Price ($) *
+                </label>
+                <Input
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  defaultValue={editingItem.price}
+                  required
+                  className="w-full bg-white/10 border-white/20 text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Category *
+                </label>
+                <Select defaultValue={editingItem.category}>
+                  <SelectTrigger className="w-full bg-white/10 border-white/20 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="health">Health</SelectItem>
+                    <SelectItem value="accessories">Accessories</SelectItem>
+                    <SelectItem value="fees">Fees</SelectItem>
+                  </SelectContent>
+                </Select>
+                <input name="category" type="hidden" value={editingItem.category} />
+              </div>
+              <DialogFooter>
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  onClick={() => setEditingItem(null)}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  className="flex-button"
+                >
+                  Update Item
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
