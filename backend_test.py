@@ -555,19 +555,19 @@ class BathhouseAPITester:
                 
                 if response.status_code == 200:
                     data = response.json()
-                    if 'id' in data and data['first_name'] == 'Test':
+                    if 'id' in data and data['first_name'] == 'Maria':
                         self.log_test("Approve Pending Customer", True, f"Approved customer ID: {data['id']}")
                         
                         # Verify customer is now in main customer list
                         search_response = requests.get(
-                            f"{self.api_url}/customers?q=Test",
+                            f"{self.api_url}/customers?q=Maria",
                             headers=self.headers,
                             timeout=10
                         )
                         
                         if search_response.status_code == 200:
                             customers = search_response.json()
-                            found_approved = any(c.get('first_name') == 'Test' and c.get('last_name') == 'Customer' for c in customers)
+                            found_approved = any(c.get('first_name') == 'Maria' and c.get('last_name') == 'Rodriguez' for c in customers)
                             self.log_test("Approved Customer in Main List", found_approved, f"Found in customer search: {found_approved}")
                             if not found_approved:
                                 all_success = False
