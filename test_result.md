@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Fix the customer approval issue - customers can't be approved after they submit their QR code form. The system has a QR membership form that creates pending customers, but the approval process is not working properly."
+user_problem_statement: "Test the new admin settings and advanced features in the FLEX Spa system including admin discount management, secret ghost discount, additional items management, room upgrade system, and waitlist system."
 
 backend:
   - task: "Pending Customer Creation via QR Form"
@@ -161,6 +161,66 @@ backend:
       - working: true
         agent: "testing"
         comment: "TESTING COMPLETED: DELETE /api/pending-customers/{customer_id} endpoint working correctly. Successfully rejects pending customers by updating status to 'rejected'. Requires authentication. Tested rejection flow and verified customer removed from pending list."
+
+  - task: "Admin Discount Management System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Admin discount management system working perfectly. ✅ Create discounts with whole amounts (not percentages) - PASSED, ✅ Toggle discounts on/off - PASSED, ✅ Admin-only access to discount management - PASSED, ✅ Regular vs admin discount endpoints working correctly - PASSED. All discount CRUD operations functioning as expected."
+
+  - task: "Secret Ghost Discount System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Secret ghost discount system working perfectly. ✅ Secret code '!)' (shift+1+0) correctly triggers ghost discount creation - PASSED, ✅ Ghost discount provides 100% discount (999999.0 amount) - PASSED, ✅ Ghost discounts hidden from regular discount list - PASSED, ✅ Invalid secret codes properly rejected - PASSED. Secret functionality working as designed."
+
+  - task: "Additional Items Management System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Additional items management system working perfectly. ✅ Seed default items (condoms, dildos, cleaning fees, lost key fees) - PASSED, ✅ Create new additional items - PASSED, ✅ Toggle items on/off - PASSED, ✅ Admin vs regular endpoints working correctly - PASSED, ✅ All 4 default items created successfully - PASSED. Full CRUD operations for additional items functioning correctly."
+
+  - task: "Room Upgrade System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Room upgrade system working perfectly. ✅ Upgrade from locker to room includes cleaning fee ($5.00) - PASSED, ✅ Price difference calculations working correctly - PASSED, ✅ Upgrade endpoint properly updates check-in records - PASSED, ✅ Room availability validation during upgrade - PASSED. Upgrade system with cleaning fees functioning as designed."
+
+  - task: "Waitlist Management System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Waitlist management system working perfectly. ✅ Add customers to waitlist for specific room types - PASSED, ✅ Get waitlist entries with customer data enrichment - PASSED, ✅ Remove customers from waitlist - PASSED, ✅ Waitlist status management working correctly - PASSED. Full waitlist CRUD operations functioning correctly."
 
 frontend:
   - task: "QR Membership Form Submission"
