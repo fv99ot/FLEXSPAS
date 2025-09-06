@@ -111,35 +111,56 @@ backend:
     file: "/app/backend/server.py"  
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Backend endpoint /api/customers/public exists and creates pending customers correctly. PendingCustomer model and PendingCustomerCreate model are properly defined."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: QR form submission endpoint working perfectly. Tested multiple scenarios including standard customers, special characters, long names, and rapid successive submissions. All tests passed. Public endpoint correctly creates pending customers with status 'pending'."
 
   - task: "Pending Customer Approval Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high" 
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Backend endpoint /api/pending-customers/{customer_id}/approve exists. Code looks correct - creates new customer, updates pending status. Needs testing to verify it works."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Approval endpoint working perfectly. Successfully tested approval of multiple customers including edge cases. Endpoint correctly: 1) Creates new customer in main collection, 2) Updates pending status to 'approved', 3) Preserves all customer data, 4) Adds approval notes. Tested rapid successive approvals - all successful."
 
   - task: "Get Pending Customers Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Backend endpoint /api/pending-customers exists to fetch pending customers. Code looks correct but needs testing."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE TESTING COMPLETED: Get pending customers endpoint working perfectly. Correctly returns only customers with status 'pending'. Requires authentication as expected. Tested with multiple pending customers and verified accurate filtering. Response format is correct array of PendingCustomer objects."
+
+  - task: "Customer Rejection Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "TESTING COMPLETED: DELETE /api/pending-customers/{customer_id} endpoint working correctly. Successfully rejects pending customers by updating status to 'rejected'. Requires authentication. Tested rejection flow and verified customer removed from pending list."
 
 frontend:
   - task: "QR Membership Form Submission"
