@@ -737,8 +737,8 @@ class BathhouseAPITester:
             return False
 
     def test_admin_discount_management(self):
-        """Test NEW admin discount management system"""
-        print("\n💰 Testing Admin Discount Management (NEW FEATURE)...")
+        """Test admin discount management system (after ghost functionality removal)"""
+        print("\n💰 Testing Admin Discount Management...")
         
         if not self.token:
             return self.log_test("Admin Discount Management", False, "No authentication token")
@@ -746,13 +746,12 @@ class BathhouseAPITester:
         all_success = True
         created_discount_id = None
         
-        # Test 1: Create new discount with whole amounts
+        # Test 1: Create new discount with whole amounts (no is_ghost field)
         discount_data = {
             "name": "FREE LOCKER SPECIAL",
             "amount": 25.0,  # Whole amount, not percentage
             "description": "Free locker promotion",
-            "code": None,
-            "is_ghost": False
+            "code": "FREELOCKER"
         }
         
         try:
@@ -767,7 +766,13 @@ class BathhouseAPITester:
                 data = response.json()
                 if 'id' in data and data['name'] == discount_data['name']:
                     created_discount_id = data['id']
-                    self.log_test("Create Discount", True, f"Created: {data['name']} - ${data['amount']}")
+                    # Verify no is_ghost field in response
+                    has_ghost_field = 'is_ghost' in data
+                    success = not has_ghost_field
+                    details = f"Created: {data['name']} - ${data['amount']}, No ghost field: {not has_ghost_field}"
+                    self.log_test("Create Discount", success, details)
+                    if not success:
+                        all_success = False
                 else:
                     self.log_test("Create Discount", False, "Invalid response data")
                     all_success = False
@@ -779,7 +784,7 @@ class BathhouseAPITester:
             self.log_test("Create Discount", False, f"Exception: {str(e)}")
             all_success = False
         
-        # Test 2: Get regular discounts (should exclude ghost discounts)
+        # Test 2: Get active discounts (should show all active discounts)
         try:
             response = requests.get(
                 f"{self.api_url}/discounts",
@@ -791,21 +796,23 @@ class BathhouseAPITester:
                 data = response.json()
                 if isinstance(data, list):
                     found_discount = any(d.get('id') == created_discount_id for d in data)
-                    self.log_test("Get Regular Discounts", found_discount, f"Found {len(data)} discounts")
-                    if not found_discount:
+                    # Verify all discounts appear (no ghost filtering)
+                    all_active = all(d.get('active', False) for d in data)
+                    self.log_test("Get Active Discounts", found_discount and all_active, f"Found {len(data)} active discounts")
+                    if not (found_discount and all_active):
                         all_success = False
                 else:
-                    self.log_test("Get Regular Discounts", False, "Invalid response format")
+                    self.log_test("Get Active Discounts", False, "Invalid response format")
                     all_success = False
             else:
-                self.log_test("Get Regular Discounts", False, f"Status: {response.status_code}")
+                self.log_test("Get Active Discounts", False, f"Status: {response.status_code}")
                 all_success = False
                 
         except Exception as e:
-            self.log_test("Get Regular Discounts", False, f"Exception: {str(e)}")
+            self.log_test("Get Active Discounts", False, f"Exception: {str(e)}")
             all_success = False
         
-        # Test 3: Get admin discounts (should include all discounts)
+        # Test 3: Get admin discounts (should show all discounts for managers)
         try:
             response = requests.get(
                 f"{self.api_url}/admin/discounts",
@@ -852,6 +859,29 @@ class BathhouseAPITester:
                     
             except Exception as e:
                 self.log_test("Toggle Discount", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 5: Delete discount
+        if created_discount_id:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/discounts/{created_discount_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    success = 'message' in data
+                    self.log_test("Delete Discount", success, f"Message: {data.get('message', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Delete Discount", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Delete Discount", False, f"Exception: {str(e)}")
                 all_success = False
         
         return all_success
