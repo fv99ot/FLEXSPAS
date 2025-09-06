@@ -2824,6 +2824,130 @@ const Dashboard = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Change Own Password Dialog */}
+      <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
+        <DialogContent className="sm:max-w-md admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">Change Your Password</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Enter your current password and choose a new one
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={changeMyPassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Current Password
+              </label>
+              <Input
+                type="password"
+                value={passwordForm.current_password}
+                onChange={(e) => setPasswordForm({...passwordForm, current_password: e.target.value})}
+                required
+                className="w-full bg-white/10 border-white/20 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                New Password
+              </label>
+              <Input
+                type="password"
+                value={passwordForm.new_password}
+                onChange={(e) => setPasswordForm({...passwordForm, new_password: e.target.value})}
+                required
+                minLength={6}
+                className="w-full bg-white/10 border-white/20 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm New Password
+              </label>
+              <Input
+                type="password"
+                value={passwordForm.confirm_password}
+                onChange={(e) => setPasswordForm({...passwordForm, confirm_password: e.target.value})}
+                required
+                minLength={6}
+                className="w-full bg-white/10 border-white/20 text-white"
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => setShowChangePassword(false)}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Change Password
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset User Password Dialog */}
+      <Dialog open={showResetUserPassword} onOpenChange={setShowResetUserPassword}>
+        <DialogContent className="sm:max-w-md admin-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">Reset User Password</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              {selectedUserForReset && `Set a new password for ${selectedUserForReset.username}`}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={resetUserPassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                New Password
+              </label>
+              <Input
+                type="password"
+                value={resetPasswordForm.new_password}
+                onChange={(e) => setResetPasswordForm({...resetPasswordForm, new_password: e.target.value})}
+                required
+                minLength={6}
+                className="w-full bg-white/10 border-white/20 text-white"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm New Password
+              </label>
+              <Input
+                type="password"
+                value={resetPasswordForm.confirm_password}
+                onChange={(e) => setResetPasswordForm({...resetPasswordForm, confirm_password: e.target.value})}
+                required
+                minLength={6}
+                className="w-full bg-white/10 border-white/20 text-white"
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => setShowResetUserPassword(false)}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Reset Password
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Customer Profile Modal */}
       <Dialog open={showCustomerProfile} onOpenChange={setShowCustomerProfile}>
         <DialogContent className="sm:max-w-4xl admin-dialog">
