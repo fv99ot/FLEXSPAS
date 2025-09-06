@@ -1570,34 +1570,7 @@ const Dashboard = () => {
                   </CardContent>
                 </Card>
 
-                {/* Secret Code Information */}
-                <Card className="dashboard-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-white">
-                      <AlertTriangle className="h-5 w-5 mr-2" />
-                      Secret Discount Code
-                    </CardTitle>
-                    <CardDescription className="text-gray-300">
-                      100% Ghost Discount activation
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-600/50">
-                      <p className="text-white font-medium mb-2">Secret Code: Shift + 1 + 0</p>
-                      <p className="text-gray-300 text-sm mb-2">
-                        Press and hold Shift, then press 1, then press 0 to activate the ghost discount.
-                      </p>
-                      <p className="text-yellow-300 text-xs">
-                        Ghost discounts are 100% off and do not appear in sales reports.
-                      </p>
-                      {secretCodeActive && (
-                        <div className="mt-3 p-2 bg-green-600/20 border border-green-500/50 rounded">
-                          <p className="text-green-300 text-sm">🙈 Ghost discount is currently active!</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+
               </div>
             )}
           </TabsContent>
