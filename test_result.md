@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the new admin settings and advanced features in the FLEX Spa system including admin discount management, secret ghost discount, additional items management, room upgrade system, and waitlist system."
+user_problem_statement: "Test the new overtime payment system in the FLEX Spa system. Focus on testing customer model updates, check-in blocking for unpaid overtime, check-out overtime calculation, pay overtime endpoint, and integration testing."
 
 backend:
   - task: "Pending Customer Creation via QR Form"
