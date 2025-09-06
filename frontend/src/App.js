@@ -607,6 +607,34 @@ const Dashboard = () => {
   };
 
   // Waitlist Functions
+  const addToWaitlist = async (customerId, roomType, membershipType) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.post(`${API}/waitlist`, {
+        customer_id: customerId,
+        room_type: roomType || null,
+        membership_type: membershipType
+      }, { headers });
+      fetchWaitlist();
+      alert('Customer added to waitlist successfully!');
+    } catch (error) {
+      console.error('Error adding to waitlist:', error);
+      alert('Error adding to waitlist');
+    }
+  };
+
+  const fetchWaitlist = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/waitlist`, { headers });
+      setWaitlist(response.data);
+    } catch (error) {
+      console.error('Error fetching waitlist:', error);
+    }
+  };
+
   const removeFromWaitlist = async (entryId) => {
     try {
       const token = localStorage.getItem('token');
