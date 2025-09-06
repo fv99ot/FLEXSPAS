@@ -75,6 +75,8 @@ class Customer(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     notes: str = ""
     is_banned: bool = False
+    unpaid_overtime_hours: float = 0.0  # Track unpaid overtime hours
+    unpaid_overtime_amount: float = 0.0  # Track unpaid overtime fees ($20/hour)
 
 class CustomerCreate(BaseModel):
     first_name: str
