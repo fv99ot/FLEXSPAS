@@ -593,18 +593,6 @@ const Dashboard = () => {
     }
   };
 
-  const applySecretDiscount = async (secretCode) => {
-    try {
-      const token = localStorage.getItem('token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const response = await axios.post(`${API}/apply-secret-discount`, { code: secretCode }, { headers });
-      setSecretCodeActive(true);
-      return response.data;
-    } catch (error) {
-      console.error('Error applying secret discount:', error);
-      return null;
-    }
-  };
 
   // Waitlist Functions
   const addToWaitlist = async (customerId, roomType, membershipType) => {
