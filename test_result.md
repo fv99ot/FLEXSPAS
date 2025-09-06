@@ -198,10 +198,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Pending Customer Approval Endpoint"
-    - "Get Pending Customers Endpoint" 
     - "Pending Customer Approval UI"
-    - "QR Membership Form Submission"
   stuck_tasks:
     - "Pending Customer Approval UI"
   test_all: false
