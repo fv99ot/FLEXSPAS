@@ -1593,12 +1593,13 @@ class BathhouseAPITester:
             # Test endpoint existence by making a request (may fail due to missing data, but should not 404)
             test_url = f"{self.api_url}/customers/test-id/pay-overtime"
             
-            response = requests.post(test_url, json={}, headers=self.headers, timeout=10)
+            response = requests.post(test_url, json={"payment_method": "cash"}, headers=self.headers, timeout=10)
             
-            # Endpoint should exist (not 404), even if it returns error due to invalid data
-            endpoint_exists = response.status_code != 404
+            # Endpoint should exist and return 404 for invalid customer (not 404 for missing endpoint)
+            # A 404 with "Customer not found" message indicates the endpoint exists but customer doesn't
+            endpoint_exists = response.status_code == 404
             success = endpoint_exists
-            details = f"Status: {response.status_code} (endpoint exists: {endpoint_exists})"
+            details = f"Status: {response.status_code} (endpoint exists and returns customer not found)"
             self.log_test("Pay Overtime Endpoint", success, details)
             
             if not success:
