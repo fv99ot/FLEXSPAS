@@ -873,8 +873,26 @@ async def get_waitlist(current_user: User = Depends(get_current_user)):
     for entry in waitlist:
         # Get customer info
         customer = await db.customers.find_one({"id": entry["customer_id"]})
-        entry_data = WaitlistEntry(**entry).dict()
-        entry_data["customer"] = customer
+        
+        # Clean up the entry data for JSON serialization
+        entry_data = {
+            "id": entry["id"],
+            "customer_id": entry["customer_id"],
+            "current_room_number": entry.get("current_room_number"),
+            "current_room_type": entry.get("current_room_type"),
+            "desired_room_type": entry["desired_room_type"],
+            "membership_type": entry["membership_type"],
+            "priority": entry.get("priority", 1),
+            "created_at": entry["created_at"],
+            "status": entry.get("status", "waiting")
+        }
+        
+        # Clean up customer data for JSON serialization
+        if customer:
+            customer_data = {k: v for k, v in customer.items() if k != "_id"}
+            entry_data["customer"] = customer_data
+        else:
+            entry_data["customer"] = None
         
         # Add to appropriate waitlist
         desired_type = entry.get("desired_room_type", "regular_room")
