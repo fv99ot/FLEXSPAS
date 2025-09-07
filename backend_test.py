@@ -2992,6 +2992,9 @@ class BathhouseAPITester:
         self.test_enhanced_3_column_waitlist_system()
         self.test_waitlist_system()  # Legacy compatibility test
         
+        # MULTIPLE WAITLIST FUNCTIONALITY TESTING (REVIEW REQUEST)
+        self.test_multiple_waitlist_functionality()
+        
         # NEW OVERTIME PAYMENT SYSTEM TESTING
         self.test_overtime_payment_system()
         self.test_overtime_integration_workflow()
