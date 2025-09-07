@@ -858,7 +858,7 @@ async def delete_discount(discount_id: str, current_user: User = Depends(get_cur
     return {"message": "Discount deleted successfully"}
 
 # Waitlist Management
-@api_router.get("/waitlist", response_model=List[dict])
+@api_router.get("/waitlist")
 async def get_waitlist(current_user: User = Depends(get_current_user)):
     """Get waitlist organized by room types"""
     waitlist = await db.waitlist.find({"status": "waiting"}).sort("created_at", 1).to_list(1000)
