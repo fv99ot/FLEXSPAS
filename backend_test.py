@@ -1200,12 +1200,423 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_enhanced_3_column_waitlist_system(self):
+        """Test ENHANCED 3-Column Waitlist System as specified in review request"""
+        print("\n⏳ Testing Enhanced 3-Column Waitlist System...")
+        
+        if not self.token:
+            return self.log_test("Enhanced Waitlist System", False, "No authentication token")
+        
+        all_success = True
+        created_waitlist_ids = []
+        test_customer_ids = []
+        test_checkin_ids = []
+        
+        # Create multiple test customers for comprehensive testing
+        for i in range(3):
+            unique_id = f"WAITLIST{datetime.now().strftime('%Y%m%d%H%M%S')}{i}"
+            customer_data = {
+                "first_name": f"WaitlistCustomer{i+1}",
+                "last_name": "TestUser",
+                "id_number": unique_id,
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            }
+            
+            try:
+                response = requests.post(
+                    f"{self.api_url}/customers",
+                    json=customer_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    test_customer_ids.append(response.json()['id'])
+                else:
+                    self.log_test(f"Create Test Customer {i+1}", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Create Test Customer {i+1}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        if len(test_customer_ids) < 3:
+            return self.log_test("Enhanced Waitlist System", False, "Could not create test customers")
+        
+        # TEST 1: Organized Waitlist Structure - GET /api/waitlist returns 3-column structure
+        print("   Testing 1: Organized Waitlist Structure...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Check for 3-column structure
+                expected_columns = ["regular_room", "small_room", "deluxe_room"]
+                has_all_columns = all(column in data for column in expected_columns)
+                is_dict_structure = isinstance(data, dict)
+                
+                success = has_all_columns and is_dict_structure
+                details = f"Structure: {type(data).__name__}, Columns: {list(data.keys()) if isinstance(data, dict) else 'N/A'}"
+                self.log_test("3-Column Waitlist Structure", success, details)
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("3-Column Waitlist Structure", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("3-Column Waitlist Structure", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 2: Add customers to different waitlists and verify categorization
+        print("   Testing 2: Waitlist Categorization by Room Type...")
+        room_types = ["regular_room", "small_room", "deluxe_room"]
+        
+        for i, room_type in enumerate(room_types):
+            if i < len(test_customer_ids):
+                waitlist_data = {
+                    "customer_id": test_customer_ids[i],
+                    "desired_room_type": room_type,
+                    "membership_type": "1_day"
+                }
+                
+                try:
+                    response = requests.post(
+                        f"{self.api_url}/waitlist",
+                        json=waitlist_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        created_waitlist_ids.append(data['id'])
+                        
+                        # Verify WaitlistEntry model fields
+                        required_fields = ['id', 'customer_id', 'desired_room_type', 'membership_type', 'created_at', 'status']
+                        has_all_fields = all(field in data for field in required_fields)
+                        correct_room_type = data.get('desired_room_type') == room_type
+                        
+                        success = has_all_fields and correct_room_type
+                        details = f"Room: {room_type}, Fields: {has_all_fields}, Correct type: {correct_room_type}"
+                        self.log_test(f"Add to {room_type.replace('_', ' ').title()} Waitlist", success, details)
+                        
+                        if not success:
+                            all_success = False
+                    else:
+                        self.log_test(f"Add to {room_type.replace('_', ' ').title()} Waitlist", False, f"Status: {response.status_code}")
+                        all_success = False
+                        
+                except Exception as e:
+                    self.log_test(f"Add to {room_type.replace('_', ' ').title()} Waitlist", False, f"Exception: {str(e)}")
+                    all_success = False
+        
+        # TEST 3: Verify customers are properly categorized and sorted by creation time
+        print("   Testing 3: Proper Categorization and Sorting...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check each column has entries in correct categories
+                categorization_correct = True
+                sorting_correct = True
+                customer_enrichment = True
+                
+                for room_type in ["regular_room", "small_room", "deluxe_room"]:
+                    if room_type in data and len(data[room_type]) > 0:
+                        for entry in data[room_type]:
+                            # Check categorization
+                            if entry.get('desired_room_type') != room_type:
+                                categorization_correct = False
+                            
+                            # Check customer enrichment
+                            if 'customer' not in entry or entry['customer'] is None:
+                                customer_enrichment = False
+                        
+                        # Check sorting by created_at (first-come, first-served)
+                        if len(data[room_type]) > 1:
+                            for i in range(1, len(data[room_type])):
+                                prev_time = data[room_type][i-1].get('created_at', '')
+                                curr_time = data[room_type][i].get('created_at', '')
+                                if prev_time > curr_time:  # Should be ascending order
+                                    sorting_correct = False
+                
+                success = categorization_correct and sorting_correct and customer_enrichment
+                details = f"Categorization: {categorization_correct}, Sorting: {sorting_correct}, Enrichment: {customer_enrichment}"
+                self.log_test("Waitlist Categorization & Sorting", success, details)
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Waitlist Categorization & Sorting", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Waitlist Categorization & Sorting", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 4: Add Current Customers to Waitlist - POST /api/waitlist/add-from-checkin/{checkin_id}
+        print("   Testing 4: Add Current Customers to Waitlist...")
+        
+        # First create a check-in for one of our test customers
+        if test_customer_ids:
+            try:
+                # Get available room
+                rooms_response = requests.get(
+                    f"{self.api_url}/rooms/available/locker",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if rooms_response.status_code == 200:
+                    available_rooms = rooms_response.json()['available_rooms']
+                    if available_rooms:
+                        # Create check-in
+                        checkin_data = {
+                            "customer_id": test_customer_ids[0],
+                            "membership_type": "1_day",
+                            "room_type": "locker",
+                            "room_number": available_rooms[0]
+                        }
+                        
+                        checkin_response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if checkin_response.status_code == 200:
+                            checkin_id = checkin_response.json()['id']
+                            test_checkin_ids.append(checkin_id)
+                            
+                            # Now add this checked-in customer to waitlist for better room
+                            waitlist_from_checkin_data = {
+                                "desired_room_type": "deluxe_room"
+                            }
+                            
+                            response = requests.post(
+                                f"{self.api_url}/waitlist/add-from-checkin/{checkin_id}",
+                                json=waitlist_from_checkin_data,
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            if response.status_code == 200:
+                                data = response.json()
+                                
+                                # Verify current room info is stored
+                                has_current_room_info = (
+                                    'current_room_number' in data and 
+                                    'current_room_type' in data and
+                                    data.get('current_room_number') == available_rooms[0] and
+                                    data.get('current_room_type') == 'locker'
+                                )
+                                
+                                success = has_current_room_info and data.get('desired_room_type') == 'deluxe_room'
+                                details = f"Current room: {data.get('current_room_type')} #{data.get('current_room_number')}, Desired: {data.get('desired_room_type')}"
+                                self.log_test("Add Current Customer to Waitlist", success, details)
+                                
+                                if success:
+                                    created_waitlist_ids.append(data['id'])
+                                else:
+                                    all_success = False
+                            else:
+                                self.log_test("Add Current Customer to Waitlist", False, f"Status: {response.status_code}")
+                                all_success = False
+                        else:
+                            self.log_test("Add Current Customer to Waitlist", False, "Could not create check-in")
+                            all_success = False
+                    else:
+                        self.log_test("Add Current Customer to Waitlist", False, "No available rooms")
+                        all_success = False
+                else:
+                    self.log_test("Add Current Customer to Waitlist", False, "Could not get available rooms")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Add Current Customer to Waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 5: Waitlist Validation - Duplicate Prevention
+        print("   Testing 5: Waitlist Validation...")
+        
+        if test_customer_ids:
+            # Try to add same customer to same waitlist again (should fail)
+            duplicate_waitlist_data = {
+                "customer_id": test_customer_ids[0],
+                "desired_room_type": "regular_room",
+                "membership_type": "1_day"
+            }
+            
+            try:
+                response = requests.post(
+                    f"{self.api_url}/waitlist",
+                    json=duplicate_waitlist_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                # Should fail with 400 status (duplicate)
+                success = response.status_code == 400
+                details = f"Status: {response.status_code} (should be 400 for duplicate)"
+                self.log_test("Duplicate Waitlist Prevention", success, details)
+                
+                if not success:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Duplicate Waitlist Prevention", False, f"Exception: {str(e)}")
+                all_success = False
+            
+            # Test that customers CAN be on multiple waitlists (different room types)
+            multiple_waitlist_data = {
+                "customer_id": test_customer_ids[0],
+                "desired_room_type": "small_room",  # Different room type
+                "membership_type": "1_day"
+            }
+            
+            try:
+                response = requests.post(
+                    f"{self.api_url}/waitlist",
+                    json=multiple_waitlist_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                # Should succeed (different room type)
+                success = response.status_code == 200
+                details = f"Status: {response.status_code} (should be 200 for different room type)"
+                self.log_test("Multiple Waitlists (Different Types)", success, details)
+                
+                if success:
+                    created_waitlist_ids.append(response.json()['id'])
+                else:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Multiple Waitlists (Different Types)", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 6: Data Structure Verification
+        print("   Testing 6: WaitlistEntry Model Data Structure...")
+        
+        if created_waitlist_ids:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/waitlist",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Find one of our created entries to verify structure
+                    test_entry = None
+                    for room_type in data:
+                        for entry in data[room_type]:
+                            if entry.get('id') in created_waitlist_ids:
+                                test_entry = entry
+                                break
+                        if test_entry:
+                            break
+                    
+                    if test_entry:
+                        # Verify all required fields exist
+                        required_fields = [
+                            'id', 'customer_id', 'desired_room_type', 'membership_type', 
+                            'created_at', 'status', 'customer'
+                        ]
+                        
+                        has_all_fields = all(field in test_entry for field in required_fields)
+                        
+                        # Verify datetime handling
+                        has_valid_datetime = 'created_at' in test_entry and test_entry['created_at'] is not None
+                        
+                        # Verify customer enrichment
+                        customer_enriched = (
+                            'customer' in test_entry and 
+                            test_entry['customer'] is not None and
+                            isinstance(test_entry['customer'], dict)
+                        )
+                        
+                        success = has_all_fields and has_valid_datetime and customer_enriched
+                        details = f"Fields: {has_all_fields}, DateTime: {has_valid_datetime}, Enriched: {customer_enriched}"
+                        self.log_test("WaitlistEntry Data Structure", success, details)
+                        
+                        if not success:
+                            all_success = False
+                    else:
+                        self.log_test("WaitlistEntry Data Structure", False, "Could not find test entry")
+                        all_success = False
+                else:
+                    self.log_test("WaitlistEntry Data Structure", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("WaitlistEntry Data Structure", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 7: Waitlist Removal Functionality
+        print("   Testing 7: Waitlist Removal...")
+        
+        if created_waitlist_ids:
+            removal_success = True
+            for waitlist_id in created_waitlist_ids[:2]:  # Remove first 2 entries
+                try:
+                    response = requests.delete(
+                        f"{self.api_url}/waitlist/{waitlist_id}",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        if 'message' not in data:
+                            removal_success = False
+                    else:
+                        removal_success = False
+                        
+                except Exception as e:
+                    removal_success = False
+            
+            self.log_test("Waitlist Removal", removal_success, f"Removed {min(2, len(created_waitlist_ids))} entries")
+            if not removal_success:
+                all_success = False
+        
+        # Cleanup: Check out any active check-ins
+        for checkin_id in test_checkin_ids:
+            try:
+                requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/checkout",
+                    headers=self.headers,
+                    timeout=10
+                )
+            except:
+                pass  # Ignore cleanup errors
+        
+        return all_success
+
     def test_waitlist_system(self):
-        """Test NEW waitlist management system"""
-        print("\n⏳ Testing Waitlist System (NEW FEATURE)...")
+        """Test NEW waitlist management system (legacy test - kept for compatibility)"""
+        print("\n⏳ Testing Legacy Waitlist System...")
         
         if not self.token or not self.created_customer_id:
-            return self.log_test("Waitlist System", False, "No token or customer ID")
+            return self.log_test("Legacy Waitlist System", False, "No token or customer ID")
         
         all_success = True
         created_waitlist_id = None
@@ -1213,7 +1624,7 @@ class BathhouseAPITester:
         # Test 1: Add customer to waitlist for specific room type
         waitlist_data = {
             "customer_id": self.created_customer_id,
-            "room_type": "deluxe_room",
+            "desired_room_type": "deluxe_room",
             "membership_type": "1_day"
         }
         
@@ -1251,14 +1662,28 @@ class BathhouseAPITester:
             
             if response.status_code == 200:
                 data = response.json()
-                if isinstance(data, list):
-                    found_entry = any(entry.get('id') == created_waitlist_id for entry in data)
-                    has_customer_data = any(entry.get('customer') is not None for entry in data)
-                    self.log_test("Get Waitlist", found_entry and has_customer_data, f"Found {len(data)} entries")
+                if isinstance(data, dict):  # Updated for 3-column structure
+                    # Check if our entry is in the correct column
+                    found_entry = False
+                    for room_type in data:
+                        for entry in data[room_type]:
+                            if entry.get('id') == created_waitlist_id:
+                                found_entry = True
+                                break
+                    
+                    has_customer_data = False
+                    for room_type in data:
+                        for entry in data[room_type]:
+                            if entry.get('customer') is not None:
+                                has_customer_data = True
+                                break
+                    
+                    total_entries = sum(len(data[room_type]) for room_type in data)
+                    self.log_test("Get Waitlist", found_entry and has_customer_data, f"Found {total_entries} entries")
                     if not (found_entry and has_customer_data):
                         all_success = False
                 else:
-                    self.log_test("Get Waitlist", False, "Invalid response format")
+                    self.log_test("Get Waitlist", False, "Invalid response format - expected dict structure")
                     all_success = False
             else:
                 self.log_test("Get Waitlist", False, f"Status: {response.status_code}")
