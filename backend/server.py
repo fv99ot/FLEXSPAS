@@ -918,7 +918,7 @@ async def add_to_waitlist(waitlist_create: WaitlistCreate, current_user: User = 
     })
     
     if existing_waitlist:
-        raise HTTPException(status_code=400, detail=f"Customer already on {waitlist_create.desired_room_type.replace('_', ' ')} waitlist")
+        raise HTTPException(status_code=400, detail=f"Customer already on {waitlist_create.desired_room_type.replace('_', ' ')} waitlist. They can be on multiple different room type waitlists, but not the same one twice.")
     
     # Create waitlist entry
     waitlist_doc = waitlist_create.dict()
