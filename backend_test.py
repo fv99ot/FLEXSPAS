@@ -2730,6 +2730,213 @@ class BathhouseAPITester:
         """Test admin reset password functionality"""
         return self.test_password_management_system()
 
+    def test_multiple_waitlist_functionality(self):
+        """Test the updated waitlist system for multiple room waitlists simultaneously"""
+        print("\n🔄 Testing Multiple Waitlist Functionality (REVIEW REQUEST)...")
+        
+        if not self.token:
+            return self.log_test("Multiple Waitlist System", False, "No authentication token")
+        
+        all_success = True
+        test_customer_id = None
+        waitlist_entry_ids = []
+        
+        # Step 1: Create Test Customer
+        print("   Step 1: Creating test customer for multiple waitlist testing...")
+        unique_id = f"MULTI{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "MultiWaitlist",
+            "last_name": "TestCustomer",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                test_customer_id = response.json()['id']
+                self.log_test("Create Test Customer", True, f"Customer ID: {test_customer_id}")
+            else:
+                self.log_test("Create Test Customer", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # Step 2: Add to Multiple Different Room Type Waitlists
+        print("   Step 2: Adding customer to multiple different room type waitlists...")
+        room_types = ["regular_room", "small_room", "deluxe_room"]
+        
+        for room_type in room_types:
+            waitlist_data = {
+                "customer_id": test_customer_id,
+                "desired_room_type": room_type,
+                "membership_type": "1_day"
+            }
+            
+            try:
+                response = requests.post(
+                    f"{self.api_url}/waitlist",
+                    json=waitlist_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    waitlist_entry_ids.append(data['id'])
+                    self.log_test(f"Add to {room_type.replace('_', ' ').title()} Waitlist", True, f"Entry ID: {data['id']}")
+                else:
+                    self.log_test(f"Add to {room_type.replace('_', ' ').title()} Waitlist", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Add to {room_type.replace('_', ' ').title()} Waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Step 3: Verify 3-Column Organization
+        print("   Step 3: Verifying customer appears in all 3 columns...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if customer appears in all 3 columns
+                appears_in_regular = any(entry.get('customer_id') == test_customer_id for entry in data.get('regular_room', []))
+                appears_in_small = any(entry.get('customer_id') == test_customer_id for entry in data.get('small_room', []))
+                appears_in_deluxe = any(entry.get('customer_id') == test_customer_id for entry in data.get('deluxe_room', []))
+                
+                # Verify customer data is enriched
+                customer_data_enriched = True
+                for room_type in ['regular_room', 'small_room', 'deluxe_room']:
+                    for entry in data.get(room_type, []):
+                        if entry.get('customer_id') == test_customer_id:
+                            if 'customer' not in entry or entry['customer'] is None:
+                                customer_data_enriched = False
+                                break
+                
+                success = appears_in_regular and appears_in_small and appears_in_deluxe and customer_data_enriched
+                details = f"Regular: {appears_in_regular}, Small: {appears_in_small}, Deluxe: {appears_in_deluxe}, Enriched: {customer_data_enriched}"
+                self.log_test("Customer in All 3 Columns", success, details)
+                
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Customer in All 3 Columns", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Customer in All 3 Columns", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 4: Test Duplicate Prevention (Same Room Type)
+        print("   Step 4: Testing duplicate prevention for same room type...")
+        try:
+            # Try to add the same customer to regular_room waitlist again
+            duplicate_data = {
+                "customer_id": test_customer_id,
+                "desired_room_type": "regular_room",
+                "membership_type": "1_day"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/waitlist",
+                json=duplicate_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should fail with 400 status
+            success = response.status_code == 400
+            error_message = response.json().get('detail', '') if response.status_code == 400 else ''
+            contains_waitlist_message = 'waitlist' in error_message.lower()
+            
+            final_success = success and contains_waitlist_message
+            details = f"Status: {response.status_code}, Error mentions waitlist: {contains_waitlist_message}"
+            self.log_test("Duplicate Prevention (Same Room Type)", final_success, details)
+            
+            if not final_success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Duplicate Prevention (Same Room Type)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 5: Test Multiple Waitlist Removal
+        print("   Step 5: Testing removal from one waitlist while staying on others...")
+        if waitlist_entry_ids:
+            try:
+                # Remove customer from regular_room waitlist (first entry)
+                response = requests.delete(
+                    f"{self.api_url}/waitlist/{waitlist_entry_ids[0]}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    self.log_test("Remove from One Waitlist", True, f"Removed entry: {waitlist_entry_ids[0]}")
+                    
+                    # Verify customer still on other two waitlists
+                    waitlist_response = requests.get(
+                        f"{self.api_url}/waitlist",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if waitlist_response.status_code == 200:
+                        waitlist_data = waitlist_response.json()
+                        
+                        # Should NOT appear in regular_room anymore
+                        not_in_regular = not any(entry.get('customer_id') == test_customer_id for entry in waitlist_data.get('regular_room', []))
+                        
+                        # Should STILL appear in small_room and deluxe_room
+                        still_in_small = any(entry.get('customer_id') == test_customer_id for entry in waitlist_data.get('small_room', []))
+                        still_in_deluxe = any(entry.get('customer_id') == test_customer_id for entry in waitlist_data.get('deluxe_room', []))
+                        
+                        success = not_in_regular and still_in_small and still_in_deluxe
+                        details = f"Not in Regular: {not_in_regular}, Still in Small: {still_in_small}, Still in Deluxe: {still_in_deluxe}"
+                        self.log_test("Verify Selective Removal", success, details)
+                        
+                        if not success:
+                            all_success = False
+                    else:
+                        self.log_test("Verify Selective Removal", False, f"Could not get waitlist: {waitlist_response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test("Remove from One Waitlist", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Remove from One Waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Clean up remaining waitlist entries
+        for entry_id in waitlist_entry_ids[1:]:  # Skip the first one we already removed
+            try:
+                requests.delete(
+                    f"{self.api_url}/waitlist/{entry_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+            except:
+                pass  # Ignore cleanup errors
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🧪 Starting FLEX_LA Bathhouse API Tests...")
