@@ -860,20 +860,49 @@ async def delete_discount(discount_id: str, current_user: User = Depends(get_cur
 # Waitlist Management
 @api_router.get("/waitlist", response_model=List[dict])
 async def get_waitlist(current_user: User = Depends(get_current_user)):
-    waitlist = await db.waitlist.find({"status": "waiting"}).to_list(1000)
+    """Get waitlist organized by room types"""
+    waitlist = await db.waitlist.find({"status": "waiting"}).sort("created_at", 1).to_list(1000)
     
-    # Enrich with customer data
-    result = []
+    # Organize waitlist by desired room type
+    organized_waitlist = {
+        "regular_room": [],
+        "small_room": [],
+        "deluxe_room": []
+    }
+    
     for entry in waitlist:
+        # Get customer info
         customer = await db.customers.find_one({"id": entry["customer_id"]})
         entry_data = WaitlistEntry(**entry).dict()
-        entry_data["customer"] = Customer(**customer).dict() if customer else None
-        result.append(entry_data)
+        entry_data["customer"] = customer
+        
+        # Add to appropriate waitlist
+        desired_type = entry.get("desired_room_type", "regular_room")
+        if desired_type in organized_waitlist:
+            organized_waitlist[desired_type].append(entry_data)
     
-    return result
+    return organized_waitlist
 
 @api_router.post("/waitlist", response_model=WaitlistEntry)
 async def add_to_waitlist(waitlist_create: WaitlistCreate, current_user: User = Depends(get_current_user)):
+    """Add customer to specific room type waitlist (can be currently checked in)"""
+    
+    # Check if customer exists
+    customer = await db.customers.find_one({"id": waitlist_create.customer_id})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Check if customer is already on this specific waitlist
+    existing_waitlist = await db.waitlist.find_one({
+        "customer_id": waitlist_create.customer_id,
+        "desired_room_type": waitlist_create.desired_room_type,
+        "status": "waiting"
+    })
+    
+    if existing_waitlist:
+        raise HTTPException(status_code=400, detail=f"Customer already on {waitlist_create.desired_room_type.replace('_', ' ')} waitlist")
+    
+    # Create waitlist entry
     waitlist_doc = waitlist_create.dict()
     waitlist_doc["id"] = str(uuid.uuid4())
     waitlist_doc["priority"] = 1
@@ -885,10 +914,35 @@ async def add_to_waitlist(waitlist_create: WaitlistCreate, current_user: User = 
 
 @api_router.delete("/waitlist/{entry_id}")
 async def remove_from_waitlist(entry_id: str, current_user: User = Depends(get_current_user)):
+    """Remove customer from waitlist"""
     result = await db.waitlist.update_one({"id": entry_id}, {"$set": {"status": "expired"}})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Waitlist entry not found")
     return {"message": "Removed from waitlist"}
+
+@api_router.post("/waitlist/add-from-checkin/{checkin_id}")
+async def add_current_customer_to_waitlist(checkin_id: str, waitlist_data: dict, current_user: User = Depends(get_current_user)):
+    """Add currently checked-in customer to waitlist for better room"""
+    
+    # Get current check-in info
+    checkin = await db.check_ins.find_one({"id": checkin_id, "check_out_time": None})
+    if not checkin:
+        raise HTTPException(status_code=404, detail="Active check-in not found")
+    
+    desired_room_type = waitlist_data.get("desired_room_type")
+    if not desired_room_type:
+        raise HTTPException(status_code=400, detail="Desired room type is required")
+    
+    # Create waitlist entry with current room info
+    waitlist_create = WaitlistCreate(
+        customer_id=checkin["customer_id"],
+        current_room_number=checkin["room_number"],
+        current_room_type=checkin["room_type"],
+        desired_room_type=desired_room_type,
+        membership_type=checkin["membership_type"]
+    )
+    
+    return await add_to_waitlist(waitlist_create, current_user)
 
 # Room Upgrade System
 @api_router.post("/checkin/{checkin_id}/upgrade")
