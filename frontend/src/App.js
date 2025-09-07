@@ -1412,15 +1412,9 @@ const Dashboard = () => {
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="placeholder" disabled>Add to Waitlist</SelectItem>
-                                    {checkin.room_type !== 'regular_room' && (
-                                      <SelectItem value="regular_room">Regular Room</SelectItem>
-                                    )}
-                                    {checkin.room_type !== 'small_room' && (
-                                      <SelectItem value="small_room">Small Room</SelectItem>
-                                    )}
-                                    {checkin.room_type !== 'deluxe_room' && (
-                                      <SelectItem value="deluxe_room">Deluxe Room</SelectItem>
-                                    )}
+                                    <SelectItem value="regular_room">Regular Room Waitlist</SelectItem>
+                                    <SelectItem value="small_room">Small Room Waitlist</SelectItem>
+                                    <SelectItem value="deluxe_room">Deluxe Room Waitlist</SelectItem>
                                   </SelectContent>
                                 </Select>
                               </div>
