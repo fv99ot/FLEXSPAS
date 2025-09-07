@@ -580,31 +580,49 @@ const Dashboard = () => {
 
 
   // Waitlist Functions
-  const addToWaitlist = async (customerId, roomType, membershipType) => {
+  const fetchWaitlist = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/waitlist`, { headers });
+      // Response is now organized by room type: {regular_room: [], small_room: [], deluxe_room: []}
+      setWaitlist(response.data);
+    } catch (error) {
+      console.error('Error fetching waitlist:', error);
+    }
+  };
+
+  const addToWaitlist = async (customerId, desiredRoomType, membershipType, currentRoomType = null, currentRoomNumber = null) => {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       await axios.post(`${API}/waitlist`, {
         customer_id: customerId,
-        room_type: roomType || null,
+        current_room_type: currentRoomType,
+        current_room_number: currentRoomNumber,
+        desired_room_type: desiredRoomType,
         membership_type: membershipType
       }, { headers });
       fetchWaitlist();
       alert('Customer added to waitlist successfully!');
     } catch (error) {
       console.error('Error adding to waitlist:', error);
-      alert('Error adding to waitlist');
+      alert(error.response?.data?.detail || 'Error adding to waitlist');
     }
   };
 
-  const fetchWaitlist = async () => {
+  const addFromCheckinToWaitlist = async (checkinId, desiredRoomType) => {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const response = await axios.get(`${API}/waitlist`, { headers });
-      setWaitlist(response.data);
+      await axios.post(`${API}/waitlist/add-from-checkin/${checkinId}`, {
+        desired_room_type: desiredRoomType
+      }, { headers });
+      fetchWaitlist();
+      alert('Customer added to waitlist for room upgrade!');
     } catch (error) {
-      console.error('Error fetching waitlist:', error);
+      console.error('Error adding to waitlist:', error);
+      alert(error.response?.data?.detail || 'Error adding to waitlist');
     }
   };
 
