@@ -762,7 +762,9 @@ class DiscountCreate(BaseModel):
 class WaitlistEntry(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     customer_id: str
-    room_type: Optional[RoomType] = None  # None = any room
+    current_room_number: Optional[int] = None  # If customer is currently checked in
+    current_room_type: Optional[RoomType] = None  # Current room type
+    desired_room_type: RoomType  # What room type they want to upgrade to
     membership_type: MembershipType
     priority: int = 1
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -770,7 +772,9 @@ class WaitlistEntry(BaseModel):
 
 class WaitlistCreate(BaseModel):
     customer_id: str
-    room_type: Optional[RoomType] = None
+    current_room_number: Optional[int] = None  # If upgrading from current room
+    current_room_type: Optional[RoomType] = None
+    desired_room_type: RoomType  # Which waitlist to join
     membership_type: MembershipType
 
 # Upgrade System Models  
