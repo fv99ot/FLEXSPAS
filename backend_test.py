@@ -2722,6 +2722,14 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_change_own_password(self):
+        """Test change own password functionality"""
+        return self.test_password_management_system()
+    
+    def test_admin_reset_password(self):
+        """Test admin reset password functionality"""
+        return self.test_password_management_system()
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🧪 Starting FLEX_LA Bathhouse API Tests...")
@@ -2772,7 +2780,10 @@ class BathhouseAPITester:
         self.test_ghost_functionality_removed()  # Verify ghost functionality is completely removed
         self.test_additional_items_management()
         self.test_room_upgrade_system()
-        self.test_waitlist_system()
+        
+        # ENHANCED 3-COLUMN WAITLIST SYSTEM TESTING (PRIMARY FOCUS)
+        self.test_enhanced_3_column_waitlist_system()
+        self.test_waitlist_system()  # Legacy compatibility test
         
         # NEW OVERTIME PAYMENT SYSTEM TESTING
         self.test_overtime_payment_system()
@@ -2792,10 +2803,49 @@ class BathhouseAPITester:
         print(f"Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
         return self.tests_passed == self.tests_run
+    
+    def run_waitlist_focused_tests(self):
+        """Run focused tests for enhanced 3-column waitlist system"""
+        print("🚀 Starting Enhanced 3-Column Waitlist System Testing...")
+        print(f"🌐 Testing against: {self.base_url}")
+        print("=" * 80)
+        
+        # Authentication required
+        if not self.test_login():
+            print("❌ Authentication failed - stopping tests")
+            return False
+        
+        # Create test customer for waitlist testing
+        self.test_create_customer()
+        
+        # Focus on enhanced waitlist system
+        self.test_enhanced_3_column_waitlist_system()
+        
+        # Print final results
+        print("\n" + "=" * 80)
+        print("🏁 WAITLIST TESTING COMPLETE")
+        print(f"📊 Results: {self.tests_passed}/{self.tests_run} tests passed")
+        
+        if self.tests_passed == self.tests_run:
+            print("🎉 ALL WAITLIST TESTS PASSED! 🎉")
+            return True
+        else:
+            failed_count = self.tests_run - self.tests_passed
+            print(f"⚠️  {failed_count} test(s) failed")
+            return False
 
 def main():
+    """Main function with option to run focused waitlist tests"""
+    import sys
+    
     tester = BathhouseAPITester()
-    success = tester.run_all_tests()
+    
+    # Check if user wants to run focused waitlist tests
+    if len(sys.argv) > 1 and sys.argv[1] == "--waitlist":
+        success = tester.run_waitlist_focused_tests()
+    else:
+        success = tester.run_all_tests()
+    
     return 0 if success else 1
 
 if __name__ == "__main__":
