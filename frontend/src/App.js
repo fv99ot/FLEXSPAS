@@ -1541,72 +1541,157 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Waitlist Management */}
+            {/* Waitlist Management - 3 Column Layout */}
             <Card className="dashboard-card">
               <CardHeader>
                 <CardTitle className="flex items-center text-white">
                   <Clock className="h-5 w-5 mr-2" />
-                  Room Waitlist ({waitlist.length})
+                  Room Waitlists
                 </CardTitle>
                 <CardDescription className="text-gray-300">
-                  Customers waiting for specific room types
+                  Customers waiting for room upgrades organized by room type
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button onClick={fetchWaitlist} variant="outline" className="border-white/20 text-white hover:bg-white/10 mb-4">
-                  Refresh Waitlist
+                  Refresh Waitlists
                 </Button>
 
-                {waitlist.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No customers on waitlist</p>
-                ) : (
-                  <div className="grid gap-4">
-                    {waitlist.map((entry) => (
-                      <div key={entry.id} className="p-4 border border-orange-500/50 rounded-lg bg-orange-600/10">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <Avatar>
-                              <AvatarFallback className="bg-orange-600 text-white">
-                                {entry.customer?.first_name?.charAt(0)}{entry.customer?.last_name?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-semibold text-white">
-                                {entry.customer?.first_name} {entry.customer?.last_name}
-                              </h3>
-                              <div className="text-sm text-gray-300 space-y-1">
-                                <p>Waiting for: {entry.room_type ? entry.room_type.replace('_', ' ').toUpperCase() : 'Any Room'}</p>
-                                <p>Membership: {entry.membership_type.replace('_', ' ')}</p>
+                {/* 3-Column Waitlist Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  
+                  {/* Regular Room Waitlist */}
+                  <div className="bg-blue-600/20 p-4 rounded-lg border border-blue-500/50">
+                    <h3 className="text-blue-300 font-semibold mb-3 text-center">
+                      Regular Room Waitlist
+                    </h3>
+                    <p className="text-xs text-center text-gray-400 mb-3">
+                      Rooms 1-6, 25-32 (With TV)
+                    </p>
+                    {(!waitlist.regular_room || waitlist.regular_room.length === 0) ? (
+                      <p className="text-gray-400 text-center py-4 text-sm">No customers waiting</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {waitlist.regular_room.map((entry, index) => (
+                          <div key={entry.id} className="p-3 bg-black/30 rounded border border-blue-400/30">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-medium text-white text-sm">
+                                  #{index + 1} {entry.customer?.first_name} {entry.customer?.last_name}
+                                </h4>
+                                <p className="text-xs text-gray-300">
+                                  {entry.current_room_number ? 
+                                    `From: ${entry.current_room_type?.replace('_', ' ').toUpperCase()} #${entry.current_room_number}` : 
+                                    'New Customer'
+                                  }
+                                </p>
                                 <p className="text-xs text-gray-400">
-                                  Added: {new Date(entry.created_at).toLocaleString()}
+                                  {new Date(entry.created_at).toLocaleTimeString()}
                                 </p>
                               </div>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => removeFromWaitlist(entry.id)}
+                                className="text-xs px-2 py-1"
+                              >
+                                Remove
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() => {
-                                // User can manually assign room from available ones
-                                alert('Please manually assign an available room from the map above, then remove from waitlist.');
-                              }}
-                            >
-                              ✓ Assign Room
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => removeFromWaitlist(entry.id)}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
+
+                  {/* Small Room Waitlist */}
+                  <div className="bg-green-600/20 p-4 rounded-lg border border-green-500/50">
+                    <h3 className="text-green-300 font-semibold mb-3 text-center">
+                      Small Room Waitlist
+                    </h3>
+                    <p className="text-xs text-center text-gray-400 mb-3">
+                      Rooms 7-24 (No TV)
+                    </p>
+                    {(!waitlist.small_room || waitlist.small_room.length === 0) ? (
+                      <p className="text-gray-400 text-center py-4 text-sm">No customers waiting</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {waitlist.small_room.map((entry, index) => (
+                          <div key={entry.id} className="p-3 bg-black/30 rounded border border-green-400/30">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-medium text-white text-sm">
+                                  #{index + 1} {entry.customer?.first_name} {entry.customer?.last_name}
+                                </h4>
+                                <p className="text-xs text-gray-300">
+                                  {entry.current_room_number ? 
+                                    `From: ${entry.current_room_type?.replace('_', ' ').toUpperCase()} #${entry.current_room_number}` : 
+                                    'New Customer'
+                                  }
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {new Date(entry.created_at).toLocaleTimeString()}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => removeFromWaitlist(entry.id)}
+                                className="text-xs px-2 py-1"
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Deluxe Room Waitlist */}
+                  <div className="bg-purple-600/20 p-4 rounded-lg border border-purple-500/50">
+                    <h3 className="text-purple-300 font-semibold mb-3 text-center">
+                      Deluxe Room Waitlist
+                    </h3>
+                    <p className="text-xs text-center text-gray-400 mb-3">
+                      Rooms 34-39 (Large, With TV)
+                    </p>
+                    {(!waitlist.deluxe_room || waitlist.deluxe_room.length === 0) ? (
+                      <p className="text-gray-400 text-center py-4 text-sm">No customers waiting</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {waitlist.deluxe_room.map((entry, index) => (
+                          <div key={entry.id} className="p-3 bg-black/30 rounded border border-purple-400/30">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-medium text-white text-sm">
+                                  #{index + 1} {entry.customer?.first_name} {entry.customer?.last_name}
+                                </h4>
+                                <p className="text-xs text-gray-300">
+                                  {entry.current_room_number ? 
+                                    `From: ${entry.current_room_type?.replace('_', ' ').toUpperCase()} #${entry.current_room_number}` : 
+                                    'New Customer'
+                                  }
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {new Date(entry.created_at).toLocaleTimeString()}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => removeFromWaitlist(entry.id)}
+                                className="text-xs px-2 py-1"
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
