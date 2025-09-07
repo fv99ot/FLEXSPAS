@@ -1399,6 +1399,32 @@ const Dashboard = () => {
                               >
                                 Upgrade
                               </Button>
+                              
+                              {/* Add to Waitlist Dropdown */}
+                              <div className="relative">
+                                <Select onValueChange={(value) => {
+                                  if (value && value !== 'placeholder') {
+                                    addFromCheckinToWaitlist(checkin.id, value);
+                                  }
+                                }}>
+                                  <SelectTrigger className="w-32 h-8 bg-yellow-600 hover:bg-yellow-700 border-yellow-500 text-white text-xs">
+                                    <SelectValue placeholder="+ Waitlist" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="placeholder" disabled>Add to Waitlist</SelectItem>
+                                    {checkin.room_type !== 'regular_room' && (
+                                      <SelectItem value="regular_room">Regular Room</SelectItem>
+                                    )}
+                                    {checkin.room_type !== 'small_room' && (
+                                      <SelectItem value="small_room">Small Room</SelectItem>
+                                    )}
+                                    {checkin.room_type !== 'deluxe_room' && (
+                                      <SelectItem value="deluxe_room">Deluxe Room</SelectItem>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
                               <Button
                                 size="sm"
                                 variant={checkin.is_overtime ? "destructive" : "outline"}
