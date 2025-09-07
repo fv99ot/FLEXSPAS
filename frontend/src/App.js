@@ -1586,7 +1586,7 @@ const Dashboard = () => {
                       Regular Room Waitlist
                     </h3>
                     <p className="text-xs text-center text-gray-400 mb-3">
-                      Rooms 1-6, 25-32 (With TV)
+                      Rooms 1-6, 25-32 (With TV) • {(!waitlist.regular_room || waitlist.regular_room.length === 0) ? '0' : waitlist.regular_room.length} waiting
                     </p>
                     {(!waitlist.regular_room || waitlist.regular_room.length === 0) ? (
                       <p className="text-gray-400 text-center py-4 text-sm">No customers waiting</p>
@@ -1608,6 +1608,11 @@ const Dashboard = () => {
                                 <p className="text-xs text-gray-400">
                                   {new Date(entry.created_at).toLocaleTimeString()}
                                 </p>
+                                {/* Show if customer is on multiple waitlists */}
+                                {(waitlist.small_room?.some(e => e.customer_id === entry.customer_id) || 
+                                  waitlist.deluxe_room?.some(e => e.customer_id === entry.customer_id)) && (
+                                  <p className="text-xs text-yellow-300">⭐ On multiple waitlists</p>
+                                )}
                               </div>
                               <Button
                                 size="sm"
@@ -1630,7 +1635,7 @@ const Dashboard = () => {
                       Small Room Waitlist
                     </h3>
                     <p className="text-xs text-center text-gray-400 mb-3">
-                      Rooms 7-24 (No TV)
+                      Rooms 7-24 (No TV) • {(!waitlist.small_room || waitlist.small_room.length === 0) ? '0' : waitlist.small_room.length} waiting
                     </p>
                     {(!waitlist.small_room || waitlist.small_room.length === 0) ? (
                       <p className="text-gray-400 text-center py-4 text-sm">No customers waiting</p>
@@ -1652,6 +1657,11 @@ const Dashboard = () => {
                                 <p className="text-xs text-gray-400">
                                   {new Date(entry.created_at).toLocaleTimeString()}
                                 </p>
+                                {/* Show if customer is on multiple waitlists */}
+                                {(waitlist.regular_room?.some(e => e.customer_id === entry.customer_id) || 
+                                  waitlist.deluxe_room?.some(e => e.customer_id === entry.customer_id)) && (
+                                  <p className="text-xs text-yellow-300">⭐ On multiple waitlists</p>
+                                )}
                               </div>
                               <Button
                                 size="sm"
@@ -1674,7 +1684,7 @@ const Dashboard = () => {
                       Deluxe Room Waitlist
                     </h3>
                     <p className="text-xs text-center text-gray-400 mb-3">
-                      Rooms 34-39 (Large, With TV)
+                      Rooms 34-39 (Large, With TV) • {(!waitlist.deluxe_room || waitlist.deluxe_room.length === 0) ? '0' : waitlist.deluxe_room.length} waiting
                     </p>
                     {(!waitlist.deluxe_room || waitlist.deluxe_room.length === 0) ? (
                       <p className="text-gray-400 text-center py-4 text-sm">No customers waiting</p>
@@ -1696,6 +1706,11 @@ const Dashboard = () => {
                                 <p className="text-xs text-gray-400">
                                   {new Date(entry.created_at).toLocaleTimeString()}
                                 </p>
+                                {/* Show if customer is on multiple waitlists */}
+                                {(waitlist.regular_room?.some(e => e.customer_id === entry.customer_id) || 
+                                  waitlist.small_room?.some(e => e.customer_id === entry.customer_id)) && (
+                                  <p className="text-xs text-yellow-300">⭐ On multiple waitlists</p>
+                                )}
                               </div>
                               <Button
                                 size="sm"
