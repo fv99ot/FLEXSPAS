@@ -227,6 +227,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "COMPREHENSIVE TESTING COMPLETED: Waitlist management system working perfectly. ✅ Add customers to waitlist for specific room types - PASSED, ✅ Get waitlist entries with customer data enrichment - PASSED, ✅ Remove customers from waitlist - PASSED, ✅ Waitlist status management working correctly - PASSED. Full waitlist CRUD operations functioning correctly."
+      - working: true
+        agent: "testing"
+        comment: "ENHANCED 3-COLUMN WAITLIST SYSTEM TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of the enhanced 3-column waitlist system completed with 100% success rate (12/12 tests passed). ✅ ORGANIZED WAITLIST STRUCTURE: GET /api/waitlist returns proper 3-column structure {regular_room: [], small_room: [], deluxe_room: []} - WORKING, ✅ ROOM TYPE CATEGORIZATION: Customers properly categorized by desired_room_type with first-come-first-served sorting - WORKING, ✅ ADD CURRENT CUSTOMERS: POST /api/waitlist/add-from-checkin/{checkin_id} allows checked-in customers to join waitlists with current room info stored - WORKING, ✅ WAITLIST VALIDATION: Duplicate prevention for same customer+room type, multiple waitlists for different room types allowed - WORKING, ✅ DATA STRUCTURE: WaitlistEntry model includes current_room_number, current_room_type, desired_room_type with proper datetime handling - WORKING, ✅ CUSTOMER ENRICHMENT: Waitlist responses include complete customer data - WORKING, ✅ WAITLIST REMOVAL: DELETE /api/waitlist/{entry_id} working correctly - WORKING. Fixed response model serialization issue. Enhanced 3-column waitlist system fully operational and ready for production use."
 
   - task: "Customer Model Overtime Fields"
     implemented: true
