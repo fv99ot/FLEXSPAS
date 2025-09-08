@@ -633,6 +633,49 @@ async def update_customer_notes(customer_id: str, notes_data: dict, current_user
     
     return {"message": "Customer notes updated successfully", "notes": notes}
 
+@api_router.get("/customers/{customer_id}/membership-status")
+async def get_customer_membership_status(customer_id: str, current_user: User = Depends(get_current_user)):
+    """Check if customer has a valid (non-expired) membership"""
+    
+    # Get customer's most recent check-in with 6-month membership
+    recent_checkin = await db.check_ins.find_one(
+        {
+            "customer_id": customer_id,
+            "membership_type": "6_month",
+            "check_in_time": {"$ne": None}
+        },
+        sort=[("check_in_time", -1)]
+    )
+    
+    if not recent_checkin:
+        return {
+            "has_valid_membership": False,
+            "membership_type": None,
+            "expiration_date": None,
+            "days_remaining": 0
+        }
+    
+    # Calculate expiration date (6 months from last 6-month membership purchase)
+    check_in_time = recent_checkin["check_in_time"]
+    if isinstance(check_in_time, str):
+        check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
+    elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
+        check_in_time = check_in_time.replace(tzinfo=timezone.utc)
+    
+    expiration_date = check_in_time + timedelta(days=180)  # 6 months
+    current_time = datetime.now(timezone.utc)
+    
+    is_valid = current_time < expiration_date
+    days_remaining = (expiration_date - current_time).days if is_valid else 0
+    
+    return {
+        "has_valid_membership": is_valid,
+        "membership_type": "6_month" if is_valid else None,
+        "expiration_date": expiration_date,
+        "days_remaining": days_remaining,
+        "last_membership_date": check_in_time
+    }
+
 @api_router.get("/customers/{customer_id}/profile")
 async def get_customer_profile(customer_id: str, current_user: User = Depends(get_current_user)):
     """Get detailed customer profile with visit history"""
