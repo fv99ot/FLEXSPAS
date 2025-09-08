@@ -264,7 +264,9 @@ const Dashboard = () => {
     customerName: '',
     totalAmount: 0,
     paymentMethod: '',
-    additionalItems: []
+    additionalItems: [],
+    selectedDiscount: null,
+    discountAmount: 0
   });
 
   useEffect(() => {
