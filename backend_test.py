@@ -607,6 +607,337 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_qr_pending_customer_approval_comprehensive(self):
+        """Comprehensive test of QR pending customer approval system as requested"""
+        print("\n🔄 COMPREHENSIVE QR PENDING CUSTOMER APPROVAL TESTING...")
+        print("   Testing the complete flow: QR form → pending → approval → main customer")
+        
+        all_success = True
+        
+        # Generate unique timestamp for test data
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+        
+        # TEST 1: Create Test Pending Customer via QR Form (Public Endpoint)
+        print("   TEST 1: Create Test Pending Customer via QR Form...")
+        test_customer_data = {
+            "first_name": "Isabella",
+            "last_name": "Garcia",
+            "id_number": f"QR_TEST_{unique_timestamp}",
+            "date_of_birth": "1988-09-12",
+            "id_expiration_date": "2026-08-30",
+            "state_of_id": "FL"
+        }
+        
+        pending_customer_id = None
+        
+        try:
+            # Submit via public endpoint (no auth required) - simulates QR form submission
+            response = requests.post(
+                f"{self.api_url}/customers/public",
+                json=test_customer_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['status'] == 'pending' and data['first_name'] == 'Isabella':
+                    pending_customer_id = data['id']
+                    self.log_test("QR Form Submission (Public Endpoint)", True, 
+                                f"Created pending customer: {data['first_name']} {data['last_name']} (ID: {pending_customer_id})")
+                else:
+                    self.log_test("QR Form Submission (Public Endpoint)", False, "Invalid response data structure")
+                    all_success = False
+            else:
+                self.log_test("QR Form Submission (Public Endpoint)", False, 
+                            f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("QR Form Submission (Public Endpoint)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        if not pending_customer_id:
+            print("   ❌ Cannot continue testing - QR form submission failed")
+            return False
+        
+        # TEST 2: Get Pending Customers List (Admin Authentication Required)
+        print("   TEST 2: Get Pending Customers List...")
+        
+        if not self.token:
+            self.log_test("Get Pending Customers List", False, "No authentication token")
+            all_success = False
+        else:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/pending-customers",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    pending_customers = response.json()
+                    if isinstance(pending_customers, list):
+                        # Find our test customer in the pending list
+                        found_customer = None
+                        for customer in pending_customers:
+                            if customer.get('id') == pending_customer_id:
+                                found_customer = customer
+                                break
+                        
+                        if found_customer:
+                            # Verify customer data integrity
+                            data_integrity = (
+                                found_customer.get('first_name') == 'Isabella' and
+                                found_customer.get('last_name') == 'Garcia' and
+                                found_customer.get('status') == 'pending' and
+                                found_customer.get('id_number') == f"QR_TEST_{unique_timestamp}"
+                            )
+                            
+                            self.log_test("Get Pending Customers List", data_integrity, 
+                                        f"Found {len(pending_customers)} pending customers, target customer found with correct data")
+                            if not data_integrity:
+                                all_success = False
+                        else:
+                            self.log_test("Get Pending Customers List", False, 
+                                        f"Test customer not found in {len(pending_customers)} pending customers")
+                            all_success = False
+                    else:
+                        self.log_test("Get Pending Customers List", False, "Invalid response format - not a list")
+                        all_success = False
+                else:
+                    self.log_test("Get Pending Customers List", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Get Pending Customers List", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 3: Test Approval Process (The Critical Test)
+        print("   TEST 3: Test Approval Process...")
+        
+        approved_customer_id = None
+        
+        if pending_customer_id and self.token:
+            try:
+                # This is the endpoint the frontend calls for approval
+                response = requests.post(
+                    f"{self.api_url}/pending-customers/{pending_customer_id}/approve",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    approved_data = response.json()
+                    if ('id' in approved_data and 
+                        approved_data.get('first_name') == 'Isabella' and
+                        approved_data.get('last_name') == 'Garcia'):
+                        
+                        approved_customer_id = approved_data['id']
+                        
+                        # Verify approval notes were added
+                        has_approval_notes = 'notes' in approved_data and 'Approved by' in approved_data.get('notes', '')
+                        
+                        self.log_test("Approve Pending Customer", True, 
+                                    f"Successfully approved customer (New ID: {approved_customer_id}, Notes: {has_approval_notes})")
+                    else:
+                        self.log_test("Approve Pending Customer", False, "Invalid approval response data")
+                        all_success = False
+                else:
+                    self.log_test("Approve Pending Customer", False, 
+                                f"CRITICAL FAILURE - Status: {response.status_code}, Response: {response.text}")
+                    print(f"   🚨 This matches the user-reported issue: 'won't let me approve a customer'")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Approve Pending Customer", False, f"CRITICAL EXCEPTION: {str(e)}")
+                print(f"   🚨 This could be the root cause of the user-reported issue")
+                all_success = False
+        
+        # TEST 4: Verify Customer Moved to Main Collection
+        print("   TEST 4: Verify Customer Moved to Main Collection...")
+        
+        if approved_customer_id and self.token:
+            try:
+                # Search for the approved customer in main customers collection
+                response = requests.get(
+                    f"{self.api_url}/customers?q=Isabella",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    customers = response.json()
+                    found_in_main = False
+                    
+                    for customer in customers:
+                        if (customer.get('id') == approved_customer_id and
+                            customer.get('first_name') == 'Isabella' and
+                            customer.get('last_name') == 'Garcia'):
+                            found_in_main = True
+                            break
+                    
+                    self.log_test("Customer in Main Collection", found_in_main, 
+                                f"Approved customer found in main customers collection: {found_in_main}")
+                    if not found_in_main:
+                        all_success = False
+                else:
+                    self.log_test("Customer in Main Collection", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Customer in Main Collection", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 5: Verify Customer No Longer in Pending List
+        print("   TEST 5: Verify Customer No Longer in Pending List...")
+        
+        if pending_customer_id and self.token:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/pending-customers",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    remaining_pending = response.json()
+                    still_pending = any(c.get('id') == pending_customer_id for c in remaining_pending)
+                    
+                    self.log_test("Removed from Pending List", not still_pending, 
+                                f"Customer no longer in pending list: {not still_pending}")
+                    if still_pending:
+                        all_success = False
+                else:
+                    self.log_test("Removed from Pending List", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Removed from Pending List", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 6: Test Authentication and Authorization Issues
+        print("   TEST 6: Test Authentication and Authorization...")
+        
+        # Create another pending customer for auth testing
+        auth_test_data = {
+            "first_name": "AuthTest",
+            "last_name": "Customer",
+            "id_number": f"AUTH_TEST_{unique_timestamp}",
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        auth_pending_id = None
+        try:
+            auth_response = requests.post(
+                f"{self.api_url}/customers/public",
+                json=auth_test_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            if auth_response.status_code == 200:
+                auth_pending_id = auth_response.json()['id']
+        except:
+            pass
+        
+        if auth_pending_id:
+            try:
+                # Test approval without authentication (should fail)
+                response = requests.post(
+                    f"{self.api_url}/pending-customers/{auth_pending_id}/approve",
+                    headers={'Content-Type': 'application/json'},  # No auth header
+                    timeout=10
+                )
+                
+                auth_protection = response.status_code == 401
+                self.log_test("Approval Requires Authentication", auth_protection, 
+                            f"Unauthenticated approval properly rejected: {auth_protection}")
+                if not auth_protection:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Approval Requires Authentication", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 7: Integration Testing - Complete End-to-End Flow
+        print("   TEST 7: Integration Testing - Complete End-to-End Flow...")
+        
+        # Create another test customer for full integration test
+        integration_timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f') + "_INT"
+        integration_customer_data = {
+            "first_name": "Miguel",
+            "last_name": "Rodriguez",
+            "id_number": f"INTEGRATION_{integration_timestamp}",
+            "date_of_birth": "1985-11-25",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "TX"
+        }
+        
+        try:
+            # Step 1: QR form submission
+            qr_response = requests.post(
+                f"{self.api_url}/customers/public",
+                json=integration_customer_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if qr_response.status_code == 200:
+                integration_pending_id = qr_response.json()['id']
+                
+                # Step 2: Admin approval
+                approval_response = requests.post(
+                    f"{self.api_url}/pending-customers/{integration_pending_id}/approve",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if approval_response.status_code == 200:
+                    integration_approved_id = approval_response.json()['id']
+                    
+                    # Step 3: Verify complete data transfer
+                    customer_response = requests.get(
+                        f"{self.api_url}/customers/{integration_approved_id}",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if customer_response.status_code == 200:
+                        final_customer = customer_response.json()
+                        
+                        # Verify all data was properly transferred
+                        data_complete = (
+                            final_customer.get('first_name') == 'Miguel' and
+                            final_customer.get('last_name') == 'Rodriguez' and
+                            final_customer.get('id_number') == f"INTEGRATION_{integration_timestamp}" and
+                            final_customer.get('date_of_birth') == '1985-11-25' and
+                            final_customer.get('state_of_id') == 'TX' and
+                            'unpaid_overtime_hours' in final_customer and
+                            'unpaid_overtime_amount' in final_customer
+                        )
+                        
+                        self.log_test("End-to-End Integration", data_complete, 
+                                    f"Complete workflow successful with full data integrity: {data_complete}")
+                        if not data_complete:
+                            all_success = False
+                    else:
+                        self.log_test("End-to-End Integration", False, "Could not retrieve final customer data")
+                        all_success = False
+                else:
+                    self.log_test("End-to-End Integration", False, f"Integration approval failed: {approval_response.status_code}")
+                    all_success = False
+            else:
+                self.log_test("End-to-End Integration", False, f"Integration QR submission failed: {qr_response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("End-to-End Integration", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def test_user_reported_approval_issue(self):
         """Test the specific user-reported issue: 'won't let me approve a customer after they submit their QR code form'"""
         print("\n🚨 Testing User-Reported Approval Issue...")
