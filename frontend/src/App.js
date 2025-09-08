@@ -1128,6 +1128,18 @@ const Dashboard = () => {
   };
 
   const handlePaymentComplete = () => {
+    // Print receipt before clearing data
+    if (selectedCustomer && paymentData.checkInId) {
+      const checkInData = {
+        room_type: checkinForm.roomType,
+        room_number: checkinForm.roomNumber,
+        membership_type: checkinForm.membershipType,
+        check_in_time: new Date()
+      };
+      
+      printReceipt(selectedCustomer, checkInData, paymentData);
+    }
+    
     setShowPayment(false);
     setPaymentData({
       checkInId: '',
