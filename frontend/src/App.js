@@ -368,7 +368,9 @@ const Dashboard = () => {
 
   const fetchDiscounts = async () => {
     try {
-      const response = await axios.get(`${API}/discounts`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/discounts`, { headers });
       setDiscounts(response.data);
     } catch (error) {
       console.error('Error fetching discounts:', error);
