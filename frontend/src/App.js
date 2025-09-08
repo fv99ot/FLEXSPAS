@@ -188,6 +188,8 @@ const Dashboard = () => {
     category: 'general'
   });
   const [pendingCustomers, setPendingCustomers] = useState([]);
+  
+  // Make discounts and additionalItems available for payment dialog
   const [discounts, setDiscounts] = useState([]);
   const [waitlist, setWaitlist] = useState([]);
   const [showUpgrade, setShowUpgrade] = useState(false);
