@@ -3533,6 +3533,9 @@ class BathhouseAPITester:
         # NEW FEATURE: Sales reports tests
         self.test_sales_reports()
         
+        # QR PENDING CUSTOMER APPROVAL SYSTEM (CRITICAL USER ISSUE)
+        self.test_qr_pending_customer_approval_comprehensive()
+        
         # NEW FEATURE: Customer approval system tests
         self.test_pending_customer_approval_system()
         
