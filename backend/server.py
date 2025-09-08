@@ -406,8 +406,8 @@ async def get_available_rooms_for_type(room_type: RoomType, current_user: User =
 @api_router.post("/checkin", response_model=CheckIn)
 async def check_in_customer(checkin_data: dict, current_user: User = Depends(get_current_user)):
     customer_id = checkin_data["customer_id"]
-    room_type = RoomType(checkin_data["room_type"])
-    membership_type = MembershipType(checkin_data["membership_type"])
+    membership_type = checkin_data.get("membership_type")
+    room_type = checkin_data["room_type"]
     room_number = checkin_data["room_number"]
     
     # Check if customer exists and is not banned
@@ -425,30 +425,96 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
             detail=f"Customer has unpaid overtime fees of ${unpaid_overtime:.2f}. Must pay before checking in again."
         )
     
+    # Check for valid existing membership
+    membership_status = None
+    if membership_type == "6_month":
+        # Check if customer already has valid 6-month membership
+        recent_checkin = await db.check_ins.find_one(
+            {
+                "customer_id": customer_id,
+                "membership_type": "6_month",
+                "check_in_time": {"$ne": None}
+            },
+            sort=[("check_in_time", -1)]
+        )
+        
+        if recent_checkin:
+            check_in_time = recent_checkin["check_in_time"]
+            if isinstance(check_in_time, str):
+                check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
+            elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
+                check_in_time = check_in_time.replace(tzinfo=timezone.utc)
+            
+            expiration_date = check_in_time + timedelta(days=180)
+            current_time = datetime.now(timezone.utc)
+            
+            if current_time < expiration_date:
+                raise HTTPException(
+                    status_code=400, 
+                    detail=f"Customer already has valid 6-month membership until {expiration_date.strftime('%Y-%m-%d')}. No need to purchase another membership."
+                )
+    
+    # If no membership_type provided, check if customer has valid membership
+    if not membership_type:
+        recent_checkin = await db.check_ins.find_one(
+            {
+                "customer_id": customer_id,
+                "membership_type": "6_month",
+                "check_in_time": {"$ne": None}
+            },
+            sort=[("check_in_time", -1)]
+        )
+        
+        if recent_checkin:
+            check_in_time = recent_checkin["check_in_time"]
+            if isinstance(check_in_time, str):
+                check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
+            elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
+                check_in_time = check_in_time.replace(tzinfo=timezone.utc)
+            
+            expiration_date = check_in_time + timedelta(days=180)
+            current_time = datetime.now(timezone.utc)
+            
+            if current_time < expiration_date:
+                # Customer has valid membership, use it
+                membership_type = "6_month"
+                membership_status = {
+                    "using_existing": True,
+                    "expiration_date": expiration_date
+                }
+        
+        if not membership_type:
+            raise HTTPException(status_code=400, detail="Customer has no valid membership. Must purchase membership to check in.")
+    
+    # Check for active check-in
+    existing_checkin = await db.check_ins.find_one({"customer_id": customer_id, "check_out_time": None})
+    if existing_checkin:
+        raise HTTPException(status_code=400, detail="Customer is already checked in")
+    
     # Check if room is available
-    existing_checkin = await db.check_ins.find_one({
+    room_checkin = await db.check_ins.find_one({
         "room_number": room_number,
         "room_type": room_type,
         "check_out_time": None
     })
-    if existing_checkin:
+    if room_checkin:
         raise HTTPException(status_code=400, detail="Room is already occupied")
     
-    # Check customer's session count for today
+    # Check session limits for the day
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     today_checkins = await db.check_ins.find({
         "customer_id": customer_id,
         "check_in_time": {"$gte": today_start}
-    }).to_list(1000)
+    }).to_list(None)
     
     if len(today_checkins) >= 3:
         raise HTTPException(status_code=400, detail="Customer has reached maximum 3 sessions for today")
     
-    # Calculate pricing
+    # Calculate costs
     is_weekend = is_weekend_day()
-    room_fee = get_room_pricing(room_type, is_weekend)
-    membership_fee = get_membership_fee(membership_type)
-    total_amount = room_fee + membership_fee
+    membership_fee = 0 if membership_status and membership_status.get("using_existing") else get_membership_fee(MembershipType(membership_type))
+    room_fee = get_room_pricing(RoomType(room_type), is_weekend)
+    total_amount = membership_fee + room_fee
     
     # Create check-in record
     checkin_doc = {
@@ -459,16 +525,21 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
         "room_type": room_type,
         "room_number": room_number,
         "check_in_time": datetime.now(timezone.utc),
-        "check_out_time": None,
         "total_amount": total_amount,
         "membership_fee": membership_fee,
         "room_fee": room_fee,
         "is_weekend": is_weekend,
-        "session_count": len(today_checkins) + 1
+        "session_count": len(today_checkins) + 1,
+        "payment_method": "cash"
     }
     
     await db.check_ins.insert_one(checkin_doc)
-    return CheckIn(**checkin_doc)
+    
+    response_data = CheckIn(**checkin_doc).dict()
+    if membership_status:
+        response_data["membership_status"] = membership_status
+    
+    return response_data
 
 @api_router.put("/checkin/{checkin_id}/checkout")
 async def check_out_customer(checkin_id: str, current_user: User = Depends(get_current_user)):
