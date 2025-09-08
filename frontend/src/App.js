@@ -787,6 +787,76 @@ const Dashboard = () => {
     }
   };
 
+  // Receipt Printing Function
+  const printReceipt = (customerData, checkInData, paymentData) => {
+    const checkInTime = new Date(checkInData.check_in_time || new Date());
+    const checkOutTime = new Date(checkInTime.getTime() + (8 * 60 * 60 * 1000)); // 8 hours later
+    
+    const receiptContent = `
+      <div style="font-family: monospace; width: 300px; padding: 20px; margin: 0 auto;">
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px;">
+          <h2 style="margin: 0; font-size: 18px;">FLEX SPA LOS ANGELES</h2>
+          <p style="margin: 5px 0; font-size: 12px;">Bathhouse Receipt</p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="margin: 2px 0;"><strong>Customer:</strong> ${customerData.first_name} ${customerData.last_name}</p>
+          <p style="margin: 2px 0;"><strong>ID Number:</strong> ${customerData.id_number}</p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="margin: 2px 0;"><strong>Room/Locker:</strong> ${checkInData.room_type?.replace('_', ' ').toUpperCase()} #${checkInData.room_number}</p>
+          <p style="margin: 2px 0;"><strong>Membership:</strong> ${checkInData.membership_type?.replace('_', ' ')}</p>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+          <p style="margin: 2px 0;"><strong>Check-in Time:</strong> ${checkInTime.toLocaleString()}</p>
+          <p style="margin: 2px 0;"><strong>Must Check-out By:</strong> ${checkOutTime.toLocaleString()}</p>
+          <p style="margin: 2px 0; color: red;"><strong>SESSION LIMIT: 8 HOURS</strong></p>
+        </div>
+        
+        <div style="border-top: 1px solid #000; padding-top: 10px; margin-bottom: 15px;">
+          <p style="margin: 2px 0;"><strong>Payment Method:</strong> ${paymentData.paymentMethod?.toUpperCase()}</p>
+          <p style="margin: 2px 0;"><strong>Total Amount:</strong> $${paymentData.totalAmount?.toFixed(2)}</p>
+          ${paymentData.additionalItems && paymentData.additionalItems.length > 0 ? 
+            paymentData.additionalItems.map(item => 
+              `<p style="margin: 2px 0; font-size: 11px;">  ${item.name} (x${item.quantity}): $${(item.price * item.quantity).toFixed(2)}</p>`
+            ).join('') : ''
+          }
+          ${paymentData.selectedDiscount ? 
+            `<p style="margin: 2px 0; font-size: 11px; color: green;">  Discount (${paymentData.selectedDiscount.name}): -$${paymentData.discountAmount?.toFixed(2)}</p>` : ''
+          }
+        </div>
+        
+        <div style="text-align: center; border-top: 2px solid #000; padding-top: 10px; font-size: 11px;">
+          <p style="margin: 2px 0;">Thank you for visiting!</p>
+          <p style="margin: 2px 0;">Keep this receipt for your records</p>
+          <p style="margin: 2px 0;">${new Date().toLocaleDateString()}</p>
+        </div>
+      </div>
+    `;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>FLEX SPA Receipt</title>
+          <style>
+            @media print {
+              @page { margin: 0.5in; }
+              body { margin: 0; }
+            }
+          </style>
+        </head>
+        <body onload="window.print(); window.close();">
+          ${receiptContent}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const saveProfileNotes = async () => {
     if (!selectedCustomerProfile) return;
     
