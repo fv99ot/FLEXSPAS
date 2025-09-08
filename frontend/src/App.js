@@ -277,6 +277,7 @@ const Dashboard = () => {
     fetchPendingCustomers(); // All staff can see pending customers
     fetchWaitlist(); // Fetch waitlist data
     fetchAdditionalItems(); // All staff need access to additional items for payment
+    fetchDiscounts(); // All staff need access to discounts for payment
     fetchAdminDiscounts(); // All staff need access to discounts for payment
     if (user?.role === 'manager') {
       fetchEmployees();
