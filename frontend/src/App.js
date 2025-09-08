@@ -148,9 +148,6 @@ const Login = () => {
             </form>
           </CardContent>
         </Card>
-        <div className="mt-4 text-center text-gray-400 text-sm">
-          Default admin: username: admin, password: admin123
-        </div>
       </div>
     </div>
   );
