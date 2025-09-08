@@ -1004,7 +1004,9 @@ const Dashboard = () => {
         customerName: `${selectedCustomer.first_name} ${selectedCustomer.last_name}`,
         totalAmount: response.data.total_amount,
         paymentMethod: '',
-        additionalItems: []
+        additionalItems: [],
+        selectedDiscount: null,
+        discountAmount: 0
       };
 
       console.log('💰 Setting payment data:', JSON.stringify(paymentInfo, null, 2));
