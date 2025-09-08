@@ -2982,7 +2982,12 @@ class BathhouseAPITester:
         # Test specific user-reported issue
         self.test_user_reported_approval_issue()
         
-        # NEW ADMIN FEATURES TESTING
+        # COMPREHENSIVE DISCOUNT AND ADDITIONAL ITEMS TESTING (AS REQUESTED IN REVIEW)
+        self.test_discount_management_comprehensive()
+        self.test_additional_items_management_comprehensive()
+        self.test_integration_and_authentication()
+        
+        # NEW ADMIN FEATURES TESTING (LEGACY)
         self.test_admin_discount_management()
         self.test_ghost_functionality_removed()  # Verify ghost functionality is completely removed
         self.test_additional_items_management()
