@@ -206,6 +206,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "COMPREHENSIVE TESTING COMPLETED: Additional items management system working perfectly. ✅ Seed default items (condoms, dildos, cleaning fees, lost key fees) - PASSED, ✅ Create new additional items - PASSED, ✅ Toggle items on/off - PASSED, ✅ Admin vs regular endpoints working correctly - PASSED, ✅ All 4 default items created successfully - PASSED. Full CRUD operations for additional items functioning correctly."
+      - working: true
+        agent: "testing"
+        comment: "COMPREHENSIVE REVIEW REQUEST TESTING COMPLETED (100% SUCCESS): Thorough testing of additional items management system with focus on admin functionality completed with perfect results. ✅ ADDITIONAL ITEMS CRUD OPERATIONS: Create new additional item - PASSED, Update existing item (name, price, category) - PASSED, Toggle item active/inactive status - PASSED, Delete item - PASSED. ✅ ADMIN ENDPOINTS VERIFIED: GET /api/additional-items (payment dialog, active only) - PASSED, GET /api/admin/additional-items (admin management, all items) - PASSED, POST /api/additional-items (create) - PASSED, PUT /api/additional-items/{id} (update) - PASSED, PUT /api/additional-items/{id}/toggle (enable/disable) - PASSED, DELETE /api/additional-items/{id} - PASSED. ✅ INTEGRATION TESTING: Created item appears in both admin view and payment dialog view - PASSED, Disabled items don't appear in payment dialog but remain in admin view - PASSED, Admin-only access restrictions verified - PASSED. ✅ AUTHENTICATION: Admin credentials (username=admin, password=admin123) working perfectly - PASSED. All additional items management functionality confirmed working properly as requested in review."
 
   - task: "Room Upgrade System"
     implemented: true
