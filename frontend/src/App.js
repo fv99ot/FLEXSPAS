@@ -1717,9 +1717,359 @@ function App() {
             </Card>
           </TabsContent>
 
-          {/* Continue with other tabs... */}
-          {/* QR Code, Reports, Employees, Admin Settings tabs would continue here */}
-          {/* For brevity, I'm not including all the remaining tabs in this response */}
+          <TabsContent value="qr" className="space-y-6">
+            {/* QR Code Generation */}
+            <Card className="dashboard-card">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <Key className="h-5 w-5 mr-2" />
+                  Membership Form QR Code
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  QR code for customers to scan and fill out membership forms
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center space-y-4">
+                  {qrCodeUrl ? (
+                    <div className="inline-block p-4 bg-white rounded-lg">
+                      <img src={qrCodeUrl} alt="Membership Form QR Code" className="max-w-64 h-auto" />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-gray-400">Loading QR code...</div>
+                  )}
+                  <div className="text-sm text-gray-300">
+                    <p>Customers can scan this QR code to fill out their membership information.</p>
+                    <p>Applications will appear in the "Pending Approvals" tab for review.</p>
+                  </div>
+                  <Button onClick={generateQRCode} className="flex-button">
+                    Regenerate QR Code
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-6">
+            {/* Sales Reports */}
+            <Card className="dashboard-card">
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Sales Reports
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  View daily and monthly sales reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex space-x-4">
+                    <Select value={reportType} onValueChange={setReportType}>
+                      <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white"
+                    />
+                    <Button onClick={fetchSalesReport} className="flex-button">
+                      Generate Report
+                    </Button>
+                  </div>
+
+                  {salesData && (
+                    <div className="mt-6 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Card className="bg-white/10 border-white/20">
+                          <CardContent className="p-4 text-center">
+                            <h3 className="text-lg font-semibold text-white">Total Revenue</h3>
+                            <p className="text-2xl font-bold text-green-400">${salesData.total_revenue?.toFixed(2) || '0.00'}</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-white/10 border-white/20">
+                          <CardContent className="p-4 text-center">
+                            <h3 className="text-lg font-semibold text-white">Total Transactions</h3>
+                            <p className="text-2xl font-bold text-blue-400">{salesData.total_transactions || 0}</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-white/10 border-white/20">
+                          <CardContent className="p-4 text-center">
+                            <h3 className="text-lg font-semibold text-white">Average Transaction</h3>
+                            <p className="text-2xl font-bold text-purple-400">${salesData.average_transaction?.toFixed(2) || '0.00'}</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {salesData.payment_breakdown && (
+                        <Card className="bg-white/10 border-white/20">
+                          <CardHeader>
+                            <CardTitle className="text-white">Payment Method Breakdown</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {Object.entries(salesData.payment_breakdown).map(([method, data]) => (
+                                <div key={method} className="flex justify-between items-center p-2 bg-white/5 rounded">
+                                  <span className="text-white capitalize">{method}</span>
+                                  <div className="text-right">
+                                    <span className="text-white font-semibold">${data.amount?.toFixed(2) || '0.00'}</span>
+                                    <span className="text-gray-300 text-sm ml-2">({data.count || 0} transactions)</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {user?.role === 'manager' && (
+            <TabsContent value="employees" className="space-y-6">
+              {/* Employee Management */}
+              <Card className="dashboard-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-white">
+                    <Users className="h-5 w-5 mr-2" />
+                    Employee Management
+                  </CardTitle>
+                  <CardDescription className="text-gray-300">
+                    Manage system users and their access levels
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Button onClick={() => setShowAddEmployee(true)} className="flex-button">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Employee
+                    </Button>
+
+                    <div className="grid gap-4">
+                      {employees.map((employee) => (
+                        <div key={employee.id} className="flex items-center justify-between p-4 border border-white/20 rounded-lg bg-white/5">
+                          <div className="flex items-center space-x-4">
+                            <Avatar>
+                              <AvatarFallback className="bg-red-600 text-white">
+                                {employee.username.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-semibold text-white">{employee.username}</h3>
+                              <p className="text-sm text-gray-300 capitalize">{employee.role}</p>
+                              <p className="text-xs text-gray-400">
+                                Created: {new Date(employee.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-white/20 text-white hover:bg-white/10"
+                              onClick={() => {
+                                setPasswordForm({
+                                  ...passwordForm,
+                                  targetUserId: employee.id,
+                                  targetUsername: employee.username
+                                });
+                                setPasswordDialogType('reset');
+                                setShowPasswordDialog(true);
+                              }}
+                            >
+                              Reset Password
+                            </Button>
+                            {employee.username !== 'admin' && employee.id !== user?.id && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteEmployee(employee.id)}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {user?.role === 'manager' && (
+            <TabsContent value="admin" className="space-y-6">
+              {/* Admin Settings */}
+              <Card className="dashboard-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-white">
+                    <Settings className="h-5 w-5 mr-2" />
+                    Admin Settings
+                  </CardTitle>
+                  <CardDescription className="text-gray-300">
+                    Manage discounts, additional items, and system settings
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="discounts" className="space-y-4">
+                    <TabsList className="grid w-full grid-cols-3 bg-white/10">
+                      <TabsTrigger value="discounts" className="tab-dark">Discounts</TabsTrigger>
+                      <TabsTrigger value="items" className="tab-dark">Additional Items</TabsTrigger>
+                      <TabsTrigger value="passwords" className="tab-dark">Password Management</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="discounts" className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-white">Discount Management</h3>
+                        <Button onClick={() => setShowAddDiscount(true)} className="flex-button">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Discount
+                        </Button>
+                      </div>
+
+                      <div className="grid gap-3">
+                        {adminDiscounts.map((discount) => (
+                          <div key={discount.id} className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5">
+                            <div>
+                              <h4 className="font-medium text-white">{discount.name}</h4>
+                              <p className="text-sm text-gray-300">${discount.amount.toFixed(2)} off</p>
+                              {discount.description && (
+                                <p className="text-xs text-gray-400">{discount.description}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant={discount.active ? "default" : "secondary"}>
+                                {discount.active ? "Active" : "Inactive"}
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/20 text-white hover:bg-white/10"
+                                onClick={() => toggleDiscount(discount.id, discount.active)}
+                              >
+                                {discount.active ? 'Disable' : 'Enable'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteDiscount(discount.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="items" className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-white">Additional Items Management</h3>
+                        <Button onClick={() => setShowAddItem(true)} className="flex-button">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Item
+                        </Button>
+                      </div>
+
+                      <div className="grid gap-3">
+                        {adminItems.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between p-3 border border-white/20 rounded-lg bg-white/5">
+                            <div>
+                              <h4 className="font-medium text-white">{item.name}</h4>
+                              <p className="text-sm text-gray-300">${item.price.toFixed(2)}</p>
+                              <p className="text-xs text-gray-400 capitalize">{item.category}</p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge variant={item.active ? "default" : "secondary"}>
+                                {item.active ? "Active" : "Inactive"}
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/20 text-white hover:bg-white/10"
+                                onClick={() => toggleAdditionalItem(item.id, item.active)}
+                              >
+                                {item.active ? 'Disable' : 'Enable'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => deleteAdditionalItem(item.id)}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="passwords" className="space-y-4">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold text-white">Password Management</h3>
+                        
+                        <Card className="bg-white/10 border-white/20">
+                          <CardContent className="p-4">
+                            <Button
+                              onClick={() => {
+                                setPasswordDialogType('change');
+                                setShowPasswordDialog(true);
+                              }}
+                              className="flex-button w-full"
+                            >
+                              <Lock className="h-4 w-4 mr-2" />
+                              Change My Password
+                            </Button>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="bg-white/10 border-white/20">
+                          <CardHeader>
+                            <h4 className="text-white">Reset Employee Passwords</h4>
+                            <p className="text-gray-300 text-sm">Click on any employee to reset their password</p>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid gap-2">
+                              {employees.filter(emp => emp.id !== user?.id).map((employee) => (
+                                <Button
+                                  key={employee.id}
+                                  variant="outline"
+                                  className="justify-start border-white/20 text-white hover:bg-white/10"
+                                  onClick={() => {
+                                    setPasswordForm({
+                                      ...passwordForm,
+                                      targetUserId: employee.id,
+                                      targetUsername: employee.username
+                                    });
+                                    setPasswordDialogType('reset');
+                                    setShowPasswordDialog(true);
+                                  }}
+                                >
+                                  <User className="h-4 w-4 mr-2" />
+                                  Reset password for {employee.username}
+                                </Button>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
           
         </Tabs>
       </div>
