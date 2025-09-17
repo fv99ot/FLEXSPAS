@@ -5,7 +5,7 @@ import json
 import jwt as jwt_lib
 
 # Test user lookup issue
-base_url = "https://flexla-admin.preview.emergentagent.com"
+base_url = "https://bathhouse-admin.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # Step 1: Login and get token

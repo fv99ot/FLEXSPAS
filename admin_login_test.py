@@ -6,7 +6,7 @@ import jwt
 import time
 
 class AdminLoginTester:
-    def __init__(self, base_url="https://flexla-admin.preview.emergentagent.com"):
+    def __init__(self, base_url="https://bathhouse-admin.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None

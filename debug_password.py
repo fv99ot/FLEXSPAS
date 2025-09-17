@@ -4,7 +4,7 @@ import requests
 import json
 
 # Test the password endpoint step by step
-base_url = "https://flexla-admin.preview.emergentagent.com"
+base_url = "https://bathhouse-admin.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # Step 1: Login
