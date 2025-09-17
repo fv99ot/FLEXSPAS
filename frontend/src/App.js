@@ -2683,10 +2683,10 @@ function LoginPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <img 
-            src="https://customer-assets.emergentagent.com/job_flexla-admin/artifacts/lo5s13pg_IMG_3221.jpg" 
+            src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
             alt="Flex Spa Los Angeles"
-            className="h-20 w-auto mx-auto mb-4"
-            style={{ maxHeight: '80px', objectFit: 'contain' }}
+            className="h-16 w-auto mx-auto mb-4"
+            style={{ maxHeight: '64px', objectFit: 'contain' }}
           />
           <h2 className="text-3xl font-bold text-white">Admin Portal</h2>
           <p className="text-gray-400 mt-2">Sign in to access the spa management system</p>
