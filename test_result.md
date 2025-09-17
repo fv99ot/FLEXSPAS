@@ -102,7 +102,115 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the new customer profile and password management features: Customer Profile System (GET /api/customers/{customer_id}/profile with visit history and membership expiration), Customer Notes Update (PUT /api/customers/{customer_id}/notes), Change Own Password (PUT /api/users/me/password), and Reset User Password (Admin) (PUT /api/users/{user_id}/password). Use admin credentials: username=admin, password=admin123."
+user_problem_statement: "Implement 6 new features for Flex Spa Los Angeles: 1) Update frontend check-in process to handle membership validation based on existing valid memberships, 2) Implement overtime payment prompt during checkout with 'Pay Now' or 'IOU' options, 3) Replace 'FLEX SPA LOS ANGELES' text with provided image on main page, 4) Modify main page tabs to display in two lines instead of one, 5) Enhance locker/room map to show remaining time for each customer in 'X hours Y min til checkout' format, 6) Add functionality to locker/room map to allow renewing or upgrading by clicking on occupied rooms, finalizing transactions and adding to history."
+
+backend:
+  - task: "Membership Validation Backend Function"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Backend has_valid_membership function exists and membership validation is integrated into check-in endpoint. Validates 6-month memberships and blocks duplicate purchases. Function checks for valid existing memberships at lines 458-487."
+
+frontend:
+  - task: "Frontend Membership Validation Integration"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Updated handleCheckIn function to properly handle membership validation responses from backend. Added user-friendly alerts for membership status and error handling for validation failures at lines 1106-1142."
+
+  - task: "Overtime Payment Prompt During Checkout"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented overtime payment prompt dialog with 'Pay Now' and 'IOU' options. Updated handleCheckOut function to show prompt when overtime is detected. Dialog implemented at lines 1650-1684 with state management and payment handling."
+
+  - task: "Replace FLEX SPA LOS ANGELES Text with Image"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Replaced text branding with uploaded image across all components. Updated header (line 1258), MembershipForm.js, and receipt generation. Image URL: https://customer-assets.emergentagent.com/job_flexla-admin/artifacts/lo5s13pg_IMG_3221.jpg"
+
+  - task: "Two-Line Tab Layout"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Modified tab layout to display in two rows using grid system. First row: Customer Management, Pending Approvals, Active Check-ins, Room Map. Second row: QR Code, Sales Reports, Employees (manager), Admin Settings (manager). Implemented at lines 1266-1281."
+
+  - task: "Room Map Time Display Enhancement"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Enhanced room map to show remaining time for occupied rooms in 'Xh Ym' format. Updated fetchRoomMap function to include remaining_hours from active check-ins. Time display added to room/locker tiles at lines 1044-1048 for fetchRoomMap and 1697-1704 for room tiles."
+
+  - task: "Clickable Room Management for Upgrades/Renewals"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added click functionality to occupied rooms/lockers in map. Clicking occupied room opens upgrade dialog for that customer's check-in. handleRoomClick function implemented at lines 1301-1312 with room upgrade integration."
+
+metadata:
+  created_by: "main_agent"
+  version: "2.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Frontend Membership Validation Integration"
+    - "Overtime Payment Prompt During Checkout"
+    - "Replace FLEX SPA LOS ANGELES Text with Image"
+    - "Two-Line Tab Layout"
+    - "Room Map Time Display Enhancement"
+    - "Clickable Room Management for Upgrades/Renewals"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "IMPLEMENTATION COMPLETE: All 6 requested features have been implemented. 1) Frontend membership validation with user-friendly alerts, 2) Overtime payment prompt with Pay Now/IOU options, 3) Brand image replacement across all components, 4) Two-line tab layout with responsive grid, 5) Room map enhanced with remaining time display, 6) Clickable room management for upgrades. Ready for comprehensive testing of all new features."
 
 backend:
   - task: "Pending Customer Creation via QR Form"
