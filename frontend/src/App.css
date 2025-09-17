@@ -248,9 +248,14 @@ h1, h2, h3 {
 }
 
 .tab-dark[data-state="active"] {
-  background: #dc2626;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+  border-color: #dc2626 !important;
+}
+
+.tab-dark:hover {
+  background: rgba(220, 38, 38, 0.2);
   color: white;
-  border-color: #dc2626;
 }
 
 /* Badge styling */
