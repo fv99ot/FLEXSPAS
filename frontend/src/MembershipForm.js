@@ -85,14 +85,14 @@ const MembershipForm = () => {
       <div className="max-w-2xl mx-auto">
         <Card className="shadow-lg membership-form">
           <CardHeader className="text-center flex-button">
-            <div className="flex justify-center mb-4">
+            <CardTitle className="text-4xl font-bold text-white flex-brand flex items-center justify-center">
               <img 
-                src="https://customer-assets.emergentagent.com/job_flexla-admin/artifacts/lo5s13pg_IMG_3221.jpg" 
+                src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
                 alt="Flex Spa Los Angeles"
-                className="h-16 w-auto"
-                style={{ maxHeight: '64px', objectFit: 'contain' }}
+                className="h-12 w-auto"
+                style={{ maxHeight: '48px', objectFit: 'contain' }}
               />
-            </div>
+            </CardTitle>
             <CardDescription className="text-gray-300">
               Membership Registration Form
             </CardDescription>
