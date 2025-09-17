@@ -2108,7 +2108,527 @@ function App() {
         </div>
       )}
 
-      {/* Other existing dialogs would continue here... */}
+      {/* Add Customer Dialog */}
+      {showAddCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Customer</h3>
+            <form onSubmit={addCustomer} className="space-y-4">
+              <Input
+                placeholder="First Name"
+                value={customerForm.first_name}
+                onChange={(e) => setCustomerForm({...customerForm, first_name: e.target.value})}
+                required
+              />
+              <Input
+                placeholder="Last Name"
+                value={customerForm.last_name}
+                onChange={(e) => setCustomerForm({...customerForm, last_name: e.target.value})}
+                required
+              />
+              <Input
+                placeholder="ID Number"
+                value={customerForm.id_number}
+                onChange={(e) => setCustomerForm({...customerForm, id_number: e.target.value})}
+                required
+              />
+              <Input
+                type="date"
+                placeholder="Date of Birth"
+                value={customerForm.date_of_birth}
+                onChange={(e) => setCustomerForm({...customerForm, date_of_birth: e.target.value})}
+                required
+              />
+              <Input
+                type="date"
+                placeholder="ID Expiration Date"
+                value={customerForm.id_expiration_date}
+                onChange={(e) => setCustomerForm({...customerForm, id_expiration_date: e.target.value})}
+                required
+              />
+              <Input
+                placeholder="State of ID"
+                value={customerForm.state_of_id}
+                onChange={(e) => setCustomerForm({...customerForm, state_of_id: e.target.value})}
+                required
+              />
+              <div className="flex space-x-3">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {loading ? 'Adding...' : 'Add Customer'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddCustomer(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Check-in Dialog */}
+      {showCheckIn && selectedCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Check In: {selectedCustomer.first_name} {selectedCustomer.last_name}
+            </h3>
+            <form onSubmit={handleCheckIn} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Membership Type</label>
+                <Select onValueChange={(value) => setCheckinForm({...checkinForm, membership_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select membership type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1_day">1 Day ($10)</SelectItem>
+                    <SelectItem value="6_month">6 Month ($25)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Accommodation Type</label>
+                <Select onValueChange={(value) => {
+                  setCheckinForm({...checkinForm, accommodation_type: value, room_type: value});
+                  if (value) fetchAvailableRooms(value);
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select accommodation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="locker">Locker</SelectItem>
+                    <SelectItem value="small_room">Small Room (No TV)</SelectItem>
+                    <SelectItem value="regular_room">Regular Room (With TV)</SelectItem>
+                    <SelectItem value="deluxe_room">Deluxe Room (With TV)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {availableRooms.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Available Rooms/Lockers</label>
+                  <Select onValueChange={(value) => setCheckinForm({...checkinForm, room_number: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select room/locker number" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roomDetails.map((room) => (
+                        <SelectItem key={room.number} value={room.number.toString()}>
+                          {room.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex space-x-3">
+                <Button type="submit" disabled={loading || !checkinForm.room_number} className="flex-1">
+                  {loading ? 'Checking In...' : 'Check In'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowCheckIn(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Dialog */}
+      {showPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Processing</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded">
+                <p className="font-medium">Customer: {paymentData.customerName}</p>
+                <p className="text-lg font-bold text-green-600">Total: ${paymentData.totalAmount.toFixed(2)}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <Select onValueChange={(value) => setPaymentData({...paymentData, paymentMethod: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex space-x-3">
+                <Button 
+                  onClick={handlePaymentComplete} 
+                  disabled={!paymentData.paymentMethod}
+                  className="flex-1"
+                >
+                  Complete Payment
+                </Button>
+                <Button variant="outline" onClick={() => setShowPayment(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Room Upgrade Dialog */}
+      {showUpgrade && selectedCheckin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Room Upgrade</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded">
+                <p>Customer: {selectedCheckin.customer?.first_name} {selectedCheckin.customer?.last_name}</p>
+                <p>Current: {selectedCheckin.room_type.replace('_', ' ').toUpperCase()} #{selectedCheckin.room_number}</p>
+              </div>
+
+              <form onSubmit={performRoomUpgrade} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Room Type</label>
+                  <Select onValueChange={(value) => {
+                    setUpgradeData({...upgradeData, new_room_type: value});
+                    fetchAvailableRooms(value);
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select new room type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small_room">Small Room (No TV)</SelectItem>
+                      <SelectItem value="regular_room">Regular Room (With TV)</SelectItem>
+                      <SelectItem value="deluxe_room">Deluxe Room (With TV)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {availableRooms.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Available Rooms</label>
+                    <Select onValueChange={(value) => setUpgradeData({...upgradeData, new_room_number: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select room number" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roomDetails.map((room) => (
+                          <SelectItem key={room.number} value={room.number.toString()}>
+                            {room.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex space-x-3">
+                  <Button type="submit" disabled={loading || !upgradeData.new_room_number} className="flex-1">
+                    {loading ? 'Upgrading...' : 'Upgrade Room'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setShowUpgrade(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Profile Dialog */}
+      {showProfile && selectedCustomerProfile && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Customer Profile: {selectedCustomerProfile.customer.first_name} {selectedCustomerProfile.customer.last_name}
+              </h3>
+              <Button variant="ghost" onClick={() => setShowProfile(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Customer Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">ID Number</label>
+                  <p className="text-gray-900">{selectedCustomerProfile.customer.id_number}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Date of Birth</label>
+                  <p className="text-gray-900">{selectedCustomerProfile.customer.date_of_birth}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">ID Expiration</label>
+                  <p className="text-gray-900">{selectedCustomerProfile.customer.id_expiration_date}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">State of ID</label>
+                  <p className="text-gray-900">{selectedCustomerProfile.customer.state_of_id}</p>
+                </div>
+              </div>
+
+              {/* Membership Status */}
+              {selectedCustomerProfile.membership_expiration && (
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Membership Status</h4>
+                  <p className="text-blue-700">
+                    Expires: {new Date(selectedCustomerProfile.membership_expiration).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+
+              {/* Notes Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea
+                  className="w-full p-3 border border-gray-300 rounded-md"
+                  rows={4}
+                  value={profileNotes}
+                  onChange={(e) => setProfileNotes(e.target.value)}
+                  placeholder="Add notes about this customer..."
+                />
+                <Button onClick={saveProfileNotes} className="mt-2">
+                  Save Notes
+                </Button>
+              </div>
+
+              {/* Visit History */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Recent Visits ({selectedCustomerProfile.total_visits})</h4>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {selectedCustomerProfile.visit_history.map((visit, index) => (
+                    <div key={index} className="p-3 bg-gray-50 rounded border">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium">
+                            {visit.room_type.replace('_', ' ').toUpperCase()} #{visit.room_number}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(visit.date).toLocaleDateString()} at {new Date(visit.date).toLocaleTimeString()}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Membership: {visit.membership_type.replace('_', ' ').toUpperCase()}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-green-600">${visit.total_amount.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Overtime Payment Dialog */}
+      {showOvertimePayment && overtimeCustomer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pay Overtime Fees</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-yellow-50 rounded">
+                <p className="font-medium">Customer: {overtimeCustomer.first_name} {overtimeCustomer.last_name}</p>
+                <p className="text-lg font-bold text-red-600">
+                  Amount Due: ${overtimeCustomer.unpaid_overtime_amount.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Overtime Hours: {overtimeCustomer.unpaid_overtime_hours.toFixed(1)}h
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <Select value={overtimePaymentMethod} onValueChange={setOvertimePaymentMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex space-x-3">
+                <Button 
+                  onClick={() => payOvertimeFees(overtimeCustomer.id, overtimePaymentMethod)}
+                  className="flex-1"
+                >
+                  Process Payment
+                </Button>
+                <Button variant="outline" onClick={() => setShowOvertimePayment(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Employee Dialog */}
+      {showAddEmployee && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Employee</h3>
+            <form onSubmit={addEmployee} className="space-y-4">
+              <Input
+                placeholder="Username"
+                value={newEmployee.username}
+                onChange={(e) => setNewEmployee({...newEmployee, username: e.target.value})}
+                required
+              />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={newEmployee.password}
+                onChange={(e) => setNewEmployee({...newEmployee, password: e.target.value})}
+                required
+              />
+              <Select value={newEmployee.role} onValueChange={(value) => setNewEmployee({...newEmployee, role: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="employee">Employee</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex space-x-3">
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {loading ? 'Adding...' : 'Add Employee'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddEmployee(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Discount Dialog */}
+      {showAddDiscount && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Discount</h3>
+            <form onSubmit={createDiscount} className="space-y-4">
+              <Input
+                placeholder="Discount Name"
+                value={newDiscount.name}
+                onChange={(e) => setNewDiscount({...newDiscount, name: e.target.value})}
+                required
+              />
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Discount Amount ($)"
+                value={newDiscount.amount}
+                onChange={(e) => setNewDiscount({...newDiscount, amount: e.target.value})}
+                required
+              />
+              <Input
+                placeholder="Description (optional)"
+                value={newDiscount.description}
+                onChange={(e) => setNewDiscount({...newDiscount, description: e.target.value})}
+              />
+              <div className="flex space-x-3">
+                <Button type="submit" className="flex-1">
+                  Add Discount
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddDiscount(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Additional Item Dialog */}
+      {showAddItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Additional Item</h3>
+            <form onSubmit={createAdditionalItem} className="space-y-4">
+              <Input
+                placeholder="Item Name"
+                value={newItem.name}
+                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                required
+              />
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Price ($)"
+                value={newItem.price}
+                onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                required
+              />
+              <Select value={newItem.category} onValueChange={(value) => setNewItem({...newItem, category: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="safety">Safety</SelectItem>
+                  <SelectItem value="cleaning">Cleaning</SelectItem>
+                  <SelectItem value="fees">Fees</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex space-x-3">
+                <Button type="submit" className="flex-1">
+                  Add Item
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowAddItem(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Management Dialog */}
+      {showPasswordDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {passwordDialogType === 'change' ? 'Change My Password' : `Reset Password for ${passwordForm.targetUsername}`}
+            </h3>
+            <form onSubmit={changePassword} className="space-y-4">
+              {passwordDialogType === 'change' && (
+                <Input
+                  type="password"
+                  placeholder="Current Password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                  required
+                />
+              )}
+              <Input
+                type="password"
+                placeholder="New Password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                required
+              />
+              <div className="flex space-x-3">
+                <Button type="submit" className="flex-1">
+                  {passwordDialogType === 'change' ? 'Change Password' : 'Reset Password'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowPasswordDialog(false)} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       
     </div>
   );
