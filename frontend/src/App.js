@@ -626,7 +626,9 @@ function App() {
     const receiptContent = `
       <div style="width: 300px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.3; background: white; color: black; padding: 20px; margin: 0;">
         <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px;">
-          <h2 style="margin: 0; font-size: 18px;">FLEX SPA LOS ANGELES</h2>
+          <h2 style="margin: 0; font-size: 18px;">
+            <img src="https://customer-assets.emergentagent.com/job_flexla-admin/artifacts/lo5s13pg_IMG_3221.jpg" alt="Flex Spa Los Angeles" style="max-height: 40px; object-fit: contain; display: block; margin: 0 auto;" />
+          </h2>
           <p style="margin: 5px 0; font-size: 10px;">123 Spa Street, Los Angeles, CA 90210</p>
           <p style="margin: 2px 0; font-size: 10px;">Phone: (555) 123-FLEX</p>
         </div>
