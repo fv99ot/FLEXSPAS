@@ -2704,12 +2704,14 @@ function LoginPage() {
     }}>
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <img 
-            src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
-            alt="Flex Spa Los Angeles"
-            className="h-16 w-auto mx-auto mb-4"
-            style={{ maxHeight: '64px', objectFit: 'contain' }}
-          />
+          <div style={{ background: '#000000', padding: '12px', borderRadius: '8px', display: 'inline-block', marginBottom: '16px' }}>
+            <img 
+              src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
+              alt="Flex Spa Los Angeles"
+              className="h-16 w-auto"
+              style={{ maxHeight: '64px', objectFit: 'contain' }}
+            />
+          </div>
           <h2 className="text-3xl font-bold text-white">Admin Portal</h2>
           <p className="text-gray-400 mt-2">Sign in to access the spa management system</p>
         </div>
