@@ -208,6 +208,18 @@ frontend:
         agent: "testing"
         comment: "TESTING INCOMPLETE: Unable to test clickable room management functionality due to no currently occupied rooms in the system. Feature appears implemented in code with handleRoomClick function. Requires active check-ins to test room click interactions for upgrades/renewals."
 
+  - task: "Modal Dialog Form Submissions"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUE IDENTIFIED: Modal dialogs open correctly but become unresponsive preventing form submissions. Affects Add Customer, Add Discount, Add Additional Item, and Add Employee functionalities. Modal overlay appears to block interactions. Forms display proper labels (Date of Birth vs ID Expiration Date) but submission buttons are non-functional. This is blocking core administrative functions."
+
 metadata:
   created_by: "main_agent"
   version: "2.0"
