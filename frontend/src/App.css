@@ -240,7 +240,7 @@ h1, h2, h3 {
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
 }
 
-/* Tab styling */
+/* Tab styling with blood red active state */
 .tab-dark {
   background: rgba(15, 23, 42, 0.8) !important;
   border: 1px solid rgba(30, 58, 138, 0.3) !important;
@@ -248,14 +248,17 @@ h1, h2, h3 {
   transition: all 0.2s ease-in-out !important;
 }
 
-.tab-dark[data-state="active"] {
+.tab-dark[data-state="active"], 
+.tab-dark[aria-selected="true"],
+button[data-state="active"].tab-dark,
+button[aria-selected="true"].tab-dark {
   background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%) !important;
   color: white !important;
   border-color: #dc2626 !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
 }
 
-.tab-dark:hover {
+.tab-dark:hover:not([data-state="active"]) {
   background: rgba(30, 58, 138, 0.2) !important;
   color: rgba(255, 255, 255, 0.9) !important;
 }
