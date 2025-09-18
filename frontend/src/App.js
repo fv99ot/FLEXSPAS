@@ -1073,7 +1073,17 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen" style={{
+      background: '#0a0a1a',
+      backgroundImage: `
+        radial-gradient(circle at 20% 50%, rgba(75, 0, 130, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 90% 90%, rgba(25, 25, 112, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 60% 40%, rgba(220, 38, 38, 0.1) 0%, transparent 60%)
+      `,
+      backgroundAttachment: 'fixed'
+    }}>
       {/* Header */}
       <header className="header-dark shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
