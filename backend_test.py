@@ -3825,10 +3825,207 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_authentication_debug(self):
+        """Debug authentication system to identify 401/403 errors"""
+        print("\n🔍 DEBUGGING AUTHENTICATION SYSTEM...")
+        print("   Testing specific endpoints mentioned in review request")
+        
+        all_success = True
+        
+        # Test 1: Login endpoint (note: it's /api/login, not /api/auth/login)
+        print("   TEST 1: Login with admin/admin123 credentials...")
+        try:
+            response = requests.post(
+                f"{self.api_url}/login",
+                json={"username": "admin", "password": "admin123"},
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'access_token' in data:
+                    self.token = data['access_token']
+                    self.headers['Authorization'] = f'Bearer {self.token}'
+                    self.log_test("Login Endpoint", True, f"Token received, User: {data['user']['username']}, Role: {data['user']['role']}")
+                else:
+                    self.log_test("Login Endpoint", False, "No access_token in response")
+                    all_success = False
+            else:
+                self.log_test("Login Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Login Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        if not self.token:
+            print("   ❌ Cannot continue - login failed")
+            return False
+        
+        # Test 2: Customer search endpoint
+        print("   TEST 2: GET /api/customers?q=test...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=test",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                self.log_test("Customer Search", True, f"Found {len(data)} customers")
+            else:
+                self.log_test("Customer Search", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Customer Search", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Room map data endpoint
+        print("   TEST 3: GET /api/rooms/available/locker...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                available_count = len(data.get('available_rooms', []))
+                self.log_test("Room Map Data", True, f"Found {available_count} available lockers")
+            else:
+                self.log_test("Room Map Data", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Room Map Data", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Active check-ins endpoint
+        print("   TEST 4: GET /api/checkins/active...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                self.log_test("Active Check-ins", True, f"Found {len(data)} active check-ins")
+            else:
+                self.log_test("Active Check-ins", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Active Check-ins", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 5: JWT token validation
+        print("   TEST 5: JWT token validation...")
+        if self.token:
+            try:
+                import jwt as jwt_lib
+                # Decode without verification to check structure
+                decoded = jwt_lib.decode(self.token, options={"verify_signature": False})
+                
+                has_user_id = 'user_id' in decoded
+                has_role = 'role' in decoded
+                has_exp = 'exp' in decoded
+                
+                success = has_user_id and has_role and has_exp
+                details = f"user_id: {has_user_id}, role: {has_role}, exp: {has_exp}"
+                if success:
+                    details += f", Role: {decoded.get('role')}"
+                
+                self.log_test("JWT Token Structure", success, details)
+                if not success:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("JWT Token Structure", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("JWT Token Structure", False, "No token available")
+            all_success = False
+        
+        # Test 6: Database connection and admin user existence
+        print("   TEST 6: Database connection and admin user...")
+        try:
+            # Test by trying to get users list (admin only endpoint)
+            response = requests.get(
+                f"{self.api_url}/users",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                admin_exists = any(user.get('username') == 'admin' for user in data)
+                self.log_test("Database & Admin User", admin_exists, f"Found {len(data)} users, admin exists: {admin_exists}")
+                if not admin_exists:
+                    all_success = False
+            else:
+                self.log_test("Database & Admin User", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Database & Admin User", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 7: Test without authentication to verify 401 responses
+        print("   TEST 7: Verify 401 responses without authentication...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers",
+                headers={'Content-Type': 'application/json'},  # No auth header
+                timeout=10
+            )
+            
+            success = response.status_code == 401
+            self.log_test("401 Without Auth", success, f"Status: {response.status_code} (should be 401)")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("401 Without Auth", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 8: Test with invalid token to verify 401 responses
+        print("   TEST 8: Verify 401 responses with invalid token...")
+        try:
+            invalid_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer invalid_token'}
+            response = requests.get(
+                f"{self.api_url}/customers",
+                headers=invalid_headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 401
+            self.log_test("401 Invalid Token", success, f"Status: {response.status_code} (should be 401)")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("401 Invalid Token", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🧪 Starting FLEX_LA Bathhouse API Tests...")
         print(f"🌐 Testing against: {self.base_url}")
+        
+        # PRIORITY: Authentication debugging as requested in review
+        auth_debug_success = self.test_authentication_debug()
         
         # Authentication tests
         if not self.test_login():
