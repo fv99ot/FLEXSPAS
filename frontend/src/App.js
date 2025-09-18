@@ -1118,7 +1118,7 @@ function App() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
         <Tabs defaultValue="search" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="space-y-2">
             <TabsList className={`grid w-full ${user?.role === 'manager' ? 'grid-cols-4' : 'grid-cols-3'} bg-transparent`}>
               <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
               <TabsTrigger value="pending" className="tab-dark">
