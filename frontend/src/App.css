@@ -263,7 +263,18 @@ div[class*="Card"],
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
 }
 
-/* Force active tabs to be BLOOD RED not white */
+/* Tab styling base */
+.tab-dark {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(30, 58, 138, 0.3) !important;
+  color: rgba(156, 163, 175, 0.8) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.tab-dark:hover:not([data-state="active"]) {
+  background: rgba(30, 58, 138, 0.2) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
 .tab-dark[data-state="active"], 
 .tab-dark[aria-selected="true"],
 button[data-state="active"].tab-dark,
