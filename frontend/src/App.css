@@ -249,9 +249,10 @@ h1, h2, h3 {
 }
 
 .tab-dark[data-state="active"] {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%) !important;
   color: white !important;
   border-color: #dc2626 !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4) !important;
 }
 
 .tab-dark:hover {
