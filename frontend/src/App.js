@@ -2143,20 +2143,26 @@ function App() {
                 onChange={(e) => setCustomerForm({...customerForm, id_number: e.target.value})}
                 required
               />
-              <Input
-                type="date"
-                placeholder="Date of Birth"
-                value={customerForm.date_of_birth}
-                onChange={(e) => setCustomerForm({...customerForm, date_of_birth: e.target.value})}
-                required
-              />
-              <Input
-                type="date"
-                placeholder="ID Expiration Date"
-                value={customerForm.id_expiration_date}
-                onChange={(e) => setCustomerForm({...customerForm, id_expiration_date: e.target.value})}
-                required
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                <Input
+                  type="date"
+                  placeholder="Date of Birth"
+                  value={customerForm.date_of_birth}
+                  onChange={(e) => setCustomerForm({...customerForm, date_of_birth: e.target.value})}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ID Expiration Date</label>
+                <Input
+                  type="date"
+                  placeholder="ID Expiration Date"
+                  value={customerForm.id_expiration_date}
+                  onChange={(e) => setCustomerForm({...customerForm, id_expiration_date: e.target.value})}
+                  required
+                />
+              </div>
               <Input
                 placeholder="State of ID"
                 value={customerForm.state_of_id}
