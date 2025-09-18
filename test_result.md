@@ -195,15 +195,18 @@ frontend:
 
   - task: "Clickable Room Management for Upgrades/Renewals"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added click functionality to occupied rooms/lockers in map. Clicking occupied room opens upgrade dialog for that customer's check-in. handleRoomClick function implemented at lines 1301-1312 with room upgrade integration."
+      - working: "NA"
+        agent: "testing"
+        comment: "TESTING INCOMPLETE: Unable to test clickable room management functionality due to no currently occupied rooms in the system. Feature appears implemented in code with handleRoomClick function. Requires active check-ins to test room click interactions for upgrades/renewals."
 
 metadata:
   created_by: "main_agent"
