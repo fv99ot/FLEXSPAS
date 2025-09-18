@@ -148,35 +148,41 @@ h1, h2, h3 {
   backdrop-filter: blur(10px);
 }
 
-/* Aggressive override for all card backgrounds */
-.dashboard-card,
-.card,
-[data-radix-tabs-content] .dashboard-card,
-[data-radix-tabs-content] .card,
-.space-y-6 > .dashboard-card,
-.space-y-6 .dashboard-card,
-div[class*="card"],
-div[class*="Card"],
-.bg-white,
-.bg-gray-50,
-.bg-gray-100,
-[style*="background"],
-[class*="bg-white"],
-[class*="bg-gray"] {
+/* SHADCN UI Component overrides - targeting specific classes */
+[data-radix-dialog-content],
+.bg-card,
+.bg-popover,
+.bg-background,
+.bg-muted,
+[class*="bg-card"],
+[class*="bg-popover"],
+[class*="bg-background"],
+[class*="bg-muted"] {
   background: rgba(15, 23, 42, 0.8) !important;
   background-color: rgba(15, 23, 42, 0.8) !important;
-  color: #ffffff !important;
+  color: white !important;
   border: 1px solid rgba(30, 58, 138, 0.3) !important;
-  backdrop-filter: blur(15px) !important;
 }
 
-/* Search card specific targeting */
-[role="tabpanel"] > .space-y-6 > .dashboard-card,
-[role="tabpanel"] .dashboard-card,
-.space-y-6 .card,
-.max-w-7xl .dashboard-card {
+/* Target all possible card containers */
+[class*="rounded"],
+[class*="border"],
+[class*="p-"],
+[class*="shadow"],
+div[class*="space-y"] > div,
+.space-y-6 > div,
+.max-w-7xl div[class*="border"],
+.max-w-7xl div[class*="rounded"] {
   background: rgba(15, 23, 42, 0.8) !important;
   background-color: rgba(15, 23, 42, 0.8) !important;
+  color: white !important;
+  border-color: rgba(30, 58, 138, 0.3) !important;
+}
+
+/* Final nuclear override for any remaining white backgrounds */
+div:not([style*="background-image"]):not(.bg-gradient) {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  color: white !important;
 }
 
 .dashboard-card input,
