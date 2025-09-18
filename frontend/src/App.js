@@ -1089,12 +1089,14 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <img 
-                src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
-                alt="Flex Spa Los Angeles"
-                className="h-10 w-auto mr-3"
-                style={{ maxHeight: '40px', objectFit: 'contain' }}
-              />
+              <div style={{ background: '#000000', padding: '8px', borderRadius: '4px', marginRight: '12px' }}>
+                <img 
+                  src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
+                  alt="Flex Spa Los Angeles"
+                  className="h-10 w-auto"
+                  style={{ maxHeight: '40px', objectFit: 'contain' }}
+                />
+              </div>
               <Badge variant="secondary" className="ml-3 badge-manager">
                 {user?.role === 'manager' ? 'Manager' : 'Employee'}
               </Badge>
