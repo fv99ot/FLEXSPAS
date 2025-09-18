@@ -2689,7 +2689,17 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{
+      background: '#0a0a1a',
+      backgroundImage: `
+        radial-gradient(circle at 20% 50%, rgba(75, 0, 130, 0.4) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 90% 90%, rgba(25, 25, 112, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 60% 40%, rgba(220, 38, 38, 0.1) 0%, transparent 60%)
+      `,
+      backgroundAttachment: 'fixed'
+    }}>
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <img 
