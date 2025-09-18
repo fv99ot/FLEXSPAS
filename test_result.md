@@ -135,15 +135,18 @@ frontend:
 
   - task: "Overtime Payment Prompt During Checkout"
     implemented: true
-    working: true
+    working: "NA"
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Implemented overtime payment prompt dialog with 'Pay Now' and 'IOU' options. Updated handleCheckOut function to show prompt when overtime is detected. Dialog implemented at lines 1650-1684 with state management and payment handling."
+      - working: "NA"
+        agent: "testing"
+        comment: "TESTING INCOMPLETE: Unable to test overtime payment prompt functionality due to modal dialog issues preventing proper UI interactions. Feature appears implemented in code but requires extended session simulation to trigger overtime conditions. Recommend manual testing with 8+ hour sessions."
 
   - task: "Replace FLEX SPA LOS ANGELES Text with Image"
     implemented: true
