@@ -3825,6 +3825,242 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_user_reported_critical_issues(self):
+        """Test the 8 critical endpoints reported as broken by the user"""
+        print("\n🚨 TESTING USER-REPORTED CRITICAL ISSUES...")
+        print("   Testing 8 specific endpoints that user reported as broken")
+        
+        if not self.token:
+            self.log_test("Critical Issues Test", False, "No authentication token")
+            return False
+        
+        all_success = True
+        
+        # 1. Customer Search Not Working - Test GET /api/customers?q=test
+        print("   1. Testing Customer Search...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=test",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                success = isinstance(data, list)
+            
+            self.log_test("Customer Search (GET /api/customers?q=test)", success, 
+                        f"Status: {response.status_code}, Response type: {type(response.json()) if success else 'error'}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Customer Search (GET /api/customers?q=test)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # 2. Add Customer Not Working - Test POST /api/customers
+        print("   2. Testing Add Customer...")
+        unique_id = f"CRITICAL{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "Critical",
+            "last_name": "Test",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                success = 'id' in data and data['first_name'] == 'Critical'
+            
+            self.log_test("Add Customer (POST /api/customers)", success, 
+                        f"Status: {response.status_code}, Created: {success}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Add Customer (POST /api/customers)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # 3. Locker/Room Map Not Working - Test GET /api/rooms/available/locker
+        print("   3. Testing Locker/Room Map...")
+        room_types = ["locker", "small_room", "regular_room", "deluxe_room"]
+        room_map_success = True
+        
+        for room_type in room_types:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/rooms/available/{room_type}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                success = response.status_code == 200
+                if success:
+                    data = response.json()
+                    success = 'available_rooms' in data and isinstance(data['available_rooms'], list)
+                
+                self.log_test(f"Room Map - {room_type} (GET /api/rooms/available/{room_type})", success, 
+                            f"Status: {response.status_code}, Has rooms: {success}")
+                if not success:
+                    room_map_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Room Map - {room_type} (GET /api/rooms/available/{room_type})", False, f"Exception: {str(e)}")
+                room_map_success = False
+        
+        if not room_map_success:
+            all_success = False
+        
+        # 4. Sales Report Not Working - Test GET /api/reports/sales/daily
+        print("   4. Testing Sales Report...")
+        try:
+            # Note: The actual endpoint is /api/reports/daily-sales, not /api/reports/sales/daily
+            response = requests.get(
+                f"{self.api_url}/reports/daily-sales",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                required_fields = ['date', 'total_revenue', 'total_checkins']
+                success = all(field in data for field in required_fields)
+            
+            self.log_test("Sales Report (GET /api/reports/daily-sales)", success, 
+                        f"Status: {response.status_code}, Has required fields: {success}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Sales Report (GET /api/reports/daily-sales)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # 5. QR Code Not Working - Test GET /api/qr/membership-form
+        print("   5. Testing QR Code Endpoint...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/qr/membership-form",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # This endpoint doesn't exist in the backend code - this is likely the issue
+            success = response.status_code == 200
+            
+            self.log_test("QR Code (GET /api/qr/membership-form)", success, 
+                        f"Status: {response.status_code} - ENDPOINT MISSING FROM BACKEND CODE")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("QR Code (GET /api/qr/membership-form)", False, f"Exception: {str(e)} - ENDPOINT MISSING")
+            all_success = False
+        
+        # 6. Adding Discounts Not Working - Test POST /api/discounts
+        print("   6. Testing Add Discounts...")
+        discount_data = {
+            "name": "Critical Test Discount",
+            "amount": 10.0,
+            "description": "Test discount for critical testing"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json=discount_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                success = 'id' in data and data['name'] == discount_data['name']
+            
+            self.log_test("Add Discounts (POST /api/discounts)", success, 
+                        f"Status: {response.status_code}, Created: {success}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Add Discounts (POST /api/discounts)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # 7. Adding Additional Items Not Working - Test POST /api/additional-items
+        print("   7. Testing Add Additional Items...")
+        item_data = {
+            "name": "Critical Test Item",
+            "price": 5.0,
+            "category": "test"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/additional-items",
+                json=item_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                success = 'id' in data and data['name'] == item_data['name']
+            
+            self.log_test("Add Additional Items (POST /api/additional-items)", success, 
+                        f"Status: {response.status_code}, Created: {success}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Add Additional Items (POST /api/additional-items)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # 8. Add Employee Not Working - Test POST /api/users
+        print("   8. Testing Add Employee...")
+        employee_data = {
+            "username": f"critical_test_{datetime.now().strftime('%H%M%S')}",
+            "password": "testpass123",
+            "role": "employee"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/users",
+                json=employee_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                success = 'id' in data and data['username'] == employee_data['username']
+            
+            self.log_test("Add Employee (POST /api/users)", success, 
+                        f"Status: {response.status_code}, Created: {success}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Add Employee (POST /api/users)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def test_authentication_debug(self):
         """Debug authentication system to identify 401/403 errors"""
         print("\n🔍 DEBUGGING AUTHENTICATION SYSTEM...")
