@@ -184,7 +184,7 @@ function App() {
     setLoading(true);
     
     try {
-      const response = await axios.post(`${API}/api/auth/login`, loginForm);
+      const response = await axios.post(`${API}/api/login`, loginForm);
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
