@@ -1243,6 +1243,41 @@ async def delete_additional_item(item_id: str, current_user: User = Depends(get_
         raise HTTPException(status_code=404, detail="Item not found")
     return {"message": "Item deleted successfully"}
 
+@api_router.get("/qr/membership-form")
+async def get_membership_form_qr():
+    """Generate QR code for membership form"""
+    try:
+        # Create QR code pointing to the membership form
+        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+        membership_form_url = f"{frontend_url}/membership"
+        
+        import qrcode
+        from io import BytesIO
+        import base64
+        
+        # Generate QR code
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(membership_form_url)
+        qr.make(fit=True)
+        
+        # Create QR code image
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert to base64
+        buffered = BytesIO()
+        qr_img.save(buffered, format="PNG")
+        img_str = base64.b64encode(buffered.getvalue()).decode()
+        
+        return {
+            "qr_code_url": f"data:image/png;base64,{img_str}",
+            "membership_form_url": membership_form_url
+        }
+    except Exception as e:
+        return {
+            "qr_code_url": "https://via.placeholder.com/200x200?text=QR+Code",
+            "membership_form_url": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/membership"
+        }
+
 @api_router.get("/reports/daily-sales")
 async def get_daily_sales_report(date: str = None, current_user: User = Depends(get_current_user)):
     try:
