@@ -12,12 +12,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #000000;
+  background: #0a0a1a;
   background-image: 
-    radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(120, 119, 198, 0.2) 0%, transparent 50%),
-    radial-gradient(circle at 90% 90%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(75, 0, 130, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 90% 90%, rgba(25, 25, 112, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 60% 40%, rgba(220, 38, 38, 0.1) 0%, transparent 60%);
   background-attachment: fixed;
   color: #ffffff;
   min-height: 100vh;
