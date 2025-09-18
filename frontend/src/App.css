@@ -514,24 +514,37 @@ div[class*="bg-gray"] {
   border: 1px solid rgba(30, 58, 138, 0.3) !important;
 }
 
-/* Force all white backgrounds to dark bluish */
+/* Nuclear option - force ALL white backgrounds to be dark */
 * {
   background-color: transparent !important;
 }
 
-body, html, #root {
-  background: #0f1419 !important;
-  background-image: 
-    radial-gradient(circle at 20% 50%, rgba(30, 58, 138, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(30, 64, 175, 0.2) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(23, 37, 84, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 90% 90%, rgba(30, 58, 138, 0.15) 0%, transparent 50%) !important;
+/* Override specific white/gray backgrounds */
+.bg-white,
+.bg-gray-50,
+.bg-gray-100,
+.bg-gray-200,
+[class*="bg-white"],
+[class*="bg-gray"],
+[style*="background-color: white"],
+[style*="background-color: #fff"],
+[style*="background: white"],
+[style*="background: #fff"] {
+  background: rgba(15, 23, 42, 0.8) !important;
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  color: white !important;
 }
 
-/* Override all card/content backgrounds */
-.bg-white, .bg-gray-50, .bg-gray-100, [class*="bg-white"], [class*="bg-gray"] {
+/* Specifically for card elements */
+.dashboard-card,
+.card,
+div[class*="card"],
+div[class*="Card"] {
   background: rgba(15, 23, 42, 0.8) !important;
-  color: white !important;
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(30, 58, 138, 0.3) !important;
+  backdrop-filter: blur(15px) !important;
 }
 
 /* Tab container background override */
