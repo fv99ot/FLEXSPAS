@@ -1074,13 +1074,12 @@ function App() {
 
   return (
     <div className="min-h-screen" style={{
-      background: '#0a0a1a',
+      background: '#0f1419',
       backgroundImage: `
-        radial-gradient(circle at 20% 50%, rgba(75, 0, 130, 0.4) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(138, 43, 226, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 40% 80%, rgba(75, 0, 130, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 90% 90%, rgba(25, 25, 112, 0.2) 0%, transparent 50%),
-        radial-gradient(circle at 60% 40%, rgba(220, 38, 38, 0.1) 0%, transparent 60%)
+        radial-gradient(circle at 20% 50%, rgba(30, 58, 138, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(30, 64, 175, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(23, 37, 84, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 90% 90%, rgba(30, 58, 138, 0.15) 0%, transparent 50%)
       `,
       backgroundAttachment: 'fixed'
     }}>
