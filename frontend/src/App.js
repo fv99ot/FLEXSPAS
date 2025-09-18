@@ -1345,7 +1345,7 @@ function App() {
 
           <TabsContent value="active" className="space-y-6">
             {/* Active Check-ins */}
-            <Card className="dashboard-card">
+            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
               <CardHeader>
                 <CardTitle className="flex items-center text-white">
                   <Clock className="h-5 w-5 mr-2" />
