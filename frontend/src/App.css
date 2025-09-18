@@ -385,11 +385,27 @@ button[aria-selected="true"],
   letter-spacing: 0.1em;
 }
 
-/* Header styling */
-/* Header styling */
+/* Header styling - complete black background */
 .header-dark {
   background: #000000 !important;
   border-bottom: 1px solid rgba(30, 58, 138, 0.3) !important;
+}
+
+/* Make the entire header container black */
+header {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+/* Force all header elements to have black background */
+header *,
+header div,
+header .max-w-7xl,
+header .mx-auto,
+header .px-4,
+header .flex {
+  background: #000000 !important;
+  background-color: #000000 !important;
 }
 
 /* Responsive design helpers */
