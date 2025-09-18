@@ -169,11 +169,14 @@ frontend:
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Modified tab layout to display in two rows using grid system. First row: Customer Management, Pending Approvals, Active Check-ins, Room Map. Second row: QR Code, Sales Reports, Employees (manager), Admin Settings (manager). Implemented at lines 1266-1281."
+      - working: true
+        agent: "testing"
+        comment: "TESTING COMPLETE: Two-line tab layout working perfectly. Tabs are properly organized in two rows as specified. First row contains Customer Management, Pending Approvals, Active Check-ins, Room Map. Second row contains QR Code, Sales Reports, Employees, Admin Settings. Layout is responsive and functional."
 
   - task: "Room Map Time Display Enhancement"
     implemented: true
