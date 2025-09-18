@@ -1179,7 +1179,7 @@ function App() {
 
             {/* Search Results */}
             {customers.length > 0 && (
-              <Card className="dashboard-card">
+              <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
                 <CardHeader>
                   <CardTitle className="text-white">Search Results</CardTitle>
                 </CardHeader>
