@@ -547,7 +547,7 @@ async def check_out_customer(checkin_id: str, current_user: User = Depends(get_c
     if not checkin:
         raise HTTPException(status_code=404, detail="Check-in record not found")
     
-    if checkin["check_out_time"]:
+    if checkin.get("check_out_time"):
         raise HTTPException(status_code=400, detail="Customer already checked out")
     
     # Calculate overtime if applicable
