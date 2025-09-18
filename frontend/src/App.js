@@ -1085,7 +1085,7 @@ function App() {
     }}>
       {/* Header */}
       <header className="header-dark shadow-sm border-b" style={{ background: '#000000', backgroundColor: '#000000' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ background: '#000000', backgroundColor: '#000000' }}>
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div style={{ background: '#000000', padding: '8px', borderRadius: '4px', marginRight: '12px' }}>
