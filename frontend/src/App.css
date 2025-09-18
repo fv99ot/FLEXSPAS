@@ -540,9 +540,35 @@ div[class*="bg-gray"] {
   border: 1px solid rgba(30, 58, 138, 0.3) !important;
 }
 
-/* Nuclear option - force ALL white backgrounds to be dark */
-* {
-  background-color: transparent !important;
+/* Modal overlay fix for pointer events */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  max-width: 28rem;
+  width: 100%;
+  margin: 16px;
+  position: relative;
+  z-index: 1001;
+  pointer-events: auto;
+}
+
+.modal-content * {
+  pointer-events: auto;
 }
 
 /* Override specific white/gray backgrounds */
