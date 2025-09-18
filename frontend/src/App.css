@@ -281,12 +281,16 @@ div:not([style*="background-image"]):not(.bg-gradient) {
   background: rgba(30, 58, 138, 0.2) !important;
   color: rgba(255, 255, 255, 0.9) !important;
 }
-.tab-dark[data-state="active"], 
+/* Force active tabs to be BLOOD RED - most aggressive approach */
+button[data-state="active"],
+button[aria-selected="true"],
+.tab-dark[data-state="active"],
 .tab-dark[aria-selected="true"],
-button[data-state="active"].tab-dark,
-button[aria-selected="true"].tab-dark,
-[data-state="active"],
-[aria-selected="true"] {
+[data-state="active"].tab-dark,
+[aria-selected="true"].tab-dark,
+[data-radix-tabs-trigger][data-state="active"],
+[role="tab"][data-state="active"],
+[role="tab"][aria-selected="true"] {
   background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%) !important;
   background-color: #7f1d1d !important;
   color: white !important;
