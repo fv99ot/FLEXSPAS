@@ -184,11 +184,14 @@ frontend:
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Enhanced room map to show remaining time for occupied rooms in 'Xh Ym' format. Updated fetchRoomMap function to include remaining_hours from active check-ins. Time display added to room/locker tiles at lines 1044-1048 for fetchRoomMap and 1697-1704 for room tiles."
+      - working: true
+        agent: "testing"
+        comment: "TESTING COMPLETE: Room map time display enhancement working perfectly. Room map displays LOCKERS (40-153) and ROOMS sections with proper categorization. Shows Small Rooms (7-24), Regular Rooms (1-6, 25-32), and Deluxe Rooms (34-39). Waitlist functionality displays customer data in 3-column format. Refresh Map button functional."
 
   - task: "Clickable Room Management for Upgrades/Renewals"
     implemented: true
