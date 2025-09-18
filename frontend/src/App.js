@@ -2714,7 +2714,7 @@ function LoginPage() {
           <p className="text-gray-400 mt-2">Sign in to access the spa management system</p>
         </div>
         
-        <Card className="dashboard-card">
+        <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
           <CardContent className="p-6">
             <form onSubmit={login} className="space-y-4">
               <div>
