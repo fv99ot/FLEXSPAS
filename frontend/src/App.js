@@ -1169,7 +1169,7 @@ function App() {
                     <Search className="h-4 w-4 mr-2" />
                     Search
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddCustomer(true)} className="border-white/20 text-white hover:bg-white/10">
+                  <Button variant="outline" onClick={() => setShowAddCustomer(true)} className="flex-button">
                     <Plus className="h-4 w-4 mr-2" />
                     Add New
                   </Button>
