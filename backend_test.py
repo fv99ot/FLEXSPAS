@@ -4270,6 +4270,12 @@ class BathhouseAPITester:
         
         self.test_invalid_login()
         
+        # CRITICAL: Test user-reported critical issues FIRST
+        print("\n" + "="*80)
+        print("🚨 PRIORITY: TESTING USER-REPORTED CRITICAL ISSUES")
+        print("="*80)
+        critical_issues_success = self.test_user_reported_critical_issues()
+        
         # Customer management tests
         self.test_create_customer()
         self.test_search_customers()
