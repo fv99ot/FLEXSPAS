@@ -1091,6 +1091,75 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
         "renewal_count": checkin.get("renewal_count", 0) + 1
     }
 
+@api_router.post("/transactions", response_model=Transaction)
+async def create_transaction(transaction_data: Transaction, current_user: User = Depends(get_current_user)):
+    """Create a new transaction record"""
+    transaction_dict = transaction_data.dict()
+    transaction_dict["created_by"] = current_user.id
+    
+    await db.transactions.insert_one(transaction_dict)
+    return transaction_data
+
+@api_router.get("/transactions", response_model=List[Transaction])
+async def get_transactions(
+    limit: int = 100,
+    customer_id: Optional[str] = None,
+    transaction_type: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Get transaction history with optional filters"""
+    query = {}
+    
+    if customer_id:
+        query["customer_id"] = customer_id
+    if transaction_type:
+        query["transaction_type"] = transaction_type
+    if start_date and end_date:
+        query["created_at"] = {
+            "$gte": datetime.fromisoformat(start_date),
+            "$lte": datetime.fromisoformat(end_date)
+        }
+    
+    transactions = await db.transactions.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+    return [Transaction(**tx) for tx in transactions]
+
+@api_router.post("/transactions/{transaction_id}/refund")
+async def create_refund(
+    transaction_id: str, 
+    refund_amount: float, 
+    notes: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Create a refund for a transaction"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can process refunds")
+    
+    # Find original transaction
+    original_transaction = await db.transactions.find_one({"id": transaction_id})
+    if not original_transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    
+    if refund_amount > original_transaction["total_amount"]:
+        raise HTTPException(status_code=400, detail="Refund amount cannot exceed original transaction amount")
+    
+    # Create refund transaction
+    refund_transaction = Transaction(
+        customer_id=original_transaction["customer_id"],
+        customer_name=original_transaction["customer_name"],
+        transaction_type="refund",
+        total_amount=-refund_amount,  # Negative amount for refunds
+        payment_method=original_transaction["payment_method"],
+        is_refund=True,
+        original_transaction_id=transaction_id,
+        created_by=current_user.id,
+        notes=notes
+    )
+    
+    await db.transactions.insert_one(refund_transaction.dict())
+    return {"message": "Refund processed successfully", "refund_id": refund_transaction.id}
+
 # Discount System Models
 class Discount(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
