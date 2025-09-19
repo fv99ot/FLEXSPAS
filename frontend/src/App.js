@@ -1136,25 +1136,24 @@ function App() {
     }
   };
 
-  const handleRenewal = async (checkinId, customerName) => {
-    try {
-      const token = localStorage.getItem('token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      
-      const response = await axios.put(`${API}/api/checkin/${checkinId}/renew`, {}, { headers });
-      
-      alert(`✅ Session renewed successfully for ${customerName}!\n\nNew check-out time: ${new Date(response.data.new_checkout_time).toLocaleString()}\nRoom fee: $${response.data.room_fee.toFixed(2)}`);
-      
-      // Close any open modals
-      setShowRoomManagement(false);
-      
-      // Refresh active check-ins to show updated times
-      fetchActiveCheckins();
-      
-    } catch (error) {
-      console.error('Error renewing session:', error);
-      alert(error.response?.data?.detail || 'Error renewing session');
-    }
+  const handleRenewal = async (checkinId, customerName, roomType) => {
+    // Set up renewal transaction to go through payment dialog
+    setPaymentData({
+      checkInId: checkinId,
+      customerName: customerName,
+      totalAmount: getRoomBaseRate(roomType),
+      paymentMethod: '',
+      additionalItems: [],
+      selectedDiscount: null,
+      discountAmount: 0,
+      transactionType: 'renewal'
+    });
+    
+    // Close any open modals
+    setShowRoomManagement(false);
+    
+    // Open payment dialog for transaction finalization
+    setShowPayment(true);
   };
 
   const handleCheckOut = async (checkinId) => {
