@@ -556,12 +556,29 @@ function App() {
         new_room_number: parseInt(upgradeData.new_room_number)
       }, { headers });
       
-      alert(`Upgrade successful! Additional cost: $${response.data.additional_cost.toFixed(2)}`);
+      // Set up payment dialog for room upgrade
+      const customerName = `${selectedCheckin.customer?.first_name} ${selectedCheckin.customer?.last_name}`;
+      
+      setPaymentData({
+        checkInId: selectedCheckin.id,
+        customerName: customerName,
+        totalAmount: response.data.additional_cost,
+        paymentMethod: '',
+        additionalItems: [],
+        selectedDiscount: null,
+        discountAmount: 0,
+        transactionType: 'room_upgrade'
+      });
+      
       setShowUpgrade(false);
       setUpgradeData({ new_room_type: '', new_room_number: '' });
       setSelectedCheckin(null);
       fetchActiveCheckins();
       fetchAvailableRooms(upgradeData.new_room_type);
+      
+      // Open payment dialog to finalize transaction
+      setShowPayment(true);
+      
     } catch (error) {
       console.error('Error upgrading room:', error);
       alert(error.response?.data?.detail || 'Error upgrading room');
