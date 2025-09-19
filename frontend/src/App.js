@@ -1816,6 +1816,21 @@ function App() {
                               // Check membership status when opening check-in dialog
                               const membershipStatus = await checkCustomerMembershipStatus(customer.id);
                               setCustomerMembershipStatus(membershipStatus);
+                              
+                              // If customer has valid membership, automatically set it in the form
+                              if (membershipStatus && membershipStatus.has_valid_membership) {
+                                setCheckinForm(prev => ({
+                                  ...prev,
+                                  membership_type: '6_month' // Assuming valid membership is 6_month
+                                }));
+                              } else {
+                                // Reset membership type if no valid membership
+                                setCheckinForm(prev => ({
+                                  ...prev,
+                                  membership_type: ''
+                                }));
+                              }
+                              
                               setShowCheckIn(true);
                             }}
                             disabled={customer.is_banned || customer.unpaid_overtime_amount > 0}
