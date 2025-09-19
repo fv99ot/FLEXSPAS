@@ -1489,10 +1489,12 @@ function App() {
       // Set up payment dialog for overtime payment
       const activeCheckin = activeCheckins.find(c => c.id === checkoutOvertimeData.checkinId);
       const customerName = activeCheckin ? `${activeCheckin.customer?.first_name} ${activeCheckin.customer?.last_name}` : 'Customer';
+      const customerId = activeCheckin ? activeCheckin.customer?.id : null;
       
       setPaymentData({
         checkInId: checkoutOvertimeData.checkinId,
         customerName: customerName,
+        customerId: customerId,
         totalAmount: checkoutOvertimeData.overtimeAmount,
         paymentMethod: '',
         additionalItems: [],
