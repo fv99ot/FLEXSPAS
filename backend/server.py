@@ -1002,6 +1002,36 @@ async def get_assigned_lockers(current_user: User = Depends(get_current_user)):
     
     return assigned_lockers
 
+@api_router.get("/pricing", response_model=PricingConfig)
+async def get_pricing(current_user: User = Depends(get_current_user)):
+    """Get current pricing configuration"""
+    return await get_pricing_config()
+
+@api_router.put("/pricing")
+async def update_pricing(pricing_update: PricingUpdate, current_user: User = Depends(get_current_user)):
+    """Update pricing configuration (manager only)"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can update pricing")
+    
+    # Get current pricing
+    current_pricing = await get_pricing_config()
+    
+    # Update only provided fields
+    update_data = {}
+    for field, value in pricing_update.dict(exclude_unset=True).items():
+        if value is not None:
+            update_data[field] = value
+    
+    if update_data:
+        # Update in database
+        await db.pricing_config.update_one(
+            {},
+            {"$set": update_data},
+            upsert=True
+        )
+    
+    return {"message": "Pricing updated successfully", "updated_fields": list(update_data.keys())}
+
 # Discount System Models
 class Discount(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
