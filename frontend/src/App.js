@@ -1029,7 +1029,8 @@ function App() {
         paymentMethod: '',
         additionalItems: [],
         selectedDiscount: null,
-        discountAmount: 0
+        discountAmount: 0,
+        transactionType: 'checkin'
       };
 
       console.log('💰 Setting payment data:', JSON.stringify(paymentInfo, null, 2));
