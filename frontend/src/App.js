@@ -1098,7 +1098,9 @@ function App() {
 
   const handleCheckOut = async (checkinId) => {
     try {
-      const response = await axios.put(`${API}/api/checkin/${checkinId}/checkout`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.put(`${API}/api/checkin/${checkinId}/checkout`, {}, { headers });
       
       // Check if customer has overtime and needs to pay
       if (response.data.overtime_amount > 0) {
