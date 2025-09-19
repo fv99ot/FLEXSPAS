@@ -1382,23 +1382,32 @@ function App() {
   };
 
   const handleRenewal = async (checkinId, customerName, roomType) => {
-    // Set up renewal transaction to go through payment dialog
-    setPaymentData({
-      checkInId: checkinId,
-      customerName: customerName,
-      totalAmount: getRoomBaseRate(roomType),
-      paymentMethod: '',
-      additionalItems: [],
-      selectedDiscount: null,
-      discountAmount: 0,
-      transactionType: 'renewal'
-    });
-    
-    // Close any open modals
-    setShowRoomManagement(false);
-    
-    // Open payment dialog for transaction finalization
-    setShowPayment(true);
+    try {
+      // First check if renewal is possible (this will show the error to user if limit reached)
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      // Set up renewal transaction to go through payment dialog
+      setPaymentData({
+        checkInId: checkinId,
+        customerName: customerName,
+        totalAmount: getRoomBaseRate(roomType),
+        paymentMethod: '',
+        additionalItems: [],
+        selectedDiscount: null,
+        discountAmount: 0,
+        transactionType: 'renewal'
+      });
+      
+      // Close any open modals
+      setShowRoomManagement(false);
+      
+      // Open payment dialog for transaction finalization
+      setShowPayment(true);
+    } catch (error) {
+      console.error('Error setting up renewal:', error);
+      alert(error.response?.data?.detail || 'Error setting up renewal');
+    }
   };
 
   const handleCheckOut = async (checkinId) => {
