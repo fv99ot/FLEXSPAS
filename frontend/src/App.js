@@ -1806,6 +1806,10 @@ function App() {
                       <div className="w-4 h-4 bg-red-500 rounded"></div>
                       <span className="text-gray-300">Occupied (click to manage)</span>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-black border border-gray-400 rounded"></div>
+                      <span className="text-gray-300">Employee Assigned</span>
+                    </div>
                   </div>
 
                   <Button onClick={fetchRoomMap} className="flex-button mb-4">
