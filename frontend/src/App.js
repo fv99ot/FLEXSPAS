@@ -467,6 +467,34 @@ function App() {
     }
   };
 
+  const assignLockerToEmployee = async (userId, lockerNumber) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.put(`${API}/api/users/${userId}/assign-locker?locker_number=${lockerNumber}`, {}, { headers });
+      fetchEmployees();
+      fetchRoomMap(); // Refresh room map to update locker availability
+      alert(`Locker ${lockerNumber} assigned successfully!`);
+    } catch (error) {
+      console.error('Error assigning locker:', error);
+      alert(error.response?.data?.detail || 'Error assigning locker');
+    }
+  };
+
+  const unassignLockerFromEmployee = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.delete(`${API}/api/users/${userId}/assign-locker`, { headers });
+      fetchEmployees();
+      fetchRoomMap(); // Refresh room map to update locker availability
+      alert('Locker unassigned successfully!');
+    } catch (error) {
+      console.error('Error unassigning locker:', error);
+      alert(error.response?.data?.detail || 'Error unassigning locker');
+    }
+  };
+
   const performRoomUpgrade = async (e) => {
     e.preventDefault();
     setLoading(true);
