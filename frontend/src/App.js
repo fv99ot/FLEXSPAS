@@ -158,6 +158,19 @@ function App() {
   });
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordDialogType, setPasswordDialogType] = useState('change'); // 'change' or 'reset'
+  
+  // Pricing state
+  const [pricingConfig, setPricingConfig] = useState({
+    locker_weekday: 25.0,
+    locker_weekend: 28.0,
+    small_room_weekday: 33.0,
+    small_room_weekend: 36.0,
+    regular_room_weekday: 40.0,
+    regular_room_weekend: 45.0,
+    deluxe_room_weekday: 45.0,
+    deluxe_room_weekend: 50.0
+  });
+  const [showPricingDialog, setShowPricingDialog] = useState(false);
 
   // Customer overtime checkout state
   const [checkoutOvertimeData, setCheckoutOvertimeData] = useState(null);
