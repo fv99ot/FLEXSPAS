@@ -993,7 +993,9 @@ function App() {
       console.log('📤 Sending check-in data:', JSON.stringify(checkInData, null, 2));
       console.log('🌐 API endpoint:', `${API}/api/checkin`);
 
-      const response = await axios.post(`${API}/api/checkin`, checkInData);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.post(`${API}/api/checkin`, checkInData, { headers });
       
       console.log('✅ Check-in response received:', JSON.stringify(response.data, null, 2));
       
