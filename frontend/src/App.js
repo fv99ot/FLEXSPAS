@@ -2133,8 +2133,26 @@ function App() {
 
       {/* Add Customer Dialog */}
       {showAddCustomer && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '28rem',
+            width: '100%',
+            margin: '16px'
+          }}>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Add New Customer</h3>
             <form onSubmit={addCustomer} className="space-y-4">
               <Input
@@ -2185,7 +2203,10 @@ function App() {
                 <Button type="submit" disabled={loading} className="flex-1">
                   {loading ? 'Adding...' : 'Add Customer'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowAddCustomer(false)} className="flex-1">
+                <Button type="button" variant="outline" onClick={() => {
+                  console.log('Cancel button clicked, setting showAddCustomer to false');
+                  setShowAddCustomer(false);
+                }} className="flex-1">
                   Cancel
                 </Button>
               </div>
