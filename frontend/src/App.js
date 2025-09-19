@@ -372,7 +372,9 @@ function App() {
 
   const generateQRCode = async () => {
     try {
-      const response = await axios.get(`${API}/api/qr/membership-form`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/api/qr/membership-form`, { headers });
       setQrCodeUrl(response.data.qr_code_url);
     } catch (error) {
       console.error('Error generating QR code:', error);
