@@ -73,8 +73,8 @@ class ReviewFixesTester:
                 data = response.json()
                 
                 # Check if QR code data is present
-                if 'qr_code' in data:
-                    qr_code_data = data['qr_code']
+                if 'qr_code_url' in data:
+                    qr_code_data = data['qr_code_url']
                     
                     # Verify it's a data URL format
                     is_data_url = qr_code_data.startswith('data:image/png;base64,')
