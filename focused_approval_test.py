@@ -10,7 +10,7 @@ import uuid
 
 class FocusedApprovalTester:
     def __init__(self):
-        self.base_url = "https://flexspa-app.preview.emergentagent.com"
+        self.base_url = "https://spa-admin-hub-1.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.token = None
         self.headers = {'Content-Type': 'application/json'}
