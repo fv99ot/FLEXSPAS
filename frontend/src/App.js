@@ -444,6 +444,18 @@ function App() {
     }
   };
 
+  const checkCustomerMembershipStatus = async (customerId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/api/customers/${customerId}/membership-status`, { headers });
+      return response.data;
+    } catch (error) {
+      console.error('Error checking membership status:', error);
+      return null;
+    }
+  };
+
   const generateQRCode = async () => {
     try {
       const token = localStorage.getItem('token');
