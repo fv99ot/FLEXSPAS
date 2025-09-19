@@ -1825,19 +1825,28 @@ function App() {
                           className={`relative p-2 text-xs text-center rounded border cursor-pointer transition-colors ${
                             locker.available 
                               ? 'bg-green-600 border-green-400 text-white hover:bg-green-700' 
+                              : locker.employee_assigned
+                              ? 'bg-black border-gray-400 text-gray-300 cursor-not-allowed'
                               : locker.is_overtime
                               ? 'bg-red-800 border-red-600 text-white hover:bg-red-900'
                               : 'bg-red-600 border-red-400 text-white hover:bg-red-700'
                           }`}
                           title={
-                            locker.available 
+                            locker.employee_assigned
+                              ? `Assigned to employee: ${locker.employee_assigned}`
+                              : locker.available 
                               ? 'Available' 
                               : `Occupied by: ${locker.customer}\nTime remaining: ${formatRemainingTime(locker.remaining_hours)}\nClick to manage`
                           }
-                          onClick={() => handleRoomClick(locker)}
+                          onClick={() => !locker.employee_assigned && handleRoomClick(locker)}
                         >
                           <div>{locker.number}</div>
-                          {!locker.available && (
+                          {locker.employee_assigned && (
+                            <div className="text-xs mt-1">
+                              Employee
+                            </div>
+                          )}
+                          {!locker.available && !locker.employee_assigned && (
                             <div className="text-xs mt-1">
                               {formatRemainingTime(locker.remaining_hours)}
                             </div>
