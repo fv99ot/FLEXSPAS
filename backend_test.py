@@ -5952,101 +5952,68 @@ class BathhouseAPITester:
         print(f"   API URL: {self.api_url}")
         print("=" * 80)
         
-        # PRIORITY: Authentication debugging as requested in review
-        auth_debug_success = self.test_authentication_debug()
-        
-        # Authentication tests
+        # Core authentication and basic functionality
         if not self.test_login():
-            print("❌ Authentication failed - stopping tests")
+            print("❌ Authentication failed - cannot continue with other tests")
             return False
         
         self.test_invalid_login()
         
-        # CRITICAL: Test user-reported critical issues FIRST
-        print("\n" + "="*80)
-        print("🚨 PRIORITY: TESTING USER-REPORTED CRITICAL ISSUES")
-        print("="*80)
-        critical_issues_success = self.test_user_reported_critical_issues()
-        
-        # Customer management tests
+        # Customer management
         self.test_create_customer()
         self.test_search_customers()
         self.test_get_customer()
         
-        # NEW RENEWAL AND PRICING SYSTEMS TESTING (REVIEW REQUEST PRIORITY)
-        print("\n" + "🔥" * 80)
-        print("🔥 REVIEW REQUEST TESTING - Renewal and Pricing Systems")
-        print("🔥" * 80)
-        
-        self.test_renewal_system()
-        self.test_dynamic_pricing_system()
-        self.test_pricing_database_integration()
-        
-        # NEW REVIEW REQUEST TESTS - Testing the specific features mentioned in review
-        print("\n" + "🔥" * 80)
-        print("🔥 REVIEW REQUEST TESTING - Testing New Features from Review Request")
-        print("🔥" * 80)
-        
-        self.test_employee_locker_assignment_system()
-        self.test_sales_report_fix()
-        self.test_checkin_checkout_authentication()
-        self.test_user_model_updates()
-        
-        # NEW FEATURES TESTING - Customer Profile and Password Management (PRIORITY)
-        self.test_customer_profile_system()
-        self.test_customer_notes_update()
-        self.test_password_management_system()
-        
-        # NEW FEATURE: User management tests
-        self.test_user_management()
-        
-        # Room management tests
+        # Room and check-in system
         self.test_available_rooms()
-        
-        # NEW FEATURE: Detailed room availability tests
-        self.test_room_availability_detailed()
-        
-        # Check-in/out tests
         self.test_checkin()
         self.test_active_checkins()
         self.test_checkout()
         
-        # NEW FEATURE: Sales reports tests
+        # REVIEW REQUEST SPECIFIC TESTS
+        print("\n" + "=" * 50)
+        print("🎯 REVIEW REQUEST SPECIFIC TESTING")
+        print("=" * 50)
+        
+        self.test_renewal_timing_fix()
+        self.test_transaction_system()
+        self.test_enhanced_sales_report()
+        self.test_admin_settings_integration()
+        self.test_checkin_functionality_comprehensive()
+        
+        # OTHER FEATURES TESTING
+        print("\n" + "=" * 50)
+        print("🔧 OTHER FEATURES TESTING")
+        print("=" * 50)
+        
+        self.test_user_management()
         self.test_sales_reports()
+        self.test_room_availability_detailed()
         
-        # QR PENDING CUSTOMER APPROVAL SYSTEM (CRITICAL USER ISSUE)
-        self.test_qr_pending_customer_approval_comprehensive()
-        
-        # NEW FEATURE: Customer approval system tests
+        # QR Customer Approval System Testing
         self.test_pending_customer_approval_system()
-        
-        # Test specific user-reported issue
+        self.test_qr_pending_customer_approval_comprehensive()
         self.test_user_reported_approval_issue()
         
-        # COMPREHENSIVE DISCOUNT AND ADDITIONAL ITEMS TESTING (AS REQUESTED IN REVIEW)
-        self.test_discount_management_comprehensive()
-        self.test_additional_items_management_comprehensive()
-        self.test_integration_and_authentication()
-        
-        # NEW ADMIN FEATURES TESTING (LEGACY)
+        # Admin Features Testing
         self.test_admin_discount_management()
-        self.test_ghost_functionality_removed()  # Verify ghost functionality is completely removed
+        self.test_ghost_functionality_removed()
         self.test_additional_items_management()
-        self.test_room_upgrade_system()
         
-        # ENHANCED 3-COLUMN WAITLIST SYSTEM TESTING (PRIMARY FOCUS)
-        self.test_enhanced_3_column_waitlist_system()
-        self.test_waitlist_system()  # Legacy compatibility test
+        # Print final results
+        print("\n" + "=" * 80)
+        print(f"🏁 TESTING COMPLETE")
+        print(f"   Tests Run: {self.tests_run}")
+        print(f"   Tests Passed: {self.tests_passed}")
+        print(f"   Success Rate: {(self.tests_passed/self.tests_run*100):.1f}%")
         
-        # MULTIPLE WAITLIST FUNCTIONALITY TESTING (REVIEW REQUEST)
-        self.test_multiple_waitlist_functionality()
-        
-        # NEW OVERTIME PAYMENT SYSTEM TESTING
-        self.test_overtime_payment_system()
-        self.test_overtime_integration_workflow()
-        
-        # NEW OVERTIME CEILING ROUNDING TESTING (PRIORITY)
-        self.test_overtime_ceiling_rounding()
+        if self.tests_passed == self.tests_run:
+            print("   🎉 ALL TESTS PASSED!")
+            return True
+        else:
+            failed = self.tests_run - self.tests_passed
+            print(f"   ⚠️  {failed} TESTS FAILED")
+            return False
         
         # Business rules tests
         self.test_business_rules()
