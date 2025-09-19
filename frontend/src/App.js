@@ -2459,6 +2459,26 @@ function App() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="transactions" className="space-y-6">
+            {/* Transactions */}
+            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <CreditCard className="h-5 w-5 mr-2" />
+                  Transaction History
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  View and manage transaction records
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <p className="text-gray-400">Transaction history feature coming soon...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="qr" className="space-y-6">
             {/* QR Code Generation */}
             <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
