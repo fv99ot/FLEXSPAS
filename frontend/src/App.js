@@ -2312,6 +2312,11 @@ function App() {
                             <div>
                               <h3 className="font-semibold text-white">{employee.username}</h3>
                               <p className="text-sm text-gray-300 capitalize">{employee.role}</p>
+                              {employee.assigned_locker_number && (
+                                <p className="text-sm text-green-400">
+                                  Assigned Locker: #{employee.assigned_locker_number}
+                                </p>
+                              )}
                               <p className="text-xs text-gray-400">
                                 Created: {new Date(employee.created_at).toLocaleDateString()}
                               </p>
