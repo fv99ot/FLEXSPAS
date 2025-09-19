@@ -2225,6 +2225,21 @@ function App() {
                             >
                               Reset Password
                             </Button>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => {
+                                const roomNumber = window.prompt(`Assign a locker to ${employee.username}:\n\nEnter locker number (40-153):`);
+                                if (roomNumber && roomNumber >= 40 && roomNumber <= 153) {
+                                  alert(`Locker #${roomNumber} assigned to ${employee.username}`);
+                                  // Here you could implement the actual assignment logic
+                                } else if (roomNumber) {
+                                  alert('Invalid locker number. Please enter a number between 40-153.');
+                                }
+                              }}
+                            >
+                              Assign Locker
+                            </Button>
                             {employee.username !== 'admin' && employee.id !== user?.id && (
                               <Button
                                 size="sm"
