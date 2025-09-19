@@ -1435,96 +1435,341 @@ function App() {
                   Active Check-ins ({activeCheckins.length})
                 </CardTitle>
                 <CardDescription className="text-gray-300">
-                  Currently checked-in customers and their remaining time
+                  Currently checked-in customers organized by accommodation type
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {activeCheckins.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No active check-ins</p>
                 ) : (
-                  <div className="grid gap-4">
-                    {activeCheckins.map((checkin) => (
-                      <div
-                        key={checkin.id}
-                        className={`p-4 border rounded-lg ${checkin.is_overtime ? 'border-red-300 bg-red-900/20' : 'border-white/20 bg-white/5'}`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <Avatar>
-                              <AvatarFallback className="bg-red-600 text-white">
-                                {checkin.customer?.first_name?.charAt(0)}{checkin.customer?.last_name?.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-semibold text-white">
-                                {checkin.customer?.first_name} {checkin.customer?.last_name}
-                              </h3>
-                              <div className="flex items-center space-x-4 text-sm text-gray-300">
-                                <span className="flex items-center">
-                                  <MapPin className="h-4 w-4 mr-1" />
-                                  {checkin.room_type.replace('_', ' ').toUpperCase()} #{checkin.room_number}
-                                </span>
-                                <span className="flex items-center">
-                                  <DollarSign className="h-4 w-4 mr-1" />
-                                  ${checkin.total_amount}
-                                </span>
-                                <span>Session #{checkin.session_count}</span>
+                  <div className="space-y-6">
+                    {/* Lockers */}
+                    {activeCheckins.filter(checkin => checkin.room_type === 'locker').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-blue-400 mb-3">
+                          LOCKERS ({activeCheckins.filter(checkin => checkin.room_type === 'locker').length})
+                        </h3>
+                        <div className="grid gap-4">
+                          {activeCheckins.filter(checkin => checkin.room_type === 'locker').map((checkin) => (
+                            <div
+                              key={checkin.id}
+                              className={`p-4 border rounded-lg ${checkin.is_overtime ? 'border-red-300 bg-red-900/20' : 'border-white/20 bg-white/5'}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <Avatar>
+                                    <AvatarFallback className="bg-blue-600 text-white">
+                                      {checkin.customer?.first_name?.charAt(0)}{checkin.customer?.last_name?.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <h3 className="font-semibold text-white">
+                                      {checkin.customer?.first_name} {checkin.customer?.last_name}
+                                    </h3>
+                                    <div className="flex items-center space-x-4 text-sm text-gray-300">
+                                      <span className="flex items-center">
+                                        <MapPin className="h-4 w-4 mr-1" />
+                                        LOCKER #{checkin.room_number}
+                                      </span>
+                                      <span className="flex items-center">
+                                        <DollarSign className="h-4 w-4 mr-1" />
+                                        ${checkin.total_amount}
+                                      </span>
+                                      <span>Session #{checkin.session_count}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                  <div className="text-right">
+                                    <div className={`font-semibold ${checkin.is_overtime ? 'text-red-400' : 'text-green-400'}`}>
+                                      {formatRemainingTime(checkin.remaining_hours)}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      Checked in: {new Date(checkin.check_in_time).toLocaleTimeString()}
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                                      onClick={() => {
+                                        setSelectedCheckin(checkin);
+                                        setShowUpgrade(true);
+                                      }}
+                                    >
+                                      Upgrade
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                                      onClick={() => addToAllWaitlists(checkin.id)}
+                                    >
+                                      + All Waitlists
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant={checkin.is_overtime ? "destructive" : "outline"}
+                                      onClick={() => handleCheckOut(checkin.id)}
+                                      className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
+                                    >
+                                      Check Out
+                                    </Button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex items-center space-x-4">
-                            <div className="text-right">
-                              <div className={`font-semibold ${checkin.is_overtime ? 'text-red-400' : 'text-green-400'}`}>
-                                {formatRemainingTime(checkin.remaining_hours)}
-                              </div>
-                              <div className="text-xs text-gray-400">
-                                Checked in: {new Date(checkin.check_in_time).toLocaleTimeString()}
-                              </div>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                onClick={() => {
-                                  setSelectedCheckin(checkin);
-                                  setShowUpgrade(true);
-                                }}
-                              >
-                                Upgrade
-                              </Button>
-                              
-                              {/* Add to Waitlist Dropdown */}
-                              <div className="relative">
-                                <Select onValueChange={(value) => {
-                                  if (value && value !== 'placeholder') {
-                                    addFromCheckinToWaitlist(checkin.id, value);
-                                  }
-                                }}>
-                                  <SelectTrigger className="w-32 h-8 bg-yellow-600 hover:bg-yellow-700 border-yellow-500 text-white text-xs">
-                                    <SelectValue placeholder="+ Waitlist" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="placeholder" disabled>Add to Waitlist</SelectItem>
-                                    <SelectItem value="regular_room">Regular Room Waitlist</SelectItem>
-                                    <SelectItem value="small_room">Small Room Waitlist</SelectItem>
-                                    <SelectItem value="deluxe_room">Deluxe Room Waitlist</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              
-                              <Button
-                                size="sm"
-                                variant={checkin.is_overtime ? "destructive" : "outline"}
-                                onClick={() => handleCheckOut(checkin.id)}
-                                className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
-                              >
-                                Check Out
-                              </Button>
-                            </div>
-                          </div>
+                          ))}
                         </div>
                       </div>
-                    ))}
+                    )}
+
+                    {/* Small Rooms */}
+                    {activeCheckins.filter(checkin => checkin.room_type === 'small_room').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-green-400 mb-3">
+                          SMALL ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'small_room').length})
+                        </h3>
+                        <div className="grid gap-4">
+                          {activeCheckins.filter(checkin => checkin.room_type === 'small_room').map((checkin) => (
+                            <div
+                              key={checkin.id}
+                              className={`p-4 border rounded-lg ${checkin.is_overtime ? 'border-red-300 bg-red-900/20' : 'border-white/20 bg-white/5'}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <Avatar>
+                                    <AvatarFallback className="bg-green-600 text-white">
+                                      {checkin.customer?.first_name?.charAt(0)}{checkin.customer?.last_name?.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <h3 className="font-semibold text-white">
+                                      {checkin.customer?.first_name} {checkin.customer?.last_name}
+                                    </h3>
+                                    <div className="flex items-center space-x-4 text-sm text-gray-300">
+                                      <span className="flex items-center">
+                                        <MapPin className="h-4 w-4 mr-1" />
+                                        SMALL ROOM #{checkin.room_number}
+                                      </span>
+                                      <span className="flex items-center">
+                                        <DollarSign className="h-4 w-4 mr-1" />
+                                        ${checkin.total_amount}
+                                      </span>
+                                      <span>Session #{checkin.session_count}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                  <div className="text-right">
+                                    <div className={`font-semibold ${checkin.is_overtime ? 'text-red-400' : 'text-green-400'}`}>
+                                      {formatRemainingTime(checkin.remaining_hours)}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      Checked in: {new Date(checkin.check_in_time).toLocaleTimeString()}
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                                      onClick={() => {
+                                        setSelectedCheckin(checkin);
+                                        setShowUpgrade(true);
+                                      }}
+                                    >
+                                      Upgrade
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                                      onClick={() => addToAllWaitlists(checkin.id)}
+                                    >
+                                      + All Waitlists
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant={checkin.is_overtime ? "destructive" : "outline"}
+                                      onClick={() => handleCheckOut(checkin.id)}
+                                      className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
+                                    >
+                                      Check Out
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Regular Rooms */}
+                    {activeCheckins.filter(checkin => checkin.room_type === 'regular_room').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-purple-400 mb-3">
+                          REGULAR ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'regular_room').length})
+                        </h3>
+                        <div className="grid gap-4">
+                          {activeCheckins.filter(checkin => checkin.room_type === 'regular_room').map((checkin) => (
+                            <div
+                              key={checkin.id}
+                              className={`p-4 border rounded-lg ${checkin.is_overtime ? 'border-red-300 bg-red-900/20' : 'border-white/20 bg-white/5'}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <Avatar>
+                                    <AvatarFallback className="bg-purple-600 text-white">
+                                      {checkin.customer?.first_name?.charAt(0)}{checkin.customer?.last_name?.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <h3 className="font-semibold text-white">
+                                      {checkin.customer?.first_name} {checkin.customer?.last_name}
+                                    </h3>
+                                    <div className="flex items-center space-x-4 text-sm text-gray-300">
+                                      <span className="flex items-center">
+                                        <MapPin className="h-4 w-4 mr-1" />
+                                        REGULAR ROOM #{checkin.room_number}
+                                      </span>
+                                      <span className="flex items-center">
+                                        <DollarSign className="h-4 w-4 mr-1" />
+                                        ${checkin.total_amount}
+                                      </span>
+                                      <span>Session #{checkin.session_count}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                  <div className="text-right">
+                                    <div className={`font-semibold ${checkin.is_overtime ? 'text-red-400' : 'text-green-400'}`}>
+                                      {formatRemainingTime(checkin.remaining_hours)}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      Checked in: {new Date(checkin.check_in_time).toLocaleTimeString()}
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                                      onClick={() => {
+                                        setSelectedCheckin(checkin);
+                                        setShowUpgrade(true);
+                                      }}
+                                    >
+                                      Upgrade
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                                      onClick={() => addToAllWaitlists(checkin.id)}
+                                    >
+                                      + All Waitlists
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant={checkin.is_overtime ? "destructive" : "outline"}
+                                      onClick={() => handleCheckOut(checkin.id)}
+                                      className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
+                                    >
+                                      Check Out
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Deluxe Rooms */}
+                    {activeCheckins.filter(checkin => checkin.room_type === 'deluxe_room').length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-yellow-400 mb-3">
+                          DELUXE ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'deluxe_room').length})
+                        </h3>
+                        <div className="grid gap-4">
+                          {activeCheckins.filter(checkin => checkin.room_type === 'deluxe_room').map((checkin) => (
+                            <div
+                              key={checkin.id}
+                              className={`p-4 border rounded-lg ${checkin.is_overtime ? 'border-red-300 bg-red-900/20' : 'border-white/20 bg-white/5'}`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <Avatar>
+                                    <AvatarFallback className="bg-yellow-600 text-white">
+                                      {checkin.customer?.first_name?.charAt(0)}{checkin.customer?.last_name?.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <h3 className="font-semibold text-white">
+                                      {checkin.customer?.first_name} {checkin.customer?.last_name}
+                                    </h3>
+                                    <div className="flex items-center space-x-4 text-sm text-gray-300">
+                                      <span className="flex items-center">
+                                        <MapPin className="h-4 w-4 mr-1" />
+                                        DELUXE ROOM #{checkin.room_number}
+                                      </span>
+                                      <span className="flex items-center">
+                                        <DollarSign className="h-4 w-4 mr-1" />
+                                        ${checkin.total_amount}
+                                      </span>
+                                      <span>Session #{checkin.session_count}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                  <div className="text-right">
+                                    <div className={`font-semibold ${checkin.is_overtime ? 'text-red-400' : 'text-green-400'}`}>
+                                      {formatRemainingTime(checkin.remaining_hours)}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      Checked in: {new Date(checkin.check_in_time).toLocaleTimeString()}
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      size="sm"
+                                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                                      onClick={() => {
+                                        setSelectedCheckin(checkin);
+                                        setShowUpgrade(true);
+                                      }}
+                                    >
+                                      Upgrade
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                                      onClick={() => addToAllWaitlists(checkin.id)}
+                                    >
+                                      + All Waitlists
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant={checkin.is_overtime ? "destructive" : "outline"}
+                                      onClick={() => handleCheckOut(checkin.id)}
+                                      className={checkin.is_overtime ? "" : "border-white/20 text-white hover:bg-white/10"}
+                                    >
+                                      Check Out
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
