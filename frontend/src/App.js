@@ -2549,6 +2549,68 @@ function App() {
                         </Card>
                       </div>
                     </TabsContent>
+
+                    <TabsContent value="pricing" className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-white">Pricing Management</h3>
+                        <Button onClick={() => setShowPricingDialog(true)} className="flex-button">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Edit Pricing
+                        </Button>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(30, 58, 138, 0.3)' }}>
+                          <CardHeader>
+                            <CardTitle className="text-white">Weekday Pricing</CardTitle>
+                            <CardDescription className="text-gray-300">Monday 12am - Friday 4pm</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <div className="flex justify-between text-white">
+                              <span>Locker:</span>
+                              <span>${pricingConfig.locker_weekday.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-white">
+                              <span>Small Room:</span>
+                              <span>${pricingConfig.small_room_weekday.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-white">
+                              <span>Regular Room:</span>
+                              <span>${pricingConfig.regular_room_weekday.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-white">
+                              <span>Deluxe Room:</span>
+                              <span>${pricingConfig.deluxe_room_weekday.toFixed(2)}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(30, 58, 138, 0.3)' }}>
+                          <CardHeader>
+                            <CardTitle className="text-white">Weekend Pricing</CardTitle>
+                            <CardDescription className="text-gray-300">Friday 4pm - Monday 12am</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <div className="flex justify-between text-white">
+                              <span>Locker:</span>
+                              <span>${pricingConfig.locker_weekend.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-white">
+                              <span>Small Room:</span>
+                              <span>${pricingConfig.small_room_weekend.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-white">
+                              <span>Regular Room:</span>
+                              <span>${pricingConfig.regular_room_weekend.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-white">
+                              <span>Deluxe Room:</span>
+                              <span>${pricingConfig.deluxe_room_weekend.toFixed(2)}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
                   </Tabs>
                 </CardContent>
               </Card>
