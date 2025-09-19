@@ -6602,6 +6602,204 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_qr_code_functionality_comprehensive(self):
+        """Test QR code functionality as specifically requested in review"""
+        print("\n🔗 TESTING QR CODE FUNCTIONALITY (USER REPORTED ISSUE)...")
+        print("   User reported: 'qr code isn't working'")
+        print("   Testing: QR endpoint, dependencies, form submission, approval flow")
+        
+        all_success = True
+        
+        # TEST 1: Check if QR code endpoint exists
+        print("   TEST 1: QR Code Endpoint Availability...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/qr/membership-form",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Check expected response format
+                has_qr_url = 'qr_code_url' in data
+                has_form_url = 'membership_form_url' in data
+                has_base64 = 'qr_code_base64' in data or 'qr_code_data' in data
+                
+                success = has_qr_url and has_form_url
+                details = f"QR URL: {has_qr_url}, Form URL: {has_form_url}, Base64: {has_base64}"
+                self.log_test("QR Code Endpoint Response Format", success, details)
+                
+                if not success:
+                    all_success = False
+                    
+                # If we have base64 data, try to validate it
+                if has_base64:
+                    base64_data = data.get('qr_code_base64') or data.get('qr_code_data', '')
+                    if base64_data:
+                        try:
+                            import base64
+                            decoded = base64.b64decode(base64_data)
+                            is_valid_base64 = len(decoded) > 0
+                            self.log_test("QR Code Base64 Validation", is_valid_base64, f"Base64 length: {len(decoded)} bytes")
+                            if not is_valid_base64:
+                                all_success = False
+                        except Exception as e:
+                            self.log_test("QR Code Base64 Validation", False, f"Invalid base64: {str(e)}")
+                            all_success = False
+                            
+            elif response.status_code == 404:
+                self.log_test("QR Code Endpoint Exists", False, "❌ CRITICAL: QR endpoint missing from backend - this is likely the main issue!")
+                print("   🚨 ROOT CAUSE IDENTIFIED: GET /api/qr/membership-form endpoint does not exist in backend code")
+                print("   📝 RECOMMENDATION: Main agent needs to implement the missing QR code generation endpoint")
+                all_success = False
+            else:
+                self.log_test("QR Code Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("QR Code Endpoint", False, f"Exception: {str(e)} - Likely missing endpoint")
+            print("   🚨 CRITICAL: QR code endpoint completely missing or server error")
+            all_success = False
+        
+        # TEST 2: Check for QR code dependencies (if endpoint existed)
+        print("   TEST 2: QR Code Dependencies Check...")
+        try:
+            # Try to import qrcode library to check if it's available
+            import qrcode
+            self.log_test("QR Code Library Available", True, "qrcode library is installed")
+        except ImportError as e:
+            self.log_test("QR Code Library Available", False, f"qrcode library missing: {str(e)}")
+            print("   📝 RECOMMENDATION: Install qrcode library with 'pip install qrcode[pil]'")
+            all_success = False
+        
+        # TEST 3: Check environment variables for QR functionality
+        print("   TEST 3: Environment Variables Check...")
+        try:
+            # Check if FRONTEND_URL is configured (needed for QR code generation)
+            with open('/app/frontend/.env', 'r') as f:
+                env_content = f.read()
+                has_frontend_url = 'REACT_APP_BACKEND_URL' in env_content
+                self.log_test("Frontend URL Configuration", has_frontend_url, f"REACT_APP_BACKEND_URL configured: {has_frontend_url}")
+                if not has_frontend_url:
+                    all_success = False
+        except Exception as e:
+            self.log_test("Environment Variables Check", False, f"Could not check .env: {str(e)}")
+            all_success = False
+        
+        # TEST 4: Test the membership form submission (public endpoint)
+        print("   TEST 4: Membership Form Submission...")
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+        test_customer_data = {
+            "first_name": "QRTest",
+            "last_name": "Customer",
+            "id_number": f"QR_FORM_{unique_timestamp}",
+            "date_of_birth": "1990-05-15",
+            "id_expiration_date": "2026-12-31",
+            "state_of_id": "CA"
+        }
+        
+        pending_customer_id = None
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers/public",
+                json=test_customer_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['status'] == 'pending':
+                    pending_customer_id = data['id']
+                    self.log_test("QR Form Submission Works", True, f"Created pending customer: {pending_customer_id}")
+                else:
+                    self.log_test("QR Form Submission Works", False, "Invalid response data")
+                    all_success = False
+            else:
+                self.log_test("QR Form Submission Works", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("QR Form Submission Works", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 5: Test pending customer approval (if form submission worked)
+        if pending_customer_id and self.token:
+            print("   TEST 5: Pending Customer Approval...")
+            try:
+                # Check if customer appears in pending list
+                pending_response = requests.get(
+                    f"{self.api_url}/pending-customers",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if pending_response.status_code == 200:
+                    pending_customers = pending_response.json()
+                    found_customer = any(c.get('id') == pending_customer_id for c in pending_customers)
+                    self.log_test("Customer in Pending List", found_customer, f"Found in {len(pending_customers)} pending customers")
+                    
+                    if found_customer:
+                        # Try to approve the customer
+                        approval_response = requests.post(
+                            f"{self.api_url}/pending-customers/{pending_customer_id}/approve",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if approval_response.status_code == 200:
+                            approved_data = approval_response.json()
+                            success = 'id' in approved_data and approved_data.get('first_name') == 'QRTest'
+                            self.log_test("QR Customer Approval", success, f"Approved customer: {approved_data.get('id', 'N/A')}")
+                            if not success:
+                                all_success = False
+                        else:
+                            self.log_test("QR Customer Approval", False, f"Approval failed: {approval_response.status_code}")
+                            all_success = False
+                    else:
+                        all_success = False
+                else:
+                    self.log_test("Customer in Pending List", False, f"Could not get pending customers: {pending_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Pending Customer Approval", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 6: Check frontend route accessibility (if possible)
+        print("   TEST 6: Frontend Membership Route Check...")
+        try:
+            # Try to access the membership form route
+            frontend_url = "https://flexspa-dashboard.preview.emergentagent.com"
+            membership_response = requests.get(
+                f"{frontend_url}/membership",
+                timeout=10
+            )
+            
+            # Even if it returns HTML, a 200 status means the route exists
+            route_exists = membership_response.status_code == 200
+            self.log_test("Membership Route Accessible", route_exists, f"Status: {membership_response.status_code}")
+            if not route_exists:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Membership Route Accessible", False, f"Exception: {str(e)}")
+            # This is not critical for backend testing
+        
+        # SUMMARY OF FINDINGS
+        print("\n   📋 QR CODE FUNCTIONALITY ANALYSIS:")
+        if not all_success:
+            print("   ❌ QR Code functionality has issues:")
+            print("   1. Check if GET /api/qr/membership-form endpoint exists in backend")
+            print("   2. Verify qrcode Python library is installed")
+            print("   3. Ensure FRONTEND_URL environment variable is configured")
+            print("   4. Test complete flow: QR generation → form submission → approval")
+        else:
+            print("   ✅ QR Code functionality appears to be working correctly")
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting Comprehensive Backend API Testing...")
