@@ -1178,7 +1178,10 @@ function App() {
                     <Search className="h-4 w-4 mr-2" />
                     Search
                   </Button>
-                  <Button variant="outline" onClick={() => setShowAddCustomer(true)} className="flex-button">
+                  <Button variant="outline" onClick={() => {
+                    console.log('Add New button clicked, setting showAddCustomer to true');
+                    setShowAddCustomer(true);
+                  }} className="flex-button">
                     <Plus className="h-4 w-4 mr-2" />
                     Add New
                   </Button>
