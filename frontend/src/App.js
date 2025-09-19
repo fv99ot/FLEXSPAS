@@ -172,6 +172,17 @@ function App() {
     deluxe_room_weekend: 50.0
   });
   const [showPricingDialog, setShowPricingDialog] = useState(false);
+  
+  // Current transaction state for building up transactions
+  const [currentTransaction, setCurrentTransaction] = useState({
+    customer: null,
+    items: [],
+    subtotal: 0,
+    discount: null,
+    discountAmount: 0,
+    total: 0
+  });
+  const [showCurrentTransaction, setShowCurrentTransaction] = useState(false);
 
   // Customer overtime checkout state
   const [checkoutOvertimeData, setCheckoutOvertimeData] = useState(null);
