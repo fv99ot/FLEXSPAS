@@ -1765,9 +1765,12 @@ function App() {
                           )}
                           <Button 
                             size="sm" 
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
                               setSelectedCustomer(customer);
+                              // Check membership status when opening check-in dialog
+                              const membershipStatus = await checkCustomerMembershipStatus(customer.id);
+                              setCustomerMembershipStatus(membershipStatus);
                               setShowCheckIn(true);
                             }}
                             disabled={customer.is_banned || customer.unpaid_overtime_amount > 0}
