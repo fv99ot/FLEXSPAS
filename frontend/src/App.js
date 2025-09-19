@@ -2626,7 +2626,7 @@ function App() {
                 <CardTitle className="flex items-center justify-between text-white">
                   <div className="flex items-center">
                     <ShoppingCart className="h-5 w-5 mr-2" />
-                    Current Cart
+                    Cart & Transactions
                     {currentTransaction.customer && (
                       <span className="ml-2 text-blue-400">- {currentTransaction.customer.first_name} {currentTransaction.customer.last_name}</span>
                     )}
@@ -2644,77 +2644,86 @@ function App() {
                   )}
                 </CardTitle>
                 <CardDescription className="text-gray-300">
-                  Add memberships and additional items to cart, then process payment
+                  Add memberships and additional items to cart, then process payment. View transaction history below.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {!currentTransaction.customer ? (
-                  <div className="text-center py-8">
-                    <ShoppingCart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-400 mb-4">Select a customer to start a transaction</p>
-                    <div className="max-w-md mx-auto">
-                      <Input
-                        type="text"
-                        placeholder="Search for customer..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && searchCustomers()}
-                        className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400 mb-2"
-                      />
-                      <Button onClick={searchCustomers} disabled={loading} className="flex-button w-full">
-                        <Search className="h-4 w-4 mr-2" />
-                        Search Customer
-                      </Button>
-                    </div>
-                    
-                    {customers.length > 0 && (
-                      <div className="mt-4 max-h-60 overflow-y-auto">
-                        <div className="space-y-2">
-                          {customers.map((customer) => (
-                            <div
-                              key={customer.id}
-                              className="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10"
-                              onClick={() => {
-                                setCurrentTransaction(prev => ({
-                                  ...prev,
-                                  customer: customer
-                                }));
-                                setCustomers([]); // Clear search results
-                                setSearchQuery('');
-                              }}
-                            >
-                              <div>
-                                <p className="text-white font-medium">{customer.first_name} {customer.last_name}</p>
-                                <p className="text-gray-400 text-sm">{customer.id_number}</p>
-                              </div>
-                              <Button size="sm" className="flex-button">
-                                Select
-                              </Button>
-                            </div>
-                          ))}
+                <div className="space-y-6">
+                  {/* Customer Selection Section */}
+                  <div>
+                    <h4 className="text-white font-medium mb-4">Customer (Optional for Additional Items)</h4>
+                    {!currentTransaction.customer ? (
+                      <div className="space-y-4">
+                        <div className="flex space-x-2">
+                          <Input
+                            type="text"
+                            placeholder="Search for customer (optional)..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && searchCustomers()}
+                            className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                          />
+                          <Button onClick={searchCustomers} disabled={loading} className="flex-button">
+                            <Search className="h-4 w-4 mr-2" />
+                            Search
+                          </Button>
                         </div>
+                        
+                        <div className="text-center p-4 bg-white/5 rounded-lg">
+                          <p className="text-gray-400 text-sm">
+                            Skip customer selection to sell additional items only, or search for a customer to add memberships
+                          </p>
+                        </div>
+                        
+                        {customers.length > 0 && (
+                          <div className="max-h-60 overflow-y-auto">
+                            <div className="space-y-2">
+                              {customers.map((customer) => (
+                                <div
+                                  key={customer.id}
+                                  className="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10"
+                                  onClick={() => {
+                                    setCurrentTransaction(prev => ({
+                                      ...prev,
+                                      customer: customer
+                                    }));
+                                    setCustomers([]);
+                                    setSearchQuery('');
+                                  }}
+                                >
+                                  <div>
+                                    <p className="text-white font-medium">{customer.first_name} {customer.last_name}</p>
+                                    <p className="text-gray-400 text-sm">{customer.id_number}</p>
+                                  </div>
+                                  <Button size="sm" className="flex-button">
+                                    Select
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                        <div>
+                          <h3 className="text-white font-semibold">{currentTransaction.customer.first_name} {currentTransaction.customer.last_name}</h3>
+                          <p className="text-gray-400">{currentTransaction.customer.id_number}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setCurrentTransaction(prev => ({ ...prev, customer: null }))}
+                          className="border-gray-500 text-gray-400 hover:bg-gray-500 hover:text-white"
+                        >
+                          Remove Customer
+                        </Button>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Customer Info */}
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-                      <div>
-                        <h3 className="text-white font-semibold">{currentTransaction.customer.first_name} {currentTransaction.customer.last_name}</h3>
-                        <p className="text-gray-400">{currentTransaction.customer.id_number}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setCurrentTransaction(prev => ({ ...prev, customer: null }))}
-                        className="border-gray-500 text-gray-400 hover:bg-gray-500 hover:text-white"
-                      >
-                        Change Customer
-                      </Button>
-                    </div>
 
-                    {/* Add Memberships */}
+                  {/* Add Memberships - Only show if customer is selected */}
+                  {currentTransaction.customer && (
                     <div className="space-y-4">
                       <h4 className="text-white font-medium">Add Membership</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2750,99 +2759,175 @@ function App() {
                         </Card>
                       </div>
                     </div>
+                  )}
 
-                    {/* Add Additional Items */}
-                    {additionalItems.length > 0 && (
-                      <div className="space-y-4">
-                        <h4 className="text-white font-medium">Add Additional Items</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {additionalItems.map((item) => (
-                            <Card key={item.id} className="bg-white/5 border-white/20 cursor-pointer hover:bg-white/10"
-                                  onClick={() => {
-                                    const additionalItem = {
-                                      type: 'additional_item',
-                                      name: item.name,
-                                      amount: item.price,
-                                      id: item.id
-                                    };
-                                    addToCurrentTransaction(additionalItem);
-                                  }}>
-                              <CardContent className="p-4 text-center">
-                                <h5 className="text-white font-medium">{item.name}</h5>
-                                <p className="text-green-400 text-lg font-bold">${item.price.toFixed(2)}</p>
-                                <p className="text-gray-400 text-sm">{item.category}</p>
-                              </CardContent>
-                            </Card>
-                          ))}
+                  {/* Add Additional Items - Always available */}
+                  {additionalItems.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="text-white font-medium">Add Additional Items</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {additionalItems.map((item) => (
+                          <Card key={item.id} className="bg-white/5 border-white/20 cursor-pointer hover:bg-white/10"
+                                onClick={() => {
+                                  const additionalItem = {
+                                    type: 'additional_item',
+                                    name: item.name,
+                                    amount: item.price,
+                                    id: item.id
+                                  };
+                                  addToCurrentTransaction(additionalItem);
+                                }}>
+                            <CardContent className="p-4 text-center">
+                              <h5 className="text-white font-medium">{item.name}</h5>
+                              <p className="text-green-400 text-lg font-bold">${item.price.toFixed(2)}</p>
+                              <p className="text-gray-400 text-sm">{item.category}</p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cart Items */}
+                  {currentTransaction.items.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="text-white font-medium">Cart Items</h4>
+                      <div className="space-y-2">
+                        {currentTransaction.items.map((item, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <div>
+                              <p className="text-white font-medium">{item.name}</p>
+                              <p className="text-gray-400 text-sm">{item.type.replace('_', ' ')}</p>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <span className="text-green-400 font-bold">${item.amount.toFixed(2)}</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => removeFromCurrentTransaction(index)}
+                                className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Cart Total */}
+                      <div className="border-t border-white/20 pt-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-gray-300">Subtotal:</span>
+                          <span className="text-white font-bold">${currentTransaction.subtotal.toFixed(2)}</span>
+                        </div>
+                        {currentTransaction.discount && (
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-gray-300">Discount ({currentTransaction.discount.name}):</span>
+                            <span className="text-red-400 font-bold">-${currentTransaction.discountAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between items-center text-lg">
+                          <span className="text-white font-bold">Total:</span>
+                          <span className="text-green-400 font-bold">${currentTransaction.total.toFixed(2)}</span>
                         </div>
                       </div>
-                    )}
 
-                    {/* Cart Items */}
-                    {currentTransaction.items.length > 0 && (
-                      <div className="space-y-4">
-                        <h4 className="text-white font-medium">Cart Items</h4>
-                        <div className="space-y-2">
-                          {currentTransaction.items.map((item, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                              <div>
-                                <p className="text-white font-medium">{item.name}</p>
-                                <p className="text-gray-400 text-sm">{item.type.replace('_', ' ')}</p>
+                      {/* Action Buttons */}
+                      <div className="flex space-x-4">
+                        <Button
+                          onClick={finalizeCurrentTransaction}
+                          className="flex-1 flex-button font-semibold py-3"
+                          disabled={currentTransaction.items.length === 0}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Process Payment
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={clearCurrentTransaction}
+                          className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                        >
+                          Clear Cart
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Transaction History */}
+            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-white">
+                  <div className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2" />
+                    Transaction History
+                  </div>
+                  <Button
+                    onClick={fetchTransactions}
+                    size="sm"
+                    className="flex-button"
+                  >
+                    Refresh
+                  </Button>
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Recent transactions and payment history
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {user?.role === 'manager' ? (
+                  <div className="space-y-4">
+                    {transactions.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No transactions found</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {transactions.map((transaction) => (
+                          <div key={transaction.id} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-white font-medium">{transaction.customer_name}</h3>
+                                <span className="text-green-400 font-bold">${transaction.total_amount.toFixed(2)}</span>
                               </div>
-                              <div className="flex items-center space-x-3">
-                                <span className="text-green-400 font-bold">${item.amount.toFixed(2)}</span>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => removeFromCurrentTransaction(index)}
-                                  className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <p className="text-gray-400">Type</p>
+                                  <p className="text-white">{transaction.transaction_type}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">Payment</p>
+                                  <p className="text-white">{transaction.payment_method}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">Date</p>
+                                  <p className="text-white">{new Date(transaction.created_at).toLocaleDateString()}</p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {user?.role === 'manager' && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        setSelectedTransaction(transaction);
+                                        setRefundAmount(transaction.total_amount);
+                                        setShowRefundDialog(true);
+                                      }}
+                                      className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                                    >
+                                      Refund
+                                    </Button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
-
-                        {/* Cart Total */}
-                        <div className="border-t border-white/20 pt-4">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-300">Subtotal:</span>
-                            <span className="text-white font-bold">${currentTransaction.subtotal.toFixed(2)}</span>
                           </div>
-                          {currentTransaction.discount && (
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-gray-300">Discount ({currentTransaction.discount.name}):</span>
-                              <span className="text-red-400 font-bold">-${currentTransaction.discountAmount.toFixed(2)}</span>
-                            </div>
-                          )}
-                          <div className="flex justify-between items-center text-lg">
-                            <span className="text-white font-bold">Total:</span>
-                            <span className="text-green-400 font-bold">${currentTransaction.total.toFixed(2)}</span>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex space-x-4">
-                          <Button
-                            onClick={finalizeCurrentTransaction}
-                            className="flex-1 flex-button font-semibold py-3"
-                            disabled={currentTransaction.items.length === 0}
-                          >
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            Process Payment
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={clearCurrentTransaction}
-                            className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                          >
-                            Clear Cart
-                          </Button>
-                        </div>
+                        ))}
                       </div>
                     )}
                   </div>
+                ) : (
+                  <p className="text-gray-400 text-center py-8">Manager access required to view transaction history</p>
                 )}
               </CardContent>
             </Card>
