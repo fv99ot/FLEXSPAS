@@ -1169,6 +1169,76 @@ function App() {
     }
   };
 
+  const addToCurrentTransaction = (item) => {
+    setCurrentTransaction(prev => {
+      const newItems = [...prev.items, item];
+      const subtotal = newItems.reduce((sum, item) => sum + item.amount, 0);
+      const total = subtotal - prev.discountAmount;
+      
+      return {
+        ...prev,
+        items: newItems,
+        subtotal: subtotal,
+        total: Math.max(0, total) // Ensure total is never negative
+      };
+    });
+    
+    setShowCurrentTransaction(true);
+  };
+
+  const removeFromCurrentTransaction = (index) => {
+    setCurrentTransaction(prev => {
+      const newItems = prev.items.filter((_, i) => i !== index);
+      const subtotal = newItems.reduce((sum, item) => sum + item.amount, 0);
+      const total = subtotal - prev.discountAmount;
+      
+      return {
+        ...prev,
+        items: newItems,
+        subtotal: subtotal,
+        total: Math.max(0, total)
+      };
+    });
+  };
+
+  const finalizeCurrentTransaction = () => {
+    if (currentTransaction.items.length === 0) {
+      alert('No items in current transaction');
+      return;
+    }
+    
+    if (!currentTransaction.customer) {
+      alert('Please select a customer first');
+      return;
+    }
+    
+    // Set up payment data from current transaction
+    setPaymentData({
+      checkInId: '', // Not applicable for standalone transactions
+      customerName: `${currentTransaction.customer.first_name} ${currentTransaction.customer.last_name}`,
+      totalAmount: currentTransaction.total,
+      paymentMethod: '',
+      additionalItems: currentTransaction.items.filter(item => item.type === 'additional_item'),
+      selectedDiscount: currentTransaction.discount,
+      discountAmount: currentTransaction.discountAmount,
+      transactionType: 'standalone'
+    });
+    
+    setShowPayment(true);
+  };
+
+  const clearCurrentTransaction = () => {
+    setCurrentTransaction({
+      customer: null,
+      items: [],
+      subtotal: 0,
+      discount: null,
+      discountAmount: 0,
+      total: 0
+    });
+    setShowCurrentTransaction(false);
+  };
+
   const handleRenewal = async (checkinId, customerName, roomType) => {
     // Set up renewal transaction to go through payment dialog
     setPaymentData({
