@@ -722,12 +722,15 @@ function App() {
 
   const fetchRoomMap = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
       const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes] = await Promise.all([
-        axios.get(`${API}/api/rooms/available/locker`),
-        axios.get(`${API}/api/rooms/available/small_room`),
-        axios.get(`${API}/api/rooms/available/regular_room`),
-        axios.get(`${API}/api/rooms/available/deluxe_room`),
-        axios.get(`${API}/api/checkins/active`)
+        axios.get(`${API}/api/rooms/available/locker`, { headers }),
+        axios.get(`${API}/api/rooms/available/small_room`, { headers }),
+        axios.get(`${API}/api/rooms/available/regular_room`, { headers }),
+        axios.get(`${API}/api/rooms/available/deluxe_room`, { headers }),
+        axios.get(`${API}/api/checkins/active`, { headers })
       ]);
 
       // Get occupied rooms from active check-ins
