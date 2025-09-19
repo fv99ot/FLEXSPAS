@@ -761,12 +761,13 @@ function App() {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       
-      const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes] = await Promise.all([
+      const [lockersRes, smallRoomsRes, regularRoomsRes, deluxeRoomsRes, activeCheckinsRes, assignedLockersRes] = await Promise.all([
         axios.get(`${API}/api/rooms/available/locker`, { headers }),
         axios.get(`${API}/api/rooms/available/small_room`, { headers }),
         axios.get(`${API}/api/rooms/available/regular_room`, { headers }),
         axios.get(`${API}/api/rooms/available/deluxe_room`, { headers }),
-        axios.get(`${API}/api/checkins/active`, { headers })
+        axios.get(`${API}/api/checkins/active`, { headers }),
+        axios.get(`${API}/api/users/assigned-lockers`, { headers })
       ]);
 
       // Get occupied rooms from active check-ins
@@ -779,6 +780,9 @@ function App() {
         checkin_id: checkin.id
       }));
 
+      // Get employee assigned lockers
+      const assignedLockers = assignedLockersRes.data;
+      console.log('Assigned lockers:', assignedLockers); // Debug log
       console.log('Occupied rooms:', occupiedRooms); // Debug log
 
       // Create complete room map
@@ -789,11 +793,14 @@ function App() {
 
       const mapLockers = allLockers.map(num => {
         const occupied = occupiedRooms.find(r => r.number === num && r.type === 'locker');
+        const employeeAssigned = assignedLockers[num.toString()];
+        
         return {
           number: num,
           type: 'locker',
-          available: !occupied, // Available if NOT occupied
+          available: !occupied && !employeeAssigned, // Available if NOT occupied AND NOT assigned to employee
           customer: occupied ? occupied.customer : null,
+          employee_assigned: employeeAssigned ? employeeAssigned.employee_username : null,
           remaining_hours: occupied ? occupied.remaining_hours : null,
           is_overtime: occupied ? occupied.is_overtime : false,
           checkin_id: occupied ? occupied.checkin_id : null
