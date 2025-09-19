@@ -966,7 +966,9 @@ function App() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API}/api/customers`, customerForm);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.post(`${API}/api/customers`, customerForm, { headers });
       setCustomerForm({
         first_name: '',
         last_name: '',
