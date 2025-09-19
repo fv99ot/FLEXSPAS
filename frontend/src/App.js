@@ -1777,9 +1777,6 @@ function App() {
                     <p>Customers can scan this QR code to fill out their membership information.</p>
                     <p>Applications will appear in the "Pending Approvals" tab for review.</p>
                   </div>
-                  <Button onClick={generateQRCode} className="flex-button">
-                    Regenerate QR Code
-                  </Button>
                 </div>
               </CardContent>
             </Card>
