@@ -2341,18 +2341,25 @@ function App() {
                             </Button>
                             <Button
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className={employee.assigned_locker_number ? "bg-yellow-600 hover:bg-yellow-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
                               onClick={() => {
-                                const roomNumber = window.prompt(`Assign a locker to ${employee.username}:\n\nEnter locker number (40-153):`);
-                                if (roomNumber && roomNumber >= 40 && roomNumber <= 153) {
-                                  alert(`Locker #${roomNumber} assigned to ${employee.username}`);
-                                  // Here you could implement the actual assignment logic
-                                } else if (roomNumber) {
-                                  alert('Invalid locker number. Please enter a number between 40-153.');
+                                if (employee.assigned_locker_number) {
+                                  // Unassign current locker
+                                  if (window.confirm(`Unassign locker #${employee.assigned_locker_number} from ${employee.username}?`)) {
+                                    unassignLockerFromEmployee(employee.id);
+                                  }
+                                } else {
+                                  // Assign new locker
+                                  const roomNumber = window.prompt(`Assign a locker to ${employee.username}:\n\nEnter locker number (40-153):`);
+                                  if (roomNumber && roomNumber >= 40 && roomNumber <= 153) {
+                                    assignLockerToEmployee(employee.id, roomNumber);
+                                  } else if (roomNumber) {
+                                    alert('Invalid locker number. Please enter a number between 40-153.');
+                                  }
                                 }
                               }}
                             >
-                              Assign Locker
+                              {employee.assigned_locker_number ? 'Unassign Locker' : 'Assign Locker'}
                             </Button>
                             {employee.username !== 'admin' && employee.id !== user?.id && (
                               <Button
