@@ -1143,7 +1143,12 @@ function App() {
         // Create transaction record
         await axios.post(`${API}/api/transactions`, transactionData, { headers });
         
-        alert(`✅ Session renewed successfully for ${paymentData.customerName}!\n\nNew check-out time: ${new Date(response.data.new_checkout_time).toLocaleString()}\nRoom fee: $${response.data.room_fee.toFixed(2)}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
+        // Show enhanced success message with shift information
+        const renewalInfo = response.data;
+        const shiftInfo = renewalInfo.total_shifts_today ? 
+          `\nShifts used today: ${renewalInfo.total_shifts_today}/3\nRemaining shifts: ${renewalInfo.remaining_shifts}` : '';
+        
+        alert(`✅ Session renewed successfully for ${paymentData.customerName}!\n\nNew check-out time: ${new Date(renewalInfo.new_checkout_time).toLocaleString()}\nRoom fee: $${renewalInfo.room_fee.toFixed(2)}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}${shiftInfo}`);
         
       } else if (paymentData.transactionType === 'membership') {
         // Handle membership purchase
