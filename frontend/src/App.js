@@ -1082,15 +1082,52 @@ function App() {
 
   const handleRoomClick = (room) => {
     if (!room.available && room.checkin_id) {
-      // Room is occupied, show options to renew or upgrade
-      if (window.confirm(`Room ${room.number} is occupied by ${room.customer}. Would you like to upgrade or renew this room?`)) {
-        const checkin = activeCheckins.find(c => c.id === room.checkin_id);
-        if (checkin) {
+      // Room is occupied, show options prompt
+      const checkin = activeCheckins.find(c => c.id === room.checkin_id);
+      if (checkin) {
+        const options = [
+          "Renew (same room/locker - base rate)",
+          "Upgrade (move to different room/locker)",
+          "Check Out"
+        ];
+        
+        const choice = window.prompt(
+          `Room ${room.number} is occupied by ${room.customer}.\n\nChoose an option:\n1. ${options[0]}\n2. ${options[1]}\n3. ${options[2]}\n\nEnter 1, 2, or 3:`
+        );
+        
+        if (choice === "1") {
+          // Renewal - same room, base rate
+          setPaymentData({
+            checkInId: checkin.id,
+            customerName: `${checkin.customer?.first_name} ${checkin.customer?.last_name}`,
+            totalAmount: getRoomBaseRate(room.type),
+            paymentMethod: '',
+            additionalItems: [],
+            selectedDiscount: null,
+            discountAmount: 0,
+            transactionType: 'renewal'
+          });
+          setShowPayment(true);
+        } else if (choice === "2") {
+          // Upgrade - show upgrade options
           setSelectedCheckin(checkin);
           setShowUpgrade(true);
+        } else if (choice === "3") {
+          // Check out
+          handleCheckOut(checkin.id);
         }
       }
     }
+  };
+
+  const getRoomBaseRate = (roomType) => {
+    const rates = {
+      'locker': 10,
+      'small_room': 15,
+      'regular_room': 20,
+      'deluxe_room': 25
+    };
+    return rates[roomType] || 10;
   };
 
   return (
