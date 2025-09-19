@@ -2993,19 +2993,19 @@ function App() {
                         <Card className="bg-white/10 border-white/20">
                           <CardContent className="p-4 text-center">
                             <h3 className="text-lg font-semibold text-white">Total Revenue</h3>
-                            <p className="text-2xl font-bold text-green-400">${salesData.total_revenue?.toFixed(2) || '0.00'}</p>
+                            <p className="text-2xl font-bold text-green-400">${salesData.summary?.total_revenue?.toFixed(2) || '0.00'}</p>
                           </CardContent>
                         </Card>
                         <Card className="bg-white/10 border-white/20">
                           <CardContent className="p-4 text-center">
                             <h3 className="text-lg font-semibold text-white">Total Transactions</h3>
-                            <p className="text-2xl font-bold text-blue-400">{salesData.total_transactions || 0}</p>
+                            <p className="text-2xl font-bold text-blue-400">{salesData.summary?.total_transactions || 0}</p>
                           </CardContent>
                         </Card>
                         <Card className="bg-white/10 border-white/20">
                           <CardContent className="p-4 text-center">
                             <h3 className="text-lg font-semibold text-white">Average Transaction</h3>
-                            <p className="text-2xl font-bold text-purple-400">${salesData.average_transaction?.toFixed(2) || '0.00'}</p>
+                            <p className="text-2xl font-bold text-purple-400">${salesData.summary?.average_transaction?.toFixed(2) || '0.00'}</p>
                           </CardContent>
                         </Card>
                       </div>
