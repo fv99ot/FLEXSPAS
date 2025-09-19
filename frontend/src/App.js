@@ -354,19 +354,25 @@ function App() {
     }
   };
 
-  const addFromCheckinToWaitlist = async (checkinId, desiredRoomType) => {
+  const addToAllWaitlists = async (checkinId) => {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      await axios.post(`${API}/api/waitlist/add-from-checkin/${checkinId}`, {
-        desired_room_type: desiredRoomType
-      }, { headers });
       
-      alert('Customer added to waitlist successfully!');
+      // Add to all three waitlists
+      const waitlistTypes = ['regular_room', 'small_room', 'deluxe_room'];
+      
+      for (const roomType of waitlistTypes) {
+        await axios.post(`${API}/api/waitlist/add-from-checkin/${checkinId}`, {
+          desired_room_type: roomType
+        }, { headers });
+      }
+      
+      alert('Customer added to all waitlists successfully!');
       fetchWaitlist();
     } catch (error) {
-      console.error('Error adding to waitlist:', error);
-      alert(error.response?.data?.detail || 'Error adding to waitlist');
+      console.error('Error adding to all waitlists:', error);
+      alert(error.response?.data?.detail || 'Error adding to waitlists');
     }
   };
 
