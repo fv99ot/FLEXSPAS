@@ -222,6 +222,7 @@ function App() {
       if (user?.role === 'manager') {
         fetchEmployees();
         fetchPricing();
+        fetchTransactions();
       }
       
       // Fetch room map data
