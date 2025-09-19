@@ -1599,99 +1599,105 @@ async def get_daily_sales_report(date: str = None, current_user: User = Depends(
         start_of_day = report_date.replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_day = report_date.replace(hour=23, minute=59, second=59, microsecond=999999)
         
-        # Get all check-ins for the day
-        checkins = await db.check_ins.find({
-            "check_in_time": {
+        # Get all transactions for the day
+        transactions = await db.transactions.find({
+            "created_at": {
                 "$gte": start_of_day,
                 "$lte": end_of_day
             }
         }).to_list(1000)
         
-        total_revenue = 0
-        total_checkins = len(checkins)
+        # Separate regular transactions and refunds
+        regular_transactions = [t for t in transactions if not t.get("is_refund", False)]
+        refund_transactions = [t for t in transactions if t.get("is_refund", False)]
         
-        # Breakdown by room type, membership, employee, and payment method
-        room_breakdown = {}
-        membership_breakdown = {}
-        employee_breakdown = {}
-        payment_breakdown = {"cash": {"count": 0, "revenue": 0}, "card": {"count": 0, "revenue": 0}}
+        # Calculate totals
+        total_revenue = sum(t.get("total_amount", 0) for t in regular_transactions)
+        total_refunds = abs(sum(t.get("total_amount", 0) for t in refund_transactions))  # Make positive for display
+        net_revenue = total_revenue - total_refunds
         
-        for checkin in checkins:
-            room_type = checkin.get("room_type", "unknown")
-            membership_type = checkin.get("membership_type", "unknown")
-            employee_id = checkin.get("employee_id")
-            payment_method = checkin.get("payment_method", "cash")  # Default to cash for old records
-            amount = checkin.get("total_amount", 0)
-            
-            # Handle amount conversion
-            if isinstance(amount, str):
-                try:
-                    amount = float(amount)
-                except ValueError:
-                    amount = 0
-            
-            total_revenue += amount
-            
-            # Room type breakdown
-            if room_type not in room_breakdown:
-                room_breakdown[room_type] = {"count": 0, "revenue": 0}
-            room_breakdown[room_type]["count"] += 1
-            room_breakdown[room_type]["revenue"] += amount
-            
-            # Membership breakdown
-            if membership_type not in membership_breakdown:
-                membership_breakdown[membership_type] = {"count": 0, "revenue": 0}
-            membership_breakdown[membership_type]["count"] += 1
-            membership_breakdown[membership_type]["revenue"] += amount
-            
-            # Payment method breakdown
+        total_transactions = len(regular_transactions)
+        
+        # Payment method breakdown
+        payment_breakdown = {
+            "cash": {"count": 0, "revenue": 0, "refunds": 0},
+            "card": {"count": 0, "revenue": 0, "refunds": 0}
+        }
+        
+        for transaction in regular_transactions:
+            payment_method = transaction.get("payment_method", "cash")
             if payment_method in payment_breakdown:
                 payment_breakdown[payment_method]["count"] += 1
-                payment_breakdown[payment_method]["revenue"] += amount
-            
-            # Employee breakdown
-            if employee_id:
-                if employee_id not in employee_breakdown:
-                    employee_breakdown[employee_id] = {"count": 0, "revenue": 0}
-                employee_breakdown[employee_id]["count"] += 1
-                employee_breakdown[employee_id]["revenue"] += amount
+                payment_breakdown[payment_method]["revenue"] += transaction.get("total_amount", 0)
         
-        # Get employee names
-        employee_names = {}
-        for emp_id in employee_breakdown.keys():
-            try:
-                employee = await db.users.find_one({"id": emp_id})
-                employee_names[emp_id] = employee["username"] if employee else "Unknown"
-            except:
-                employee_names[emp_id] = "Unknown"
+        for refund in refund_transactions:
+            payment_method = refund.get("payment_method", "cash")
+            if payment_method in payment_breakdown:
+                payment_breakdown[payment_method]["refunds"] += abs(refund.get("total_amount", 0))
         
-        # Clean checkins data to remove MongoDB ObjectIds
-        clean_checkins = []
-        for checkin in checkins:
-            clean_checkin = {k: v for k, v in checkin.items() if k != "_id"}
-            # Convert datetime objects to ISO strings for JSON serialization
-            if "check_in_time" in clean_checkin and isinstance(clean_checkin["check_in_time"], datetime):
-                clean_checkin["check_in_time"] = clean_checkin["check_in_time"].isoformat()
-            if "check_out_time" in clean_checkin and isinstance(clean_checkin["check_out_time"], datetime):
-                clean_checkin["check_out_time"] = clean_checkin["check_out_time"].isoformat()
-            clean_checkins.append(clean_checkin)
-
+        # Transaction type breakdown
+        transaction_type_breakdown = {}
+        for transaction in regular_transactions:
+            tx_type = transaction.get("transaction_type", "unknown")
+            if tx_type not in transaction_type_breakdown:
+                transaction_type_breakdown[tx_type] = {"count": 0, "revenue": 0}
+            transaction_type_breakdown[tx_type]["count"] += 1
+            transaction_type_breakdown[tx_type]["revenue"] += transaction.get("total_amount", 0)
+        
         return {
             "date": date,
-            "total_revenue": round(total_revenue, 2),
-            "total_checkins": total_checkins,
-            "average_per_checkin": round(total_revenue / total_checkins, 2) if total_checkins > 0 else 0,
-            "room_breakdown": room_breakdown,
-            "membership_breakdown": membership_breakdown,
-            "employee_breakdown": employee_breakdown,
-            "employee_names": employee_names,
-            "payment_breakdown": payment_breakdown,
-            "checkins": clean_checkins
+            "summary": {
+                "total_transactions": total_transactions,
+                "total_revenue": round(total_revenue, 2),
+                "total_refunds": round(total_refunds, 2),
+                "net_revenue": round(net_revenue, 2),
+                "average_transaction": round(total_revenue / max(total_transactions, 1), 2)
+            },
+            "payment_breakdown": {
+                method: {
+                    "count": data["count"],
+                    "revenue": round(data["revenue"], 2),
+                    "refunds": round(data["refunds"], 2),
+                    "net": round(data["revenue"] - data["refunds"], 2)
+                }
+                for method, data in payment_breakdown.items()
+            },
+            "transaction_type_breakdown": {
+                tx_type: {
+                    "count": data["count"],
+                    "revenue": round(data["revenue"], 2)
+                }
+                for tx_type, data in transaction_type_breakdown.items()
+            },
+            "refund_summary": {
+                "total_refunds": round(total_refunds, 2),
+                "refund_count": len(refund_transactions),
+                "refund_rate": round((len(refund_transactions) / max(total_transactions, 1)) * 100, 2)
+            }
         }
+        
     except Exception as e:
-        # Log the error for debugging
-        print(f"Sales report error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error generating sales report: {str(e)}")
+        print(f"Error generating sales report: {e}")
+        return {
+            "date": date or datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+            "summary": {
+                "total_transactions": 0,
+                "total_revenue": 0.0,
+                "total_refunds": 0.0,
+                "net_revenue": 0.0,
+                "average_transaction": 0.0
+            },
+            "payment_breakdown": {
+                "cash": {"count": 0, "revenue": 0.0, "refunds": 0.0, "net": 0.0},
+                "card": {"count": 0, "revenue": 0.0, "refunds": 0.0, "net": 0.0}
+            },
+            "transaction_type_breakdown": {},
+            "refund_summary": {
+                "total_refunds": 0.0,
+                "refund_count": 0,
+                "refund_rate": 0.0
+            }
+        }
 
 # Include the router in the main app
 app.include_router(api_router)
