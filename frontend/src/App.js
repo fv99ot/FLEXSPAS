@@ -3239,6 +3239,70 @@ function App() {
         </div>
       )}
 
+      {/* Refund Dialog */}
+      {showRefundDialog && selectedTransaction && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Process Refund</h3>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded">
+                <p className="font-medium">Customer: {selectedTransaction.customer_name}</p>
+                <p className="text-sm text-gray-600">Transaction Type: {selectedTransaction.transaction_type}</p>
+                <p className="text-sm text-gray-600">Original Amount: ${selectedTransaction.total_amount.toFixed(2)}</p>
+                <p className="text-sm text-gray-600">Payment Method: {selectedTransaction.payment_method}</p>
+                <p className="text-sm text-gray-600">Date: {new Date(selectedTransaction.created_at).toLocaleString()}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Refund Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  max={selectedTransaction.total_amount}
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(parseFloat(e.target.value) || 0)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Refund Notes (Optional)</label>
+                <textarea
+                  value={refundNotes}
+                  onChange={(e) => setRefundNotes(e.target.value)}
+                  placeholder="Reason for refund..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <Button 
+                  onClick={processRefund} 
+                  disabled={refundAmount <= 0 || refundAmount > selectedTransaction.total_amount}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Process Refund
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowRefundDialog(false);
+                    setRefundAmount(0);
+                    setRefundNotes('');
+                    setSelectedTransaction(null);
+                  }} 
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Customer Dialog */}
       {showAddCustomer && (
         <div style={{
