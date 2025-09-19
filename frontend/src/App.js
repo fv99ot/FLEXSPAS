@@ -1455,16 +1455,30 @@ function App() {
 
   const handleOvertimePayment = async (payNow) => {
     if (payNow) {
-      // Handle immediate payment - could open payment dialog
-      alert(`Overtime payment of $${checkoutOvertimeData.overtimeAmount.toFixed(2)} will be processed.`);
+      // Set up payment dialog for overtime payment
+      const activeCheckin = activeCheckins.find(c => c.id === checkoutOvertimeData.checkinId);
+      const customerName = activeCheckin ? `${activeCheckin.customer?.first_name} ${activeCheckin.customer?.last_name}` : 'Customer';
+      
+      setPaymentData({
+        checkInId: checkoutOvertimeData.checkinId,
+        customerName: customerName,
+        totalAmount: checkoutOvertimeData.overtimeAmount,
+        paymentMethod: '',
+        additionalItems: [],
+        selectedDiscount: null,
+        discountAmount: 0,
+        transactionType: 'overtime'
+      });
+      
+      setShowOvertimePrompt(false);
+      setShowPayment(true);
     } else {
       // IOU option - overtime is already recorded by backend
       alert(`Overtime of $${checkoutOvertimeData.overtimeAmount.toFixed(2)} recorded as IOU.`);
+      setShowOvertimePrompt(false);
+      setCheckoutOvertimeData(null);
+      fetchActiveCheckins();
     }
-    
-    setShowOvertimePrompt(false);
-    setCheckoutOvertimeData(null);
-    fetchActiveCheckins();
   };
 
   const formatRemainingTime = (hours) => {
