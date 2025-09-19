@@ -73,9 +73,10 @@ function App() {
       showPayment,
       showUpgrade,
       showOvertimePayment,
-      showOvertimePrompt
+      showOvertimePrompt,
+      showRoomManagement
     });
-  }, [showAddCustomer, showCheckIn, showPayment, showUpgrade, showOvertimePayment, showOvertimePrompt]);
+  }, [showAddCustomer, showCheckIn, showPayment, showUpgrade, showOvertimePayment, showOvertimePrompt, showRoomManagement]);
   
   // Check-in state
   const [checkinForm, setCheckinForm] = useState({
