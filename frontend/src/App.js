@@ -2622,7 +2622,7 @@ function App() {
                 <div className="text-center space-y-4">
                   {qrCodeUrl ? (
                     <div className="inline-block p-4 bg-white rounded-lg">
-                      <img src={qrCodeUrl} alt="Membership Form QR Code" className="max-w-64 h-auto" />
+                      <img src={qrCodeUrl} alt="Membership Form QR Code" className="w-80 h-auto" />
                     </div>
                   ) : (
                     <div className="p-8 text-gray-400">Loading QR code...</div>
