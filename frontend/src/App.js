@@ -1623,7 +1623,7 @@ function App() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
         <Tabs defaultValue="search" className="space-y-6">
           <div className="space-y-2">
-            <TabsList className="grid w-full grid-cols-4 md:grid-cols-9 gap-2 bg-white/10">
+            <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 gap-2 bg-white/10">
               <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
               <TabsTrigger value="pending" className="tab-dark">
                 Pending Approvals
@@ -1634,12 +1634,11 @@ function App() {
               <TabsTrigger value="active" className="tab-dark">Active Check-ins</TabsTrigger>
               <TabsTrigger value="map" className="tab-dark">Room Map</TabsTrigger>
               <TabsTrigger value="cart" className="tab-dark">
-                Current Cart
+                Cart & Transactions
                 {currentTransaction.items.length > 0 && (
                   <Badge variant="secondary" className="ml-1">{currentTransaction.items.length}</Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="transactions" className="tab-dark">Transactions</TabsTrigger>
               <TabsTrigger value="qr" className="tab-dark">QR Code</TabsTrigger>
               <TabsTrigger value="reports" className="tab-dark">Sales Reports</TabsTrigger>
               {user?.role === 'manager' && (
