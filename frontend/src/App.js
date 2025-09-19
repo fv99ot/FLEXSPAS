@@ -1111,6 +1111,30 @@ function App() {
     fetchActiveCheckins();
   };
 
+  const fetchPricing = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/api/pricing`, { headers });
+      setPricingConfig(response.data);
+    } catch (error) {
+      console.error('Error fetching pricing:', error);
+    }
+  };
+
+  const updatePricing = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await axios.put(`${API}/api/pricing`, pricingConfig, { headers });
+      setShowPricingDialog(false);
+      alert('Pricing updated successfully!');
+    } catch (error) {
+      console.error('Error updating pricing:', error);
+      alert(error.response?.data?.detail || 'Error updating pricing');
+    }
+  };
+
   const handleRenewal = async (checkinId, customerName) => {
     try {
       const token = localStorage.getItem('token');
