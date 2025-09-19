@@ -422,7 +422,7 @@ function App() {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const response = await axios.get(`${API}/api/reports/sales/${reportType}?date=${selectedDate}`, { headers });
+      const response = await axios.get(`${API}/api/reports/daily-sales?date=${selectedDate}`, { headers });
       setSalesData(response.data);
     } catch (error) {
       console.error('Error fetching sales report:', error);
