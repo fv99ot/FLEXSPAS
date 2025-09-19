@@ -4255,6 +4255,644 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_employee_locker_assignment_system(self):
+        """Test NEW Employee Locker Assignment System as requested in review"""
+        print("\n🔐 Testing Employee Locker Assignment System (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Employee Locker Assignment", False, "No authentication token")
+        
+        all_success = True
+        created_employee_id = None
+        test_locker_number = "50"  # Use a locker number in valid range (40-153)
+        
+        # Test 1: Create test employee first
+        employee_data = {
+            "username": f"testemployee_{datetime.now().strftime('%H%M%S')}",
+            "password": "testpass123",
+            "role": "employee"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/users",
+                json=employee_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                created_employee_id = data['id']
+                # Verify User model includes assigned_locker_number field
+                has_locker_field = 'assigned_locker_number' in data
+                self.log_test("User Model Has Locker Field", has_locker_field, f"assigned_locker_number field present: {has_locker_field}")
+                if not has_locker_field:
+                    all_success = False
+            else:
+                self.log_test("Create Test Employee", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Test Employee", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        if not created_employee_id:
+            return False
+        
+        # Test 2: PUT /api/users/{user_id}/assign-locker - Assign locker to employee
+        try:
+            response = requests.put(
+                f"{self.api_url}/users/{created_employee_id}/assign-locker",
+                json={"locker_number": test_locker_number},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data and test_locker_number in data['message']
+                self.log_test("Assign Locker to Employee", success, f"Message: {data.get('message', '')}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Assign Locker to Employee", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Assign Locker to Employee", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: GET /api/users/assigned-lockers - Get all assigned lockers
+        try:
+            response = requests.get(
+                f"{self.api_url}/users/assigned-lockers",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, dict):
+                    locker_assigned = test_locker_number in data
+                    if locker_assigned:
+                        employee_info = data[test_locker_number]
+                        has_employee_data = 'employee_username' in employee_info and 'employee_id' in employee_info
+                        success = has_employee_data and employee_info['employee_id'] == created_employee_id
+                        self.log_test("Get Assigned Lockers", success, f"Found locker {test_locker_number} assigned to employee")
+                        if not success:
+                            all_success = False
+                    else:
+                        self.log_test("Get Assigned Lockers", False, f"Assigned locker {test_locker_number} not found in response")
+                        all_success = False
+                else:
+                    self.log_test("Get Assigned Lockers", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Assigned Lockers", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Assigned Lockers", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Verify assigned lockers are blocked from customer check-ins
+        if self.created_customer_id:
+            try:
+                checkin_data = {
+                    "customer_id": self.created_customer_id,
+                    "membership_type": "1_day",
+                    "room_type": "locker",
+                    "room_number": int(test_locker_number)  # Try to check into assigned locker
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/checkin",
+                    json=checkin_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                # Should fail because locker is assigned to employee
+                blocked = response.status_code == 400
+                self.log_test("Assigned Locker Blocked from Check-in", blocked, f"Check-in blocked: {blocked}, Status: {response.status_code}")
+                if not blocked:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Assigned Locker Blocked from Check-in", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 5: Test that only managers can assign/unassign lockers (create non-manager user)
+        non_manager_token = None
+        try:
+            # Create employee user
+            employee_user_data = {
+                "username": f"employee_{datetime.now().strftime('%H%M%S')}",
+                "password": "emppass123",
+                "role": "employee"
+            }
+            
+            create_response = requests.post(
+                f"{self.api_url}/users",
+                json=employee_user_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if create_response.status_code == 200:
+                # Login as employee
+                login_response = requests.post(
+                    f"{self.api_url}/login",
+                    json={"username": employee_user_data["username"], "password": employee_user_data["password"]},
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10
+                )
+                
+                if login_response.status_code == 200:
+                    non_manager_token = login_response.json()['access_token']
+                    
+                    # Try to assign locker as employee (should fail)
+                    response = requests.put(
+                        f"{self.api_url}/users/{created_employee_id}/assign-locker",
+                        json={"locker_number": "51"},
+                        headers={'Authorization': f'Bearer {non_manager_token}', 'Content-Type': 'application/json'},
+                        timeout=10
+                    )
+                    
+                    # Should fail with 403 (Forbidden)
+                    access_denied = response.status_code == 403
+                    self.log_test("Manager-Only Access Control", access_denied, f"Employee access denied: {access_denied}, Status: {response.status_code}")
+                    if not access_denied:
+                        all_success = False
+                        
+        except Exception as e:
+            self.log_test("Manager-Only Access Control", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 6: DELETE /api/users/{user_id}/assign-locker - Unassign locker from employee
+        try:
+            response = requests.delete(
+                f"{self.api_url}/users/{created_employee_id}/assign-locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data and 'unassigned' in data['message'].lower()
+                self.log_test("Unassign Locker from Employee", success, f"Message: {data.get('message', '')}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Unassign Locker from Employee", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Unassign Locker from Employee", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 7: Verify locker is no longer assigned
+        try:
+            response = requests.get(
+                f"{self.api_url}/users/assigned-lockers",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                locker_unassigned = test_locker_number not in data
+                self.log_test("Verify Locker Unassigned", locker_unassigned, f"Locker {test_locker_number} no longer assigned: {locker_unassigned}")
+                if not locker_unassigned:
+                    all_success = False
+            else:
+                self.log_test("Verify Locker Unassigned", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Verify Locker Unassigned", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Cleanup: Delete test employee
+        if created_employee_id:
+            try:
+                requests.delete(f"{self.api_url}/users/{created_employee_id}", headers=self.headers, timeout=10)
+            except:
+                pass
+        
+        return all_success
+
+    def test_sales_report_fix(self):
+        """Test Sales Report Fix as requested in review"""
+        print("\n📊 Testing Sales Report Fix (REVIEW REQUEST)...")
+        
+        if not self.token:
+            return self.log_test("Sales Report Fix", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test 1: GET /api/reports/daily-sales with date parameter
+        test_date = datetime.now().strftime('%Y-%m-%d')
+        
+        try:
+            response = requests.get(
+                f"{self.api_url}/reports/daily-sales?date={test_date}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Verify proper sales data structure
+                required_fields = [
+                    'date', 'total_revenue', 'total_checkins', 'average_per_checkin',
+                    'room_breakdown', 'membership_breakdown', 'employee_breakdown', 'payment_breakdown'
+                ]
+                
+                has_all_fields = all(field in data for field in required_fields)
+                
+                # Verify payment_breakdown structure
+                payment_structure_valid = False
+                if 'payment_breakdown' in data:
+                    payment_data = data['payment_breakdown']
+                    payment_structure_valid = (
+                        isinstance(payment_data, dict) and
+                        'cash' in payment_data and 'card' in payment_data and
+                        all('count' in method_data and 'revenue' in method_data 
+                            for method_data in payment_data.values())
+                    )
+                
+                success = has_all_fields and payment_structure_valid
+                details = f"All fields: {has_all_fields}, Payment structure: {payment_structure_valid}, Revenue: ${data.get('total_revenue', 0)}"
+                self.log_test("Sales Report Structure", success, details)
+                
+                if not success:
+                    all_success = False
+                    
+            else:
+                self.log_test("Sales Report Structure", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Sales Report Structure", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Test with different date formats
+        try:
+            yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            response = requests.get(
+                f"{self.api_url}/reports/daily-sales?date={yesterday}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            self.log_test("Sales Report Date Parameter", success, f"Yesterday's report: {success}")
+            if not success:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Sales Report Date Parameter", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Test without date parameter (should default to today)
+        try:
+            response = requests.get(
+                f"{self.api_url}/reports/daily-sales",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Should default to today's date
+                defaults_to_today = data.get('date') == test_date
+                self.log_test("Sales Report Default Date", defaults_to_today, f"Defaults to today: {defaults_to_today}")
+                if not defaults_to_today:
+                    all_success = False
+            else:
+                self.log_test("Sales Report Default Date", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Sales Report Default Date", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_checkin_checkout_authentication(self):
+        """Test Check-in/Check-out Authentication as requested in review"""
+        print("\n🔐 Testing Check-in/Check-out Authentication (REVIEW REQUEST)...")
+        
+        all_success = True
+        
+        # Test 1: POST /api/checkin without authorization headers (should fail)
+        if self.created_customer_id:
+            try:
+                # Get available room first
+                rooms_response = requests.get(
+                    f"{self.api_url}/rooms/available/locker",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if rooms_response.status_code == 200:
+                    available_rooms = rooms_response.json()['available_rooms']
+                    if available_rooms:
+                        checkin_data = {
+                            "customer_id": self.created_customer_id,
+                            "membership_type": "1_day",
+                            "room_type": "locker",
+                            "room_number": available_rooms[0]
+                        }
+                        
+                        # Try check-in without auth header
+                        response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers={'Content-Type': 'application/json'},  # No Authorization header
+                            timeout=10
+                        )
+                        
+                        auth_required = response.status_code == 401
+                        self.log_test("Check-in Requires Auth", auth_required, f"Unauthorized access denied: {auth_required}")
+                        if not auth_required:
+                            all_success = False
+                            
+            except Exception as e:
+                self.log_test("Check-in Requires Auth", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 2: POST /api/checkin with proper authorization headers (should succeed)
+        test_checkin_id = None
+        if self.created_customer_id and self.token:
+            try:
+                # Get available room
+                rooms_response = requests.get(
+                    f"{self.api_url}/rooms/available/locker",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if rooms_response.status_code == 200:
+                    available_rooms = rooms_response.json()['available_rooms']
+                    if available_rooms:
+                        checkin_data = {
+                            "customer_id": self.created_customer_id,
+                            "membership_type": "1_day",
+                            "room_type": "locker",
+                            "room_number": available_rooms[0]
+                        }
+                        
+                        # Check-in with proper auth
+                        response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            data = response.json()
+                            test_checkin_id = data.get('id')
+                            self.log_test("Check-in With Auth", True, f"Check-in successful with JWT token")
+                        else:
+                            self.log_test("Check-in With Auth", False, f"Status: {response.status_code}")
+                            all_success = False
+                            
+            except Exception as e:
+                self.log_test("Check-in With Auth", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 3: PUT /api/checkin/{checkin_id}/checkout without authorization (should fail)
+        if test_checkin_id:
+            try:
+                response = requests.put(
+                    f"{self.api_url}/checkin/{test_checkin_id}/checkout",
+                    headers={'Content-Type': 'application/json'},  # No Authorization header
+                    timeout=10
+                )
+                
+                auth_required = response.status_code == 401
+                self.log_test("Check-out Requires Auth", auth_required, f"Unauthorized checkout denied: {auth_required}")
+                if not auth_required:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Check-out Requires Auth", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 4: PUT /api/checkin/{checkin_id}/checkout with proper authorization (should succeed)
+        if test_checkin_id and self.token:
+            try:
+                response = requests.put(
+                    f"{self.api_url}/checkin/{test_checkin_id}/checkout",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    success = 'message' in data and 'checkout_time' in data
+                    self.log_test("Check-out With Auth", success, f"Check-out successful with JWT token")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Check-out With Auth", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Check-out With Auth", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 5: Test with invalid JWT token
+        try:
+            invalid_headers = {
+                'Authorization': 'Bearer invalid_token_here',
+                'Content-Type': 'application/json'
+            }
+            
+            response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=invalid_headers,
+                timeout=10
+            )
+            
+            invalid_token_rejected = response.status_code == 401
+            self.log_test("Invalid JWT Token Rejected", invalid_token_rejected, f"Invalid token rejected: {invalid_token_rejected}")
+            if not invalid_token_rejected:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid JWT Token Rejected", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_user_model_updates(self):
+        """Test User Model Updates as requested in review"""
+        print("\n👤 Testing User Model Updates (REVIEW REQUEST)...")
+        
+        if not self.token:
+            return self.log_test("User Model Updates", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test 1: Verify User model includes assigned_locker_number field
+        try:
+            response = requests.get(
+                f"{self.api_url}/users",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                users = response.json()
+                if users:
+                    # Check if assigned_locker_number field exists in user model
+                    has_locker_field = all('assigned_locker_number' in user for user in users)
+                    self.log_test("User Model Has Locker Field", has_locker_field, f"All users have assigned_locker_number field: {has_locker_field}")
+                    if not has_locker_field:
+                        all_success = False
+                else:
+                    self.log_test("User Model Has Locker Field", True, "No users to check, but field should exist")
+            else:
+                self.log_test("User Model Has Locker Field", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("User Model Has Locker Field", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Test that new users can be created with locker assignments
+        test_user_data = {
+            "username": f"lockertest_{datetime.now().strftime('%H%M%S')}",
+            "password": "testpass123",
+            "role": "employee"
+        }
+        
+        created_user_id = None
+        try:
+            response = requests.post(
+                f"{self.api_url}/users",
+                json=test_user_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                user_data = response.json()
+                created_user_id = user_data['id']
+                
+                # Verify user was created with assigned_locker_number field (should be None initially)
+                has_locker_field = 'assigned_locker_number' in user_data
+                locker_initially_none = user_data.get('assigned_locker_number') is None
+                
+                success = has_locker_field and locker_initially_none
+                self.log_test("New User Creation", success, f"User created with locker field: {has_locker_field}, initially None: {locker_initially_none}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("New User Creation", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("New User Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Test that existing users can have lockers assigned
+        if created_user_id:
+            test_locker = "75"
+            try:
+                response = requests.put(
+                    f"{self.api_url}/users/{created_user_id}/assign-locker",
+                    json={"locker_number": test_locker},
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    # Verify assignment by getting user info
+                    user_response = requests.get(
+                        f"{self.api_url}/users",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if user_response.status_code == 200:
+                        users = user_response.json()
+                        assigned_user = next((u for u in users if u['id'] == created_user_id), None)
+                        
+                        if assigned_user:
+                            locker_assigned = assigned_user.get('assigned_locker_number') == test_locker
+                            self.log_test("Assign Locker to Existing User", locker_assigned, f"Locker {test_locker} assigned: {locker_assigned}")
+                            if not locker_assigned:
+                                all_success = False
+                        else:
+                            self.log_test("Assign Locker to Existing User", False, "User not found after assignment")
+                            all_success = False
+                    else:
+                        self.log_test("Assign Locker to Existing User", False, "Could not verify assignment")
+                        all_success = False
+                else:
+                    self.log_test("Assign Locker to Existing User", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Assign Locker to Existing User", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 4: Test that existing users can have lockers unassigned
+        if created_user_id:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/users/{created_user_id}/assign-locker",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    # Verify unassignment by getting user info
+                    user_response = requests.get(
+                        f"{self.api_url}/users",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if user_response.status_code == 200:
+                        users = user_response.json()
+                        unassigned_user = next((u for u in users if u['id'] == created_user_id), None)
+                        
+                        if unassigned_user:
+                            locker_unassigned = unassigned_user.get('assigned_locker_number') is None
+                            self.log_test("Unassign Locker from User", locker_unassigned, f"Locker unassigned: {locker_unassigned}")
+                            if not locker_unassigned:
+                                all_success = False
+                        else:
+                            self.log_test("Unassign Locker from User", False, "User not found after unassignment")
+                            all_success = False
+                    else:
+                        self.log_test("Unassign Locker from User", False, "Could not verify unassignment")
+                        all_success = False
+                else:
+                    self.log_test("Unassign Locker from User", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Unassign Locker from User", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Cleanup: Delete test user
+        if created_user_id:
+            try:
+                requests.delete(f"{self.api_url}/users/{created_user_id}", headers=self.headers, timeout=10)
+            except:
+                pass
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🧪 Starting FLEX_LA Bathhouse API Tests...")
@@ -4280,6 +4918,16 @@ class BathhouseAPITester:
         self.test_create_customer()
         self.test_search_customers()
         self.test_get_customer()
+        
+        # NEW REVIEW REQUEST TESTS - Testing the specific features mentioned in review
+        print("\n" + "🔥" * 80)
+        print("🔥 REVIEW REQUEST TESTING - Testing New Features from Review Request")
+        print("🔥" * 80)
+        
+        self.test_employee_locker_assignment_system()
+        self.test_sales_report_fix()
+        self.test_checkin_checkout_authentication()
+        self.test_user_model_updates()
         
         # NEW FEATURES TESTING - Customer Profile and Password Management (PRIORITY)
         self.test_customer_profile_system()
