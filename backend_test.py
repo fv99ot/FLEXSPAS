@@ -4893,6 +4893,460 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_renewal_system(self):
+        """Test the NEW renewal system for extending customer sessions"""
+        print("\n🔄 Testing Renewal System (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Renewal System", False, "No authentication token")
+        
+        all_success = True
+        
+        # First, we need to create a customer and check them in
+        unique_id = f"RENEWAL{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "Renewal",
+            "last_name": "Test",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        # Create customer
+        customer_id = None
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            if response.status_code == 200:
+                customer_id = response.json()['id']
+                self.log_test("Create Renewal Test Customer", True, f"Customer ID: {customer_id}")
+            else:
+                self.log_test("Create Renewal Test Customer", False, f"Status: {response.status_code}")
+                return False
+        except Exception as e:
+            self.log_test("Create Renewal Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # Get available room for check-in
+        checkin_id = None
+        try:
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    # Check in customer
+                    checkin_data = {
+                        "customer_id": customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    checkin_response = requests.post(
+                        f"{self.api_url}/checkin",
+                        json=checkin_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if checkin_response.status_code == 200:
+                        checkin_id = checkin_response.json()['id']
+                        original_checkin_time = checkin_response.json()['check_in_time']
+                        self.log_test("Check-in for Renewal Test", True, f"Check-in ID: {checkin_id}")
+                    else:
+                        self.log_test("Check-in for Renewal Test", False, f"Status: {checkin_response.status_code}")
+                        return False
+                else:
+                    self.log_test("Check-in for Renewal Test", False, "No available rooms")
+                    return False
+            else:
+                self.log_test("Check-in for Renewal Test", False, "Could not get available rooms")
+                return False
+        except Exception as e:
+            self.log_test("Check-in for Renewal Test", False, f"Exception: {str(e)}")
+            return False
+        
+        # Test renewal endpoint
+        if checkin_id:
+            try:
+                # Wait a moment to ensure time difference
+                import time
+                time.sleep(1)
+                
+                response = requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/renew",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    required_fields = ['message', 'new_check_in_time', 'new_checkout_time', 'room_fee', 'renewal_count']
+                    has_all_fields = all(field in data for field in required_fields)
+                    
+                    if has_all_fields:
+                        # Verify renewal count incremented
+                        renewal_count = data.get('renewal_count', 0)
+                        room_fee = data.get('room_fee', 0)
+                        
+                        # Verify new check-in time is more recent than original
+                        new_checkin_time = data.get('new_check_in_time')
+                        
+                        success = renewal_count == 1 and room_fee > 0 and new_checkin_time
+                        details = f"Renewal count: {renewal_count}, Room fee: ${room_fee}, New time: {new_checkin_time}"
+                        self.log_test("Session Renewal", success, details)
+                        
+                        if not success:
+                            all_success = False
+                    else:
+                        missing = [f for f in required_fields if f not in data]
+                        self.log_test("Session Renewal", False, f"Missing fields: {missing}")
+                        all_success = False
+                else:
+                    self.log_test("Session Renewal", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Session Renewal", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test renewal with weekend pricing
+        try:
+            # Test renewal again to check multiple renewals
+            response = requests.put(
+                f"{self.api_url}/checkin/{checkin_id}/renew",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                renewal_count = data.get('renewal_count', 0)
+                success = renewal_count == 2  # Should be second renewal
+                self.log_test("Multiple Renewals", success, f"Renewal count: {renewal_count}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Multiple Renewals", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Multiple Renewals", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Clean up - checkout the customer
+        if checkin_id:
+            try:
+                requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/checkout",
+                    headers=self.headers,
+                    timeout=10
+                )
+            except:
+                pass  # Cleanup, ignore errors
+        
+        return all_success
+
+    def test_dynamic_pricing_system(self):
+        """Test the NEW dynamic pricing system with weekend/weekday logic"""
+        print("\n💰 Testing Dynamic Pricing System (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("Dynamic Pricing System", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test 1: Get current pricing configuration
+        try:
+            response = requests.get(
+                f"{self.api_url}/pricing",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = [
+                    'locker_weekday', 'locker_weekend',
+                    'small_room_weekday', 'small_room_weekend',
+                    'regular_room_weekday', 'regular_room_weekend',
+                    'deluxe_room_weekday', 'deluxe_room_weekend'
+                ]
+                
+                has_all_fields = all(field in data for field in required_fields)
+                if has_all_fields:
+                    # Verify pricing values are reasonable
+                    weekend_higher = (
+                        data['locker_weekend'] >= data['locker_weekday'] and
+                        data['small_room_weekend'] >= data['small_room_weekday'] and
+                        data['regular_room_weekend'] >= data['regular_room_weekday'] and
+                        data['deluxe_room_weekend'] >= data['deluxe_room_weekday']
+                    )
+                    
+                    details = f"Locker: ${data['locker_weekday']}/${data['locker_weekend']}, Weekend higher: {weekend_higher}"
+                    self.log_test("Get Pricing Configuration", weekend_higher, details)
+                    if not weekend_higher:
+                        all_success = False
+                else:
+                    missing = [f for f in required_fields if f not in data]
+                    self.log_test("Get Pricing Configuration", False, f"Missing fields: {missing}")
+                    all_success = False
+            else:
+                self.log_test("Get Pricing Configuration", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Pricing Configuration", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Update pricing configuration (manager only)
+        pricing_update = {
+            "locker_weekday": 26.0,
+            "locker_weekend": 29.0,
+            "small_room_weekday": 34.0,
+            "small_room_weekend": 37.0
+        }
+        
+        try:
+            response = requests.put(
+                f"{self.api_url}/pricing",
+                json=pricing_update,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'message' in data and 'updated_fields' in data
+                updated_fields = data.get('updated_fields', [])
+                expected_fields = list(pricing_update.keys())
+                fields_match = all(field in updated_fields for field in expected_fields)
+                
+                details = f"Updated fields: {updated_fields}, Fields match: {fields_match}"
+                self.log_test("Update Pricing Configuration", success and fields_match, details)
+                if not (success and fields_match):
+                    all_success = False
+            else:
+                self.log_test("Update Pricing Configuration", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Update Pricing Configuration", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Verify pricing changes are reflected
+        try:
+            response = requests.get(
+                f"{self.api_url}/pricing",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                pricing_updated = (
+                    data.get('locker_weekday') == 26.0 and
+                    data.get('locker_weekend') == 29.0 and
+                    data.get('small_room_weekday') == 34.0 and
+                    data.get('small_room_weekend') == 37.0
+                )
+                
+                details = f"Locker weekday: ${data.get('locker_weekday')}, Small room weekend: ${data.get('small_room_weekend')}"
+                self.log_test("Verify Pricing Updates", pricing_updated, details)
+                if not pricing_updated:
+                    all_success = False
+            else:
+                self.log_test("Verify Pricing Updates", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Verify Pricing Updates", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Test weekend/weekday pricing logic in check-ins
+        # Create a test customer for pricing verification
+        unique_id = f"PRICING{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "Pricing",
+            "last_name": "Test",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        customer_id = None
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            if response.status_code == 200:
+                customer_id = response.json()['id']
+        except:
+            pass
+        
+        if customer_id:
+            try:
+                # Get available room
+                rooms_response = requests.get(
+                    f"{self.api_url}/rooms/available/locker",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if rooms_response.status_code == 200:
+                    available_rooms = rooms_response.json()['available_rooms']
+                    if available_rooms:
+                        # Test check-in with current pricing
+                        checkin_data = {
+                            "customer_id": customer_id,
+                            "membership_type": "1_day",
+                            "room_type": "locker",
+                            "room_number": available_rooms[0]
+                        }
+                        
+                        checkin_response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if checkin_response.status_code == 200:
+                            checkin_data = checkin_response.json()
+                            room_fee = checkin_data.get('room_fee', 0)
+                            is_weekend = checkin_data.get('is_weekend', False)
+                            
+                            # Verify pricing matches expected values
+                            expected_fee = 29.0 if is_weekend else 26.0  # Our updated prices
+                            pricing_correct = room_fee == expected_fee
+                            
+                            details = f"Room fee: ${room_fee}, Expected: ${expected_fee}, Weekend: {is_weekend}"
+                            self.log_test("Check-in Pricing Logic", pricing_correct, details)
+                            if not pricing_correct:
+                                all_success = False
+                            
+                            # Clean up - checkout
+                            try:
+                                requests.put(
+                                    f"{self.api_url}/checkin/{checkin_data['id']}/checkout",
+                                    headers=self.headers,
+                                    timeout=10
+                                )
+                            except:
+                                pass
+                        else:
+                            self.log_test("Check-in Pricing Logic", False, f"Check-in failed: {checkin_response.status_code}")
+                            all_success = False
+                    else:
+                        self.log_test("Check-in Pricing Logic", False, "No available rooms")
+                        all_success = False
+                else:
+                    self.log_test("Check-in Pricing Logic", False, "Could not get available rooms")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Check-in Pricing Logic", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
+    def test_pricing_database_integration(self):
+        """Test pricing configuration database integration"""
+        print("\n🗄️ Testing Pricing Database Integration...")
+        
+        if not self.token:
+            return self.log_test("Pricing Database Integration", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test 1: Verify default pricing is created if none exists
+        try:
+            response = requests.get(
+                f"{self.api_url}/pricing",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                has_default_values = (
+                    'locker_weekday' in data and
+                    'locker_weekend' in data and
+                    data['locker_weekday'] > 0 and
+                    data['locker_weekend'] > 0
+                )
+                
+                self.log_test("Default Pricing Creation", has_default_values, f"Has valid pricing: {has_default_values}")
+                if not has_default_values:
+                    all_success = False
+            else:
+                self.log_test("Default Pricing Creation", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Default Pricing Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Test pricing persistence across multiple requests
+        test_pricing = {
+            "deluxe_room_weekday": 48.0,
+            "deluxe_room_weekend": 53.0
+        }
+        
+        try:
+            # Update pricing
+            update_response = requests.put(
+                f"{self.api_url}/pricing",
+                json=test_pricing,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if update_response.status_code == 200:
+                # Verify persistence by getting pricing again
+                get_response = requests.get(
+                    f"{self.api_url}/pricing",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if get_response.status_code == 200:
+                    data = get_response.json()
+                    persistence_verified = (
+                        data.get('deluxe_room_weekday') == 48.0 and
+                        data.get('deluxe_room_weekend') == 53.0
+                    )
+                    
+                    details = f"Deluxe weekday: ${data.get('deluxe_room_weekday')}, weekend: ${data.get('deluxe_room_weekend')}"
+                    self.log_test("Pricing Persistence", persistence_verified, details)
+                    if not persistence_verified:
+                        all_success = False
+                else:
+                    self.log_test("Pricing Persistence", False, f"Get status: {get_response.status_code}")
+                    all_success = False
+            else:
+                self.log_test("Pricing Persistence", False, f"Update status: {update_response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Pricing Persistence", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🧪 Starting FLEX_LA Bathhouse API Tests...")
@@ -4918,6 +5372,15 @@ class BathhouseAPITester:
         self.test_create_customer()
         self.test_search_customers()
         self.test_get_customer()
+        
+        # NEW RENEWAL AND PRICING SYSTEMS TESTING (REVIEW REQUEST PRIORITY)
+        print("\n" + "🔥" * 80)
+        print("🔥 REVIEW REQUEST TESTING - Renewal and Pricing Systems")
+        print("🔥" * 80)
+        
+        self.test_renewal_system()
+        self.test_dynamic_pricing_system()
+        self.test_pricing_database_integration()
         
         # NEW REVIEW REQUEST TESTS - Testing the specific features mentioned in review
         print("\n" + "🔥" * 80)
