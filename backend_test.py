@@ -7082,6 +7082,170 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_waitlist_removal_issue(self):
+        """Test the specific waitlist removal issue reported by user"""
+        print("\n🚨 Testing Waitlist Removal Issue (User Report)...")
+        print("   Issue: Removing customer from one waitlist removes them from ALL waitlists")
+        
+        if not self.token or not self.created_customer_id:
+            return self.log_test("Waitlist Removal Issue", False, "No token or customer ID")
+        
+        all_success = True
+        waitlist_entry_ids = {}
+        
+        # Step 1: Add customer to all 3 waitlists
+        print("   Step 1: Adding customer to all 3 waitlists...")
+        
+        waitlist_types = ["regular_room", "small_room", "deluxe_room"]
+        
+        for room_type in waitlist_types:
+            try:
+                waitlist_data = {
+                    "customer_id": self.created_customer_id,
+                    "desired_room_type": room_type,
+                    "membership_type": "1_day"
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/waitlist",
+                    json=waitlist_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    waitlist_entry_ids[room_type] = data['id']
+                    self.log_test(f"Add to {room_type} waitlist", True, f"Entry ID: {data['id']}")
+                else:
+                    self.log_test(f"Add to {room_type} waitlist", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Add to {room_type} waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        if len(waitlist_entry_ids) != 3:
+            print("   ❌ Could not add customer to all waitlists - cannot continue test")
+            return False
+        
+        # Step 2: Verify customer is on all 3 waitlists
+        print("   Step 2: Verifying customer is on all 3 waitlists...")
+        
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                waitlist_data = response.json()
+                
+                # Count how many waitlists the customer is on
+                customer_waitlists = 0
+                for room_type in waitlist_types:
+                    if room_type in waitlist_data:
+                        for entry in waitlist_data[room_type]:
+                            if entry.get('customer_id') == self.created_customer_id:
+                                customer_waitlists += 1
+                                break
+                
+                success = customer_waitlists == 3
+                self.log_test("Customer on all 3 waitlists", success, f"Found on {customer_waitlists}/3 waitlists")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Customer on all 3 waitlists", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Customer on all 3 waitlists", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 3: Remove customer from ONLY the regular_room waitlist
+        print("   Step 3: Removing customer from ONLY regular_room waitlist...")
+        
+        regular_room_entry_id = waitlist_entry_ids.get("regular_room")
+        if regular_room_entry_id:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/waitlist/{regular_room_entry_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    self.log_test("Remove from regular_room waitlist", True, "Successfully removed")
+                else:
+                    self.log_test("Remove from regular_room waitlist", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Remove from regular_room waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Remove from regular_room waitlist", False, "No regular_room entry ID")
+            all_success = False
+        
+        # Step 4: Verify customer is still on small_room and deluxe_room waitlists
+        print("   Step 4: Verifying customer still on small_room and deluxe_room waitlists...")
+        
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                waitlist_data = response.json()
+                
+                # Check each waitlist
+                on_regular_room = False
+                on_small_room = False
+                on_deluxe_room = False
+                
+                for room_type in ["regular_room", "small_room", "deluxe_room"]:
+                    if room_type in waitlist_data:
+                        for entry in waitlist_data[room_type]:
+                            if entry.get('customer_id') == self.created_customer_id:
+                                if room_type == "regular_room":
+                                    on_regular_room = True
+                                elif room_type == "small_room":
+                                    on_small_room = True
+                                elif room_type == "deluxe_room":
+                                    on_deluxe_room = True
+                                break
+                
+                # Customer should NOT be on regular_room but SHOULD be on small_room and deluxe_room
+                expected_result = not on_regular_room and on_small_room and on_deluxe_room
+                
+                self.log_test("Still on small_room waitlist", on_small_room, f"On small_room: {on_small_room}")
+                self.log_test("Still on deluxe_room waitlist", on_deluxe_room, f"On deluxe_room: {on_deluxe_room}")
+                self.log_test("Removed from regular_room waitlist", not on_regular_room, f"On regular_room: {on_regular_room}")
+                
+                # This is the critical test - if this fails, the bug exists
+                if not expected_result:
+                    print(f"   🚨 BUG CONFIRMED: Customer should be on 2/3 waitlists but is on:")
+                    print(f"      - regular_room: {on_regular_room} (should be False)")
+                    print(f"      - small_room: {on_small_room} (should be True)")
+                    print(f"      - deluxe_room: {on_deluxe_room} (should be True)")
+                    all_success = False
+                else:
+                    print(f"   ✅ WAITLIST REMOVAL WORKING CORRECTLY")
+                
+                return self.log_test("Waitlist Removal Issue Test", expected_result, 
+                                   f"Correct behavior: removed from 1, still on 2 waitlists")
+                
+            else:
+                self.log_test("Waitlist Removal Issue Test", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Waitlist Removal Issue Test", False, f"Exception: {str(e)}")
+            return False
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting Comprehensive Backend API Testing...")
