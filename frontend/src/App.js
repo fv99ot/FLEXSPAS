@@ -185,6 +185,13 @@ function App() {
     total: 0
   });
   const [showCurrentTransaction, setShowCurrentTransaction] = useState(false);
+  
+  // Transaction history state
+  const [transactions, setTransactions] = useState([]);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [refundAmount, setRefundAmount] = useState(0);
+  const [refundNotes, setRefundNotes] = useState('');
 
   // Customer overtime checkout state
   const [checkoutOvertimeData, setCheckoutOvertimeData] = useState(null);
