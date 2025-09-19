@@ -857,6 +857,62 @@ async def delete_user(user_id: str, current_user: User = Depends(get_current_use
     
     return {"message": "User deleted successfully"}
 
+@api_router.put("/users/{user_id}/assign-locker")
+async def assign_locker_to_employee(user_id: str, locker_number: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can assign lockers")
+    
+    # Check if user exists and is an employee
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user["role"] != UserRole.EMPLOYEE:
+        raise HTTPException(status_code=400, detail="Can only assign lockers to employees")
+    
+    # Check if the locker is available (not occupied by a customer check-in)
+    occupied_locker = await db.checkins.find_one({
+        "room_number": locker_number,
+        "room_type": "locker",
+        "check_out_time": None
+    })
+    if occupied_locker:
+        raise HTTPException(status_code=400, detail="Locker is currently occupied by a customer")
+    
+    # Check if locker is already assigned to another employee
+    existing_assignment = await db.users.find_one({
+        "assigned_locker_number": locker_number,
+        "id": {"$ne": user_id}
+    })
+    if existing_assignment:
+        raise HTTPException(status_code=400, detail="Locker is already assigned to another employee")
+    
+    # Update user with assigned locker
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"assigned_locker_number": locker_number}}
+    )
+    
+    return {"message": f"Locker {locker_number} assigned to employee successfully"}
+
+@api_router.delete("/users/{user_id}/assign-locker")
+async def unassign_locker_from_employee(user_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can unassign lockers")
+    
+    # Check if user exists
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Update user to remove assigned locker
+    await db.users.update_one(
+        {"id": user_id},
+        {"$unset": {"assigned_locker_number": ""}}
+    )
+    
+    return {"message": "Locker unassigned from employee successfully"}
+
 # Discount System Models
 class Discount(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
