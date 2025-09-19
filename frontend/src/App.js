@@ -62,6 +62,8 @@ function App() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showOvertimePayment, setShowOvertimePayment] = useState(false);
   const [showOvertimePrompt, setShowOvertimePrompt] = useState(false);
+  const [showRoomManagement, setShowRoomManagement] = useState(false);
+  const [selectedRoomForManagement, setSelectedRoomForManagement] = useState(null);
 
   // Add debugging for modal state
   useEffect(() => {
