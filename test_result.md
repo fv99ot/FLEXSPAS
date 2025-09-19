@@ -654,17 +654,80 @@ test_plan:
   test_priority: "high_first"
 
 backend:
-  - task: "Employee Locker Assignment System"
+  - task: "Renewal Timing Fix"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "RENEWAL TIMING FIX WORKING PERFECTLY: Comprehensive testing of PUT /api/checkin/{checkin_id}/renew endpoint completed with 100% success. ✅ Timer restart functionality verified - renewal updates check_in_time to current time, restarting 8-hour timer from renewal time (not extending from original). ✅ Multiple renewals supported - tested up to 2 renewals with proper renewal_count tracking. ✅ Response includes all required fields: message, new_check_in_time, new_checkout_time, room_fee, renewal_count. ✅ Dynamic pricing integration - renewal fees use current weekend/weekday rates. The renewal timing issue is completely fixed - renewals now properly restart the 8-hour timer from the renewal time."
+
+  - task: "Transaction System"
     implemented: true
     working: false
     file: "/app/backend/server.py"
     stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "TRANSACTION SYSTEM PARTIALLY WORKING: Testing revealed implementation issues. ❌ POST /api/transactions endpoint missing 'created_by' field requirement (422 error) - endpoint expects this field but test data didn't include it. ✅ GET /api/transactions endpoint working correctly - returns transaction history with proper filtering. ❌ POST /api/transactions/{id}/refund endpoint not tested due to transaction creation failure. RECOMMENDATION: Fix transaction creation endpoint to either auto-populate created_by field from JWT token or make it optional."
+
+  - task: "Enhanced Sales Report"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "ENHANCED SALES REPORT PARTIALLY IMPLEMENTED: Testing found missing refund-related fields. ✅ GET /api/reports/daily-sales endpoint exists and responds. ✅ Transaction type breakdown included. ❌ Missing refund data fields: total_refunds, refund_count, refund_rate not present in response. ❌ Payment breakdown missing refund fields: cash_refunds, card_refunds, net_cash, net_card not included. RECOMMENDATION: Add refund calculation logic to sales report endpoint to include all refund-related metrics as specified in review request."
+
+  - task: "Admin Settings Integration"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "ADMIN SETTINGS INTEGRATION WORKING PERFECTLY: Comprehensive testing completed with 100% success. ✅ Employee creation includes assigned_locker_number field correctly. ✅ Locker assignment functionality working - PUT /api/users/{user_id}/assign-locker accepts JSON body with locker_number. ✅ GET /api/users/assigned-lockers returns proper assigned locker mapping. ✅ Pricing endpoints working - GET /api/pricing returns all weekend/weekday pricing fields, PUT /api/pricing allows manager updates. ✅ Employee locker blocking verified - customers cannot check into employee-assigned lockers (400 status). All admin settings integration features working as requested."
+
+  - task: "Check-in Functionality"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CHECK-IN FUNCTIONALITY WORKING PERFECTLY: Comprehensive testing completed with 100% success. ✅ Basic check-in process working - POST /api/checkin creates check-ins with proper room assignment, pricing calculation, and response fields. ✅ Room availability checks working for all room types (locker, small_room, regular_room, deluxe_room). ✅ Employee locker blocking verified - assigned lockers properly blocked from customer check-ins with 400 status and clear error message. ✅ Authentication working correctly - endpoints require proper JWT tokens. All check-in functionality working as requested in review."
+
+  - task: "Employee Locker Assignment System"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "CRITICAL ISSUES FOUND: Employee Locker Assignment System has implementation issues. ✅ User model includes assigned_locker_number field correctly. ❌ PUT /api/users/{user_id}/assign-locker endpoint expects locker_number as query parameter, not JSON body (422 error). ❌ Assigned lockers not properly blocked from customer check-ins. ❌ Manager-only access control not working correctly. ✅ DELETE /api/users/{user_id}/assign-locker works for unassignment. ✅ GET /api/users/assigned-lockers endpoint works correctly. RECOMMENDATION: Fix endpoint parameter handling and check-in blocking logic."
+      - working: true
+        agent: "testing"
+        comment: "EMPLOYEE LOCKER ASSIGNMENT SYSTEM WORKING PERFECTLY: Re-testing shows all functionality working correctly. ✅ User model includes assigned_locker_number field. ✅ PUT /api/users/{user_id}/assign-locker accepts JSON body with locker_number field correctly. ✅ Assigned lockers properly blocked from customer check-ins with 400 status. ✅ Manager-only access control working correctly. ✅ GET /api/users/assigned-lockers returns proper mapping. All employee locker assignment features working as requested."
 
   - task: "Sales Report Fix"
     implemented: true
@@ -680,15 +743,18 @@ backend:
 
   - task: "Check-in/Check-out Authentication"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "AUTHENTICATION ISSUES FOUND: Check-in/Check-out authentication has problems. ❌ POST /api/checkin without authorization returns 403 instead of 401 (should require JWT). ❌ Check-in with proper auth fails with 400 status (customer already checked in issue). ✅ PUT /api/checkin/{checkin_id}/checkout requires proper authorization. ✅ Invalid JWT tokens properly rejected with 401. RECOMMENDATION: Fix authentication middleware to return proper 401 status and resolve check-in blocking issues."
+      - working: true
+        agent: "testing"
+        comment: "CHECK-IN/CHECK-OUT AUTHENTICATION WORKING CORRECTLY: Re-testing shows authentication working properly. ✅ POST /api/checkin requires proper JWT authentication. ✅ PUT /api/checkin/{checkin_id}/checkout requires proper authorization. ✅ Check-in process working with proper authentication. ✅ Invalid tokens properly rejected. All authentication functionality working as expected."
 
   - task: "User Model Updates"
     implemented: true
