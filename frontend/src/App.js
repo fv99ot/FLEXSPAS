@@ -97,7 +97,8 @@ function App() {
     paymentMethod: '',
     additionalItems: [],
     selectedDiscount: null,
-    discountAmount: 0
+    discountAmount: 0,
+    transactionType: 'checkin'
   });
   const [additionalItems, setAdditionalItems] = useState([]);
   const [discounts, setDiscounts] = useState([]);
