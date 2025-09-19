@@ -105,6 +105,42 @@
 user_problem_statement: "1. Verify the recent fixes are working correctly (QR code readability, membership button visibility, overtime payments in transaction history). 2. Fix QR code scanning issue where 2 important messages aren't easily legible because of color/font issues when users scan QR code with their phone."
 
 backend:
+  - task: "Add Customer Authentication"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CRITICAL FIX 1 TESTING COMPLETED - MOSTLY WORKING: POST /api/customers endpoint working correctly WITH authentication headers (Bearer token) - creates customers successfully with proper auth validation. Minor issue: Customer creation WITHOUT auth returns 403 instead of expected 401 status, but authentication is properly enforced. Core functionality working as intended."
+
+  - task: "Sales Report Generation"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL FIX 2 TESTING COMPLETED - STRUCTURE MISMATCH: GET /api/reports/daily-sales endpoint returns different data structure than expected. Missing fields: total_revenue, total_checkins, average_per_checkin, room_breakdown, membership_breakdown, employee_breakdown. Current response has summary, payment_breakdown, transaction_type_breakdown structure instead. Endpoint works but data structure doesn't match frontend expectations."
+
+  - task: "Session Count/Shift Display"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CRITICAL FIX 3 TESTING COMPLETED - WORKING PERFECTLY: GET /api/checkins/active endpoint working perfectly - returns proper session_count field in active check-ins. Found 5 active check-ins, all showing session_count=1 with proper customer data enrichment, remaining_hours calculation, and overtime status. Session count/shift display functionality fully operational."
+
   - task: "QR Code Text Readability Fix"
     implemented: true
     working: true
