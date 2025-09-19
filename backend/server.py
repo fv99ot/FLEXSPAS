@@ -569,7 +569,7 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
         raise HTTPException(status_code=400, detail="Customer has reached maximum 3 sessions for today")
     
     # Calculate costs
-    is_weekend = is_weekend_day()
+    is_weekend = is_weekend_time()
     membership_fee = 0 if membership_status and membership_status.get("using_existing") else get_membership_fee(MembershipType(membership_type))
     room_fee = await get_room_pricing(RoomType(room_type), is_weekend)
     total_amount = membership_fee + room_fee
