@@ -1166,7 +1166,21 @@ function App() {
       };
       
       // Handle different transaction types
-      if (paymentData.transactionType === 'renewal') {
+      if (paymentData.transactionType === 'overtime') {
+        // Handle overtime payment - call backend to process payment and create transaction
+        const response = await axios.post(`${API}/api/customers/${paymentData.customerId || selectedCustomer?.id}/pay-overtime`, {
+          payment_method: paymentData.paymentMethod
+        }, { headers });
+        
+        alert(`✅ Overtime payment completed successfully!\n\nAmount paid: $${response.data.amount_paid.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
+        
+      } else if (paymentData.transactionType === 'room_upgrade') {
+        // Handle room upgrade transaction - create transaction record
+        await axios.post(`${API}/api/transactions`, transactionData, { headers });
+        
+        alert(`✅ Room upgrade payment completed successfully!\n\nUpgrade fee: $${paymentData.totalAmount.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
+        
+      } else if (paymentData.transactionType === 'renewal') {
         // Call renewal API endpoint after payment is complete
         const response = await axios.put(`${API}/api/checkin/${paymentData.checkInId}/renew`, {}, { headers });
         
