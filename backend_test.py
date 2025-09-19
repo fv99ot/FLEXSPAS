@@ -5347,10 +5347,610 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_renewal_timing_fix(self):
+        """Test the renewal timing fix - verify renewal updates check_in_time to restart 8-hour timer"""
+        print("\n🔄 Testing Renewal Timing Fix...")
+        
+        if not self.token:
+            return self.log_test("Renewal Timing Fix", False, "No authentication token")
+        
+        # First create a customer and check them in
+        unique_id = f"RENEWAL{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "Renewal",
+            "last_name": "Test",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        # Create customer
+        try:
+            customer_response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if customer_response.status_code != 200:
+                return self.log_test("Renewal Timing Fix", False, "Could not create test customer")
+            
+            customer_id = customer_response.json()['id']
+            
+            # Get available room
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code != 200:
+                return self.log_test("Renewal Timing Fix", False, "Could not get available rooms")
+            
+            available_rooms = rooms_response.json()['available_rooms']
+            if not available_rooms:
+                return self.log_test("Renewal Timing Fix", False, "No available rooms")
+            
+            # Check in customer
+            checkin_data = {
+                "customer_id": customer_id,
+                "membership_type": "1_day",
+                "room_type": "locker",
+                "room_number": available_rooms[0]
+            }
+            
+            checkin_response = requests.post(
+                f"{self.api_url}/checkin",
+                json=checkin_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if checkin_response.status_code != 200:
+                return self.log_test("Renewal Timing Fix", False, f"Check-in failed: {checkin_response.text}")
+            
+            checkin_id = checkin_response.json()['id']
+            original_checkin_time = checkin_response.json()['check_in_time']
+            
+            # Wait a moment to ensure time difference
+            import time
+            time.sleep(2)
+            
+            # Test renewal endpoint
+            renewal_response = requests.put(
+                f"{self.api_url}/checkin/{checkin_id}/renew",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if renewal_response.status_code == 200:
+                renewal_data = renewal_response.json()
+                
+                # Verify renewal response has required fields
+                required_fields = ['message', 'new_check_in_time', 'new_checkout_time', 'room_fee', 'renewal_count']
+                has_all_fields = all(field in renewal_data for field in required_fields)
+                
+                if has_all_fields:
+                    new_checkin_time = renewal_data['new_check_in_time']
+                    renewal_count = renewal_data['renewal_count']
+                    
+                    # Verify the check-in time was actually updated (restarted timer)
+                    time_updated = new_checkin_time != original_checkin_time
+                    
+                    # Test multiple renewals
+                    second_renewal_response = requests.put(
+                        f"{self.api_url}/checkin/{checkin_id}/renew",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    multiple_renewals_work = False
+                    if second_renewal_response.status_code == 200:
+                        second_renewal_data = second_renewal_response.json()
+                        multiple_renewals_work = second_renewal_data.get('renewal_count', 0) == 2
+                    
+                    success = time_updated and multiple_renewals_work
+                    details = f"Timer restarted: {time_updated}, Multiple renewals: {multiple_renewals_work}, Count: {renewal_count}"
+                    return self.log_test("Renewal Timing Fix", success, details)
+                else:
+                    missing = [f for f in required_fields if f not in renewal_data]
+                    return self.log_test("Renewal Timing Fix", False, f"Missing fields: {missing}")
+            else:
+                return self.log_test("Renewal Timing Fix", False, f"Status: {renewal_response.status_code}, Response: {renewal_response.text}")
+                
+        except Exception as e:
+            return self.log_test("Renewal Timing Fix", False, f"Exception: {str(e)}")
+
+    def test_transaction_system(self):
+        """Test the transaction system endpoints"""
+        print("\n💳 Testing Transaction System...")
+        
+        if not self.token:
+            return self.log_test("Transaction System", False, "No authentication token")
+        
+        all_success = True
+        created_transaction_id = None
+        
+        # Test 1: Create transaction record
+        transaction_data = {
+            "customer_id": str(uuid.uuid4()),
+            "customer_name": "John Doe",
+            "transaction_type": "checkin",
+            "items": [
+                {"name": "Locker Fee", "price": 25.0, "quantity": 1},
+                {"name": "1-Day Membership", "price": 10.0, "quantity": 1}
+            ],
+            "subtotal": 35.0,
+            "discount_name": None,
+            "discount_amount": 0.0,
+            "total_amount": 35.0,
+            "payment_method": "cash",
+            "membership_type": "1_day",
+            "notes": "Test transaction"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/transactions",
+                json=transaction_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and data['customer_name'] == 'John Doe':
+                    created_transaction_id = data['id']
+                    self.log_test("Create Transaction", True, f"Created transaction: {data['id']}")
+                else:
+                    self.log_test("Create Transaction", False, "Invalid response data")
+                    all_success = False
+            else:
+                self.log_test("Create Transaction", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Transaction", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Get transaction history
+        try:
+            response = requests.get(
+                f"{self.api_url}/transactions?limit=50",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_transaction = any(t.get('id') == created_transaction_id for t in data) if created_transaction_id else True
+                    self.log_test("Get Transactions", found_transaction, f"Found {len(data)} transactions")
+                    if not found_transaction:
+                        all_success = False
+                else:
+                    self.log_test("Get Transactions", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Transactions", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Transactions", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Process refund
+        if created_transaction_id:
+            try:
+                refund_response = requests.post(
+                    f"{self.api_url}/transactions/{created_transaction_id}/refund",
+                    json={"refund_amount": 15.0, "notes": "Test refund"},
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if refund_response.status_code == 200:
+                    data = refund_response.json()
+                    success = 'message' in data and 'refund_id' in data
+                    self.log_test("Process Refund", success, f"Refund processed: {data.get('refund_id', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Process Refund", False, f"Status: {refund_response.status_code}, Response: {refund_response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Process Refund", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
+    def test_enhanced_sales_report(self):
+        """Test the enhanced sales report with refund data"""
+        print("\n📊 Testing Enhanced Sales Report...")
+        
+        if not self.token:
+            return self.log_test("Enhanced Sales Report", False, "No authentication token")
+        
+        try:
+            today = datetime.now().strftime('%Y-%m-%d')
+            response = requests.get(
+                f"{self.api_url}/reports/daily-sales?date={today}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check for enhanced fields including refund data
+                required_fields = [
+                    'date', 'total_revenue', 'total_checkins', 'average_per_checkin',
+                    'room_breakdown', 'membership_breakdown', 'employee_breakdown',
+                    'payment_breakdown', 'total_refunds', 'refund_count', 'refund_rate',
+                    'transaction_type_breakdown'
+                ]
+                
+                has_all_fields = all(field in data for field in required_fields)
+                
+                # Check payment breakdown structure includes refunds
+                payment_breakdown = data.get('payment_breakdown', {})
+                has_refund_data = (
+                    'cash_refunds' in payment_breakdown and
+                    'card_refunds' in payment_breakdown and
+                    'net_cash' in payment_breakdown and
+                    'net_card' in payment_breakdown
+                )
+                
+                # Check transaction type breakdown
+                has_transaction_breakdown = 'transaction_type_breakdown' in data
+                
+                success = has_all_fields and has_refund_data and has_transaction_breakdown
+                details = f"All fields: {has_all_fields}, Refund data: {has_refund_data}, Transaction breakdown: {has_transaction_breakdown}"
+                return self.log_test("Enhanced Sales Report", success, details)
+            else:
+                return self.log_test("Enhanced Sales Report", False, f"Status: {response.status_code}")
+                
+        except Exception as e:
+            return self.log_test("Enhanced Sales Report", False, f"Exception: {str(e)}")
+
+    def test_admin_settings_integration(self):
+        """Test admin settings integration with employee management"""
+        print("\n⚙️ Testing Admin Settings Integration...")
+        
+        if not self.token:
+            return self.log_test("Admin Settings Integration", False, "No authentication token")
+        
+        all_success = True
+        created_employee_id = None
+        
+        # Test 1: Create employee
+        employee_data = {
+            "username": f"testemployee_{datetime.now().strftime('%H%M%S')}",
+            "password": "testpass123",
+            "role": "employee"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/users",
+                json=employee_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data and 'assigned_locker_number' in data:
+                    created_employee_id = data['id']
+                    self.log_test("Create Employee with Locker Field", True, f"Employee: {data['username']}")
+                else:
+                    self.log_test("Create Employee with Locker Field", False, "Missing assigned_locker_number field")
+                    all_success = False
+            else:
+                self.log_test("Create Employee with Locker Field", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Employee with Locker Field", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Assign locker to employee
+        if created_employee_id:
+            try:
+                assignment_data = {"locker_number": "100"}
+                response = requests.put(
+                    f"{self.api_url}/users/{created_employee_id}/assign-locker",
+                    json=assignment_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    success = 'message' in data
+                    self.log_test("Assign Locker to Employee", success, f"Message: {data.get('message', '')}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Assign Locker to Employee", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Assign Locker to Employee", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 3: Get assigned lockers
+        try:
+            response = requests.get(
+                f"{self.api_url}/users/assigned-lockers",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, dict):
+                    has_assignment = "100" in data if created_employee_id else True
+                    self.log_test("Get Assigned Lockers", has_assignment, f"Found {len(data)} assigned lockers")
+                    if not has_assignment:
+                        all_success = False
+                else:
+                    self.log_test("Get Assigned Lockers", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Assigned Lockers", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Assigned Lockers", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 4: Test pricing endpoints
+        try:
+            response = requests.get(
+                f"{self.api_url}/pricing",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_pricing_fields = [
+                    'locker_weekday', 'locker_weekend',
+                    'small_room_weekday', 'small_room_weekend',
+                    'regular_room_weekday', 'regular_room_weekend',
+                    'deluxe_room_weekday', 'deluxe_room_weekend'
+                ]
+                has_all_pricing = all(field in data for field in required_pricing_fields)
+                self.log_test("Get Pricing Configuration", has_all_pricing, f"Pricing fields complete: {has_all_pricing}")
+                if not has_all_pricing:
+                    all_success = False
+            else:
+                self.log_test("Get Pricing Configuration", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Pricing Configuration", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Clean up - delete test employee
+        if created_employee_id:
+            try:
+                requests.delete(
+                    f"{self.api_url}/users/{created_employee_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+            except:
+                pass
+        
+        return all_success
+
+    def test_checkin_functionality_comprehensive(self):
+        """Test comprehensive check-in functionality including employee locker blocking"""
+        print("\n🔑 Testing Comprehensive Check-in Functionality...")
+        
+        if not self.token:
+            return self.log_test("Check-in Functionality", False, "No authentication token")
+        
+        all_success = True
+        
+        # Test 1: Basic check-in functionality
+        unique_id = f"CHECKIN{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "CheckIn",
+            "last_name": "Test",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        # Create test customer
+        try:
+            customer_response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if customer_response.status_code != 200:
+                return self.log_test("Check-in Functionality", False, "Could not create test customer")
+            
+            customer_id = customer_response.json()['id']
+            
+            # Get available rooms
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code != 200:
+                return self.log_test("Check-in Functionality", False, "Could not get available rooms")
+            
+            available_rooms = rooms_response.json()['available_rooms']
+            if not available_rooms:
+                return self.log_test("Check-in Functionality", False, "No available rooms")
+            
+            # Test check-in
+            checkin_data = {
+                "customer_id": customer_id,
+                "membership_type": "1_day",
+                "room_type": "locker",
+                "room_number": available_rooms[0]
+            }
+            
+            checkin_response = requests.post(
+                f"{self.api_url}/checkin",
+                json=checkin_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if checkin_response.status_code == 200:
+                checkin_data_response = checkin_response.json()
+                required_fields = ['id', 'total_amount', 'membership_fee', 'room_fee', 'is_weekend']
+                has_all_fields = all(field in checkin_data_response for field in required_fields)
+                self.log_test("Basic Check-in", has_all_fields, f"Room: {checkin_data_response.get('room_number')}, Amount: ${checkin_data_response.get('total_amount')}")
+                if not has_all_fields:
+                    all_success = False
+            else:
+                self.log_test("Basic Check-in", False, f"Status: {checkin_response.status_code}, Response: {checkin_response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Basic Check-in", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Room availability checks
+        try:
+            # Test all room types
+            room_types = ["locker", "small_room", "regular_room", "deluxe_room"]
+            for room_type in room_types:
+                response = requests.get(
+                    f"{self.api_url}/rooms/available/{room_type}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    has_structure = 'available_rooms' in data and 'room_details' in data
+                    if not has_structure:
+                        all_success = False
+                        break
+                else:
+                    all_success = False
+                    break
+            
+            self.log_test("Room Availability Checks", all_success, f"All room types available")
+            
+        except Exception as e:
+            self.log_test("Room Availability Checks", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 3: Employee locker blocking (create employee, assign locker, verify blocking)
+        employee_data = {
+            "username": f"blocktest_{datetime.now().strftime('%H%M%S')}",
+            "password": "testpass123",
+            "role": "employee"
+        }
+        
+        try:
+            # Create employee
+            employee_response = requests.post(
+                f"{self.api_url}/users",
+                json=employee_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if employee_response.status_code == 200:
+                employee_id = employee_response.json()['id']
+                
+                # Assign locker to employee
+                assignment_data = {"locker_number": "150"}
+                assign_response = requests.put(
+                    f"{self.api_url}/users/{employee_id}/assign-locker",
+                    json=assignment_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if assign_response.status_code == 200:
+                    # Try to check in customer to assigned locker (should fail)
+                    block_test_customer_data = {
+                        "first_name": "Block",
+                        "last_name": "Test",
+                        "id_number": f"BLOCK{datetime.now().strftime('%H%M%S')}",
+                        "date_of_birth": "1990-01-01",
+                        "id_expiration_date": "2025-12-31",
+                        "state_of_id": "CA"
+                    }
+                    
+                    block_customer_response = requests.post(
+                        f"{self.api_url}/customers",
+                        json=block_test_customer_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if block_customer_response.status_code == 200:
+                        block_customer_id = block_customer_response.json()['id']
+                        
+                        # Try to check in to assigned locker
+                        block_checkin_data = {
+                            "customer_id": block_customer_id,
+                            "membership_type": "1_day",
+                            "room_type": "locker",
+                            "room_number": 150
+                        }
+                        
+                        block_checkin_response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=block_checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        # Should fail with 400 status
+                        blocking_works = block_checkin_response.status_code == 400
+                        self.log_test("Employee Locker Blocking", blocking_works, f"Blocked assigned locker: {blocking_works}")
+                        if not blocking_works:
+                            all_success = False
+                    else:
+                        self.log_test("Employee Locker Blocking", False, "Could not create block test customer")
+                        all_success = False
+                else:
+                    self.log_test("Employee Locker Blocking", False, "Could not assign locker to employee")
+                    all_success = False
+                
+                # Clean up
+                try:
+                    requests.delete(f"{self.api_url}/users/{employee_id}", headers=self.headers, timeout=10)
+                except:
+                    pass
+            else:
+                self.log_test("Employee Locker Blocking", False, "Could not create test employee")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Employee Locker Blocking", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
-        """Run all API tests"""
-        print("🧪 Starting FLEX_LA Bathhouse API Tests...")
-        print(f"🌐 Testing against: {self.base_url}")
+        """Run all tests in sequence"""
+        print("🚀 Starting Comprehensive Backend API Testing...")
+        print(f"   Base URL: {self.base_url}")
+        print(f"   API URL: {self.api_url}")
+        print("=" * 80)
         
         # PRIORITY: Authentication debugging as requested in review
         auth_debug_success = self.test_authentication_debug()
