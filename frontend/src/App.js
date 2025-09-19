@@ -562,6 +562,7 @@ function App() {
       setPaymentData({
         checkInId: selectedCheckin.id,
         customerName: customerName,
+        customerId: selectedCheckin.customer?.id,
         totalAmount: response.data.additional_cost,
         paymentMethod: '',
         additionalItems: [],
