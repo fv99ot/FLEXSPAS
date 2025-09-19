@@ -857,10 +857,15 @@ async def delete_user(user_id: str, current_user: User = Depends(get_current_use
     
     return {"message": "User deleted successfully"}
 
+class LockerAssignment(BaseModel):
+    locker_number: str
+
 @api_router.put("/users/{user_id}/assign-locker")
-async def assign_locker_to_employee(user_id: str, locker_number: str, current_user: User = Depends(get_current_user)):
+async def assign_locker_to_employee(user_id: str, assignment: LockerAssignment, current_user: User = Depends(get_current_user)):
     if current_user.role != UserRole.MANAGER:
         raise HTTPException(status_code=403, detail="Only managers can assign lockers")
+    
+    locker_number = assignment.locker_number
     
     # Check if user exists and is an employee
     user = await db.users.find_one({"id": user_id})
@@ -871,7 +876,7 @@ async def assign_locker_to_employee(user_id: str, locker_number: str, current_us
         raise HTTPException(status_code=400, detail="Can only assign lockers to employees")
     
     # Check if the locker is available (not occupied by a customer check-in)
-    occupied_locker = await db.checkins.find_one({
+    occupied_locker = await db.check_ins.find_one({
         "room_number": locker_number,
         "room_type": "locker",
         "check_out_time": None
