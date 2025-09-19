@@ -3278,14 +3278,141 @@ function App() {
       {/* Payment Dialog */}
       {showPayment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Processing</h3>
+          <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {paymentData.transactionType === 'renewal' ? 'Renewal Payment' : 
+               paymentData.transactionType === 'membership' ? 'Membership Purchase' :
+               paymentData.transactionType === 'standalone' ? 'Transaction Payment' : 'Payment Processing'}
+            </h3>
+            
             <div className="space-y-4">
+              {/* Customer and Base Transaction Info */}
               <div className="p-4 bg-gray-50 rounded">
                 <p className="font-medium">Customer: {paymentData.customerName}</p>
-                <p className="text-lg font-bold text-green-600">Total: ${paymentData.totalAmount.toFixed(2)}</p>
+                {paymentData.transactionType === 'renewal' && (
+                  <p className="text-sm text-gray-600">Session Renewal - Restarts 8-hour timer</p>
+                )}
+                {paymentData.transactionType === 'membership' && (
+                  <p className="text-sm text-gray-600">Membership: {paymentData.membershipType}</p>
+                )}
               </div>
 
+              {/* Additional Items Section */}
+              <div className="border rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-medium text-gray-900">Additional Items</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // Open additional items selector (simplified for now)
+                      const item = window.prompt("Enter item name and price (format: Name,Price)");
+                      if (item) {
+                        const [name, price] = item.split(',');
+                        if (name && price) {
+                          const newItem = { name: name.trim(), price: parseFloat(price.trim()) || 0 };
+                          setPaymentData(prev => ({
+                            ...prev,
+                            additionalItems: [...prev.additionalItems, newItem],
+                            totalAmount: prev.totalAmount + newItem.price
+                          }));
+                        }
+                      }
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Item
+                  </Button>
+                </div>
+                
+                <div className="space-y-2">
+                  {paymentData.additionalItems.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 bg-gray-100 rounded">
+                      <span>{item.name}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">${item.price.toFixed(2)}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setPaymentData(prev => ({
+                              ...prev,
+                              additionalItems: prev.additionalItems.filter((_, i) => i !== index),
+                              totalAmount: prev.totalAmount - item.price
+                            }));
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {paymentData.additionalItems.length === 0 && (
+                    <p className="text-gray-500 text-sm">No additional items</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Discounts Section */}
+              <div className="border rounded-lg p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-medium text-gray-900">Discount</h4>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      // Open discount selector (simplified for now)
+                      const discountOptions = discounts.filter(d => d.active);
+                      if (discountOptions.length > 0) {
+                        const discountNames = discountOptions.map(d => `${d.name} ($${d.amount})`).join('\n');
+                        const selection = window.prompt(`Select discount:\n${discountNames}\n\nEnter discount name:`);
+                        if (selection) {
+                          const selectedDiscount = discountOptions.find(d => d.name.toLowerCase() === selection.toLowerCase());
+                          if (selectedDiscount) {
+                            setPaymentData(prev => ({
+                              ...prev,
+                              selectedDiscount: selectedDiscount,
+                              discountAmount: selectedDiscount.amount,
+                              totalAmount: Math.max(0, prev.totalAmount - selectedDiscount.amount + (prev.selectedDiscount?.amount || 0))
+                            }));
+                          }
+                        }
+                      } else {
+                        alert('No active discounts available');
+                      }
+                    }}
+                  >
+                    Apply Discount
+                  </Button>
+                </div>
+                
+                {paymentData.selectedDiscount ? (
+                  <div className="flex justify-between items-center p-2 bg-green-100 rounded">
+                    <span>{paymentData.selectedDiscount.name}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-green-600">-${paymentData.discountAmount.toFixed(2)}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setPaymentData(prev => ({
+                            ...prev,
+                            selectedDiscount: null,
+                            discountAmount: 0,
+                            totalAmount: prev.totalAmount + prev.discountAmount
+                          }));
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No discount applied</p>
+                )}
+              </div>
+
+              {/* Payment Method */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                 <Select onValueChange={(value) => setPaymentData({...paymentData, paymentMethod: value})}>
@@ -3299,11 +3426,20 @@ function App() {
                 </Select>
               </div>
 
+              {/* Total Summary */}
+              <div className="p-4 bg-blue-50 rounded border-2 border-blue-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900">Final Total:</span>
+                  <span className="text-2xl font-bold text-green-600">${paymentData.totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
               <div className="flex space-x-3">
                 <Button 
                   onClick={handlePaymentComplete} 
                   disabled={!paymentData.paymentMethod}
-                  className="flex-1"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                 >
                   Complete Payment
                 </Button>
