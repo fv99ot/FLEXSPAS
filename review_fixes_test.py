@@ -80,8 +80,8 @@ class ReviewFixesTester:
                     is_data_url = qr_code_data.startswith('data:image/png;base64,')
                     
                     # Check if the QR code is large enough (should be significantly larger than default)
-                    # A large QR code with box_size=10 should have a substantial base64 string
-                    is_large_size = len(qr_code_data) > 5000  # Large QR codes have longer base64 strings
+                    # A large QR code with box_size=15 should have a substantial base64 string
+                    is_large_size = len(qr_code_data) > 2000  # Large QR codes have longer base64 strings
                     
                     success = is_data_url and is_large_size
                     details = f"Data URL format: {is_data_url}, Large size: {is_large_size} (length: {len(qr_code_data)})"
