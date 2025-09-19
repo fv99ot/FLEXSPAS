@@ -1664,8 +1664,8 @@ async def get_membership_form_qr():
         from io import BytesIO
         import base64
         
-        # Generate QR code
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        # Generate QR code with larger size for better readability
+        qr = qrcode.QRCode(version=1, box_size=15, border=4, error_correction=qrcode.constants.ERROR_CORRECT_H)
         qr.add_data(membership_form_url)
         qr.make(fit=True)
         
