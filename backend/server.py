@@ -501,6 +501,14 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
     if room_checkin:
         raise HTTPException(status_code=400, detail="Room is already occupied")
     
+    # Check if locker is assigned to an employee (only for lockers)
+    if room_type == "locker":
+        assigned_locker = await db.users.find_one({
+            "assigned_locker_number": str(room_number)
+        })
+        if assigned_locker:
+            raise HTTPException(status_code=400, detail=f"Locker {room_number} is assigned to employee {assigned_locker['username']}")
+    
     # Check session limits for the day
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     today_checkins = await db.check_ins.find({
