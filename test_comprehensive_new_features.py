@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 
 class ComprehensiveNewFeaturesTester:
-    def __init__(self, base_url="https://bathhouse-admin.preview.emergentagent.com"):
+    def __init__(self, base_url="https://flexspa-manager.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
