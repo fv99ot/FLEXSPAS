@@ -1095,7 +1095,10 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
 async def create_transaction(transaction_data: Transaction, current_user: User = Depends(get_current_user)):
     """Create a new transaction record"""
     transaction_dict = transaction_data.dict()
-    transaction_dict["created_by"] = current_user.id
+    
+    # Auto-populate created_by if not provided
+    if not transaction_dict.get("created_by"):
+        transaction_dict["created_by"] = current_user.id
     
     await db.transactions.insert_one(transaction_dict)
     return transaction_data
