@@ -221,10 +221,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Overtime Payment Transaction"
-    - "Room Upgrade Transaction"
-    - "Valid Membership Check-in"
-    - "Transaction History Verification"
+    - "Waitlist Removal Issue Testing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
