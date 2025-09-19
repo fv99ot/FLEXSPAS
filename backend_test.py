@@ -7317,6 +7317,12 @@ class BathhouseAPITester:
         self.test_ghost_functionality_removed()
         self.test_additional_items_management()
         
+        # SPECIFIC USER-REPORTED ISSUE TEST
+        print("\n" + "=" * 50)
+        print("🚨 USER-REPORTED WAITLIST ISSUE TESTING")
+        print("=" * 50)
+        self.test_waitlist_removal_issue()
+        
         # Print final results
         print("\n" + "=" * 80)
         print(f"🏁 TESTING COMPLETE")
