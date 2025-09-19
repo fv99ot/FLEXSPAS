@@ -62,6 +62,18 @@ function App() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [showOvertimePayment, setShowOvertimePayment] = useState(false);
   const [showOvertimePrompt, setShowOvertimePrompt] = useState(false);
+
+  // Add debugging for modal state
+  useEffect(() => {
+    console.log('Modal states:', {
+      showAddCustomer,
+      showCheckIn,
+      showPayment,
+      showUpgrade,
+      showOvertimePayment,
+      showOvertimePrompt
+    });
+  }, [showAddCustomer, showCheckIn, showPayment, showUpgrade, showOvertimePayment, showOvertimePrompt]);
   
   // Check-in state
   const [checkinForm, setCheckinForm] = useState({
