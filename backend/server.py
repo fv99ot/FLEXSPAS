@@ -1655,7 +1655,8 @@ async def get_membership_form_qr():
     """Generate QR code for membership form"""
     try:
         # Create QR code pointing to the membership form
-        frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+        # Use the production frontend URL from the environment
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://flexspa-dashboard.preview.emergentagent.com')
         membership_form_url = f"{frontend_url}/membership"
         
         import qrcode
