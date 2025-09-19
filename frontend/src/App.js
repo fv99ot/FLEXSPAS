@@ -1547,6 +1547,78 @@ function App() {
               </CardContent>
             </Card>
 
+            {/* Current Transaction */}
+            {showCurrentTransaction && currentTransaction.items.length > 0 && (
+              <Card className="dashboard-card mb-6" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between text-white">
+                    <div className="flex items-center">
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Current Transaction
+                      {currentTransaction.customer && (
+                        <span className="ml-2 text-blue-400">- {currentTransaction.customer.first_name} {currentTransaction.customer.last_name}</span>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={clearCurrentTransaction}
+                      className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 mb-4">
+                    {currentTransaction.items.map((item, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded">
+                        <span className="text-white">{item.name}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-green-400">${item.amount.toFixed(2)}</span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => removeFromCurrentTransaction(index)}
+                            className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t border-white/20 pt-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-gray-300">Subtotal:</span>
+                      <span className="text-white">${currentTransaction.subtotal.toFixed(2)}</span>
+                    </div>
+                    {currentTransaction.discount && (
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-gray-300">Discount ({currentTransaction.discount.name}):</span>
+                        <span className="text-red-400">-${currentTransaction.discountAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-lg font-semibold">
+                      <span className="text-white">Total:</span>
+                      <span className="text-green-400">${currentTransaction.total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-3 mt-4">
+                    <Button 
+                      onClick={finalizeCurrentTransaction}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Finalize Transaction
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Search Results */}
             {customers.length > 0 && (
               <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
