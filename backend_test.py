@@ -5945,6 +5945,663 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_3_shift_limit_system(self):
+        """Test the NEW 3-shift limit system implementation"""
+        print("\n🚦 Testing 3-Shift Limit System (NEW FEATURE)...")
+        
+        if not self.token:
+            return self.log_test("3-Shift Limit System", False, "No authentication token")
+        
+        all_success = True
+        
+        # Create a test customer for shift limit testing
+        unique_id = f"SHIFT{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "ShiftTest",
+            "last_name": "Customer",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        test_customer_id = None
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                test_customer_id = response.json()['id']
+                self.log_test("Create Shift Test Customer", True, f"Customer ID: {test_customer_id}")
+            else:
+                self.log_test("Create Shift Test Customer", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Shift Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # Test 1: Check-in with 0 shifts (should work)
+        checkin_id = None
+        try:
+            # Get available room
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    checkin_data = {
+                        "customer_id": test_customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin",
+                        json=checkin_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        checkin_id = response.json()['id']
+                        self.log_test("Check-in with 0 shifts", True, f"First check-in successful: {checkin_id}")
+                    else:
+                        self.log_test("Check-in with 0 shifts", False, f"Status: {response.status_code}, Response: {response.text}")
+                        all_success = False
+                else:
+                    self.log_test("Check-in with 0 shifts", False, "No available rooms")
+                    all_success = False
+            else:
+                self.log_test("Check-in with 0 shifts", False, "Could not get available rooms")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Check-in with 0 shifts", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: First renewal (should work - 2 shifts total)
+        if checkin_id:
+            try:
+                response = requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/renew",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    renewal_count = data.get('renewal_count', 0)
+                    total_shifts = data.get('total_shifts_today', 0)
+                    success = renewal_count == 1 and total_shifts == 2
+                    self.log_test("First Renewal (2 shifts total)", success, f"Renewal count: {renewal_count}, Total shifts: {total_shifts}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("First Renewal (2 shifts total)", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("First Renewal (2 shifts total)", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 3: Second renewal (should work - 3 shifts total, at limit)
+        if checkin_id:
+            try:
+                response = requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/renew",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    renewal_count = data.get('renewal_count', 0)
+                    total_shifts = data.get('total_shifts_today', 0)
+                    remaining_shifts = data.get('remaining_shifts', 0)
+                    success = renewal_count == 2 and total_shifts == 3 and remaining_shifts == 0
+                    self.log_test("Second Renewal (3 shifts total)", success, f"Renewal count: {renewal_count}, Total shifts: {total_shifts}, Remaining: {remaining_shifts}")
+                    if not success:
+                        all_success = False
+                else:
+                    self.log_test("Second Renewal (3 shifts total)", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Second Renewal (3 shifts total)", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 4: Third renewal attempt (should be blocked - would exceed 3 shifts)
+        if checkin_id:
+            try:
+                response = requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/renew",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                # Should fail with 400 status
+                success = response.status_code == 400
+                error_message = response.text if response.status_code == 400 else ""
+                has_limit_message = "3 shifts" in error_message or "daily limit" in error_message
+                self.log_test("Third Renewal Blocked", success and has_limit_message, f"Status: {response.status_code}, Contains limit message: {has_limit_message}")
+                if not (success and has_limit_message):
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Third Renewal Blocked", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 5: Check out customer and try to check in again (should be blocked)
+        if checkin_id:
+            try:
+                # Check out
+                checkout_response = requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/checkout",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if checkout_response.status_code == 200:
+                    self.log_test("Checkout After 3 Shifts", True, "Customer checked out successfully")
+                    
+                    # Try to check in again (should be blocked)
+                    rooms_response = requests.get(
+                        f"{self.api_url}/rooms/available/locker",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if rooms_response.status_code == 200:
+                        available_rooms = rooms_response.json()['available_rooms']
+                        if available_rooms:
+                            new_checkin_data = {
+                                "customer_id": test_customer_id,
+                                "membership_type": "1_day",
+                                "room_type": "locker",
+                                "room_number": available_rooms[0]
+                            }
+                            
+                            new_checkin_response = requests.post(
+                                f"{self.api_url}/checkin",
+                                json=new_checkin_data,
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            # Should fail with 400 status
+                            blocked = new_checkin_response.status_code == 400
+                            error_message = new_checkin_response.text if blocked else ""
+                            has_limit_message = "3 shifts" in error_message or "24 hours" in error_message
+                            self.log_test("Check-in After 3 Shifts Blocked", blocked and has_limit_message, f"Status: {new_checkin_response.status_code}, Contains limit message: {has_limit_message}")
+                            if not (blocked and has_limit_message):
+                                all_success = False
+                        else:
+                            self.log_test("Check-in After 3 Shifts Blocked", False, "No available rooms for test")
+                            all_success = False
+                    else:
+                        self.log_test("Check-in After 3 Shifts Blocked", False, "Could not get available rooms")
+                        all_success = False
+                else:
+                    self.log_test("Checkout After 3 Shifts", False, f"Status: {checkout_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Checkout After 3 Shifts", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
+    def test_shift_limit_integration_scenarios(self):
+        """Test complex business logic scenarios for 3-shift limit system"""
+        print("\n🎯 Testing Shift Limit Integration Scenarios...")
+        
+        if not self.token:
+            return self.log_test("Shift Limit Integration", False, "No authentication token")
+        
+        all_success = True
+        
+        # Create test customer for integration scenarios
+        unique_id = f"INTEG{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "Integration",
+            "last_name": "TestUser",
+            "id_number": unique_id,
+            "date_of_birth": "1985-05-15",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "NY"
+        }
+        
+        integration_customer_id = None
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                integration_customer_id = response.json()['id']
+                self.log_test("Create Integration Test Customer", True, f"Customer ID: {integration_customer_id}")
+            else:
+                self.log_test("Create Integration Test Customer", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Integration Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # Scenario 1: Test with different room types
+        room_types = ["locker", "small_room", "regular_room", "deluxe_room"]
+        
+        for room_type in room_types:
+            try:
+                # Get available rooms for this type
+                rooms_response = requests.get(
+                    f"{self.api_url}/rooms/available/{room_type}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if rooms_response.status_code == 200:
+                    available_rooms = rooms_response.json()['available_rooms']
+                    if available_rooms:
+                        # Test check-in with this room type
+                        checkin_data = {
+                            "customer_id": integration_customer_id,
+                            "membership_type": "1_day",
+                            "room_type": room_type,
+                            "room_number": available_rooms[0]
+                        }
+                        
+                        response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            checkin_id = response.json()['id']
+                            
+                            # Test renewal with this room type
+                            renewal_response = requests.put(
+                                f"{self.api_url}/checkin/{checkin_id}/renew",
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            renewal_success = renewal_response.status_code == 200
+                            
+                            # Check out
+                            checkout_response = requests.put(
+                                f"{self.api_url}/checkin/{checkin_id}/checkout",
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            checkout_success = checkout_response.status_code == 200
+                            
+                            overall_success = renewal_success and checkout_success
+                            self.log_test(f"Shift Limits with {room_type.replace('_', ' ').title()}", overall_success, f"Check-in, renewal, checkout: {overall_success}")
+                            
+                            if not overall_success:
+                                all_success = False
+                        else:
+                            self.log_test(f"Shift Limits with {room_type.replace('_', ' ').title()}", False, f"Check-in failed: {response.status_code}")
+                            all_success = False
+                    else:
+                        self.log_test(f"Shift Limits with {room_type.replace('_', ' ').title()}", True, "No available rooms (skipped)")
+                else:
+                    self.log_test(f"Shift Limits with {room_type.replace('_', ' ').title()}", False, f"Could not get rooms: {rooms_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Shift Limits with {room_type.replace('_', ' ').title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Scenario 2: Test with different membership types
+        membership_types = ["1_day", "6_month"]
+        
+        for membership_type in membership_types:
+            try:
+                # Get available locker
+                rooms_response = requests.get(
+                    f"{self.api_url}/rooms/available/locker",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if rooms_response.status_code == 200:
+                    available_rooms = rooms_response.json()['available_rooms']
+                    if available_rooms:
+                        checkin_data = {
+                            "customer_id": integration_customer_id,
+                            "membership_type": membership_type,
+                            "room_type": "locker",
+                            "room_number": available_rooms[0]
+                        }
+                        
+                        response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            checkin_id = response.json()['id']
+                            
+                            # Check out immediately
+                            checkout_response = requests.put(
+                                f"{self.api_url}/checkin/{checkin_id}/checkout",
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            success = checkout_response.status_code == 200
+                            self.log_test(f"Shift Limits with {membership_type} Membership", success, f"Check-in/out with {membership_type}: {success}")
+                            
+                            if not success:
+                                all_success = False
+                        else:
+                            self.log_test(f"Shift Limits with {membership_type} Membership", False, f"Check-in failed: {response.status_code}")
+                            all_success = False
+                    else:
+                        self.log_test(f"Shift Limits with {membership_type} Membership", True, "No available rooms (skipped)")
+                else:
+                    self.log_test(f"Shift Limits with {membership_type} Membership", False, f"Could not get rooms: {rooms_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Shift Limits with {membership_type} Membership", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
+    def test_shift_limit_with_employee_lockers(self):
+        """Test that shift limits work correctly with employee-assigned lockers"""
+        print("\n👥 Testing Shift Limits with Employee Locker Integration...")
+        
+        if not self.token:
+            return self.log_test("Shift Limits with Employee Lockers", False, "No authentication token")
+        
+        all_success = True
+        
+        # Get assigned lockers to avoid conflicts
+        try:
+            response = requests.get(
+                f"{self.api_url}/users/assigned-lockers",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                assigned_lockers = response.json()
+                assigned_locker_numbers = list(assigned_lockers.keys())
+                
+                # Create test customer
+                unique_id = f"EMPLOCK{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                customer_data = {
+                    "first_name": "EmployeeLocker",
+                    "last_name": "TestUser",
+                    "id_number": unique_id,
+                    "date_of_birth": "1990-01-01",
+                    "id_expiration_date": "2025-12-31",
+                    "state_of_id": "CA"
+                }
+                
+                customer_response = requests.post(
+                    f"{self.api_url}/customers",
+                    json=customer_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if customer_response.status_code == 200:
+                    test_customer_id = customer_response.json()['id']
+                    
+                    # Try to check into an employee-assigned locker (should be blocked)
+                    if assigned_locker_numbers:
+                        assigned_locker = assigned_locker_numbers[0]
+                        
+                        checkin_data = {
+                            "customer_id": test_customer_id,
+                            "membership_type": "1_day",
+                            "room_type": "locker",
+                            "room_number": int(assigned_locker)
+                        }
+                        
+                        response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        # Should be blocked with 400 status
+                        blocked = response.status_code == 400
+                        error_message = response.text if blocked else ""
+                        has_employee_message = "employee" in error_message.lower() or "assigned" in error_message.lower()
+                        
+                        self.log_test("Employee Locker Blocking", blocked and has_employee_message, f"Status: {response.status_code}, Has employee message: {has_employee_message}")
+                        
+                        if not (blocked and has_employee_message):
+                            all_success = False
+                    else:
+                        self.log_test("Employee Locker Blocking", True, "No assigned lockers to test (skipped)")
+                    
+                    # Test normal check-in to available locker
+                    rooms_response = requests.get(
+                        f"{self.api_url}/rooms/available/locker",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if rooms_response.status_code == 200:
+                        available_rooms = rooms_response.json()['available_rooms']
+                        if available_rooms:
+                            checkin_data = {
+                                "customer_id": test_customer_id,
+                                "membership_type": "1_day",
+                                "room_type": "locker",
+                                "room_number": available_rooms[0]
+                            }
+                            
+                            response = requests.post(
+                                f"{self.api_url}/checkin",
+                                json=checkin_data,
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            if response.status_code == 200:
+                                checkin_id = response.json()['id']
+                                
+                                # Test renewal (should work normally)
+                                renewal_response = requests.put(
+                                    f"{self.api_url}/checkin/{checkin_id}/renew",
+                                    headers=self.headers,
+                                    timeout=10
+                                )
+                                
+                                renewal_success = renewal_response.status_code == 200
+                                self.log_test("Normal Check-in After Employee Block", renewal_success, f"Check-in and renewal: {renewal_success}")
+                                
+                                if not renewal_success:
+                                    all_success = False
+                                
+                                # Clean up - check out
+                                requests.put(
+                                    f"{self.api_url}/checkin/{checkin_id}/checkout",
+                                    headers=self.headers,
+                                    timeout=10
+                                )
+                            else:
+                                self.log_test("Normal Check-in After Employee Block", False, f"Check-in failed: {response.status_code}")
+                                all_success = False
+                        else:
+                            self.log_test("Normal Check-in After Employee Block", True, "No available rooms (skipped)")
+                    else:
+                        self.log_test("Normal Check-in After Employee Block", False, f"Could not get rooms: {rooms_response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test("Employee Locker Integration", False, f"Could not create test customer: {customer_response.status_code}")
+                    all_success = False
+            else:
+                self.log_test("Employee Locker Integration", False, f"Could not get assigned lockers: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Employee Locker Integration", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_shift_limit_with_unpaid_overtime(self):
+        """Test that shift limits work alongside unpaid overtime blocking"""
+        print("\n💰 Testing Shift Limits with Unpaid Overtime Integration...")
+        
+        if not self.token:
+            return self.log_test("Shift Limits with Overtime", False, "No authentication token")
+        
+        all_success = True
+        
+        # Create test customer
+        unique_id = f"OVERTIME{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        customer_data = {
+            "first_name": "Overtime",
+            "last_name": "TestUser",
+            "id_number": unique_id,
+            "date_of_birth": "1988-03-10",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "TX"
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                test_customer_id = response.json()['id']
+                
+                # Test normal check-in (should work)
+                try:
+                    rooms_response = requests.get(
+                        f"{self.api_url}/rooms/available/locker",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if rooms_response.status_code == 200:
+                        available_rooms = rooms_response.json()['available_rooms']
+                        if available_rooms:
+                            checkin_data = {
+                                "customer_id": test_customer_id,
+                                "membership_type": "1_day",
+                                "room_type": "locker",
+                                "room_number": available_rooms[0]
+                            }
+                            
+                            response = requests.post(
+                                f"{self.api_url}/checkin",
+                                json=checkin_data,
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            if response.status_code == 200:
+                                checkin_id = response.json()['id']
+                                
+                                # Test renewal (should work)
+                                renewal_response = requests.put(
+                                    f"{self.api_url}/checkin/{checkin_id}/renew",
+                                    headers=self.headers,
+                                    timeout=10
+                                )
+                                
+                                renewal_success = renewal_response.status_code == 200
+                                self.log_test("Check-in/Renewal with No Overtime", renewal_success, f"Normal operations: {renewal_success}")
+                                
+                                if not renewal_success:
+                                    all_success = False
+                                
+                                # Check out
+                                checkout_response = requests.put(
+                                    f"{self.api_url}/checkin/{checkin_id}/checkout",
+                                    headers=self.headers,
+                                    timeout=10
+                                )
+                                
+                                checkout_success = checkout_response.status_code == 200
+                                if checkout_success:
+                                    checkout_data = checkout_response.json()
+                                    overtime_amount = checkout_data.get('overtime_amount', 0)
+                                    self.log_test("Checkout Overtime Calculation", True, f"Overtime amount: ${overtime_amount}")
+                                else:
+                                    self.log_test("Checkout Overtime Calculation", False, f"Checkout failed: {checkout_response.status_code}")
+                                    all_success = False
+                            else:
+                                self.log_test("Check-in/Renewal with No Overtime", False, f"Check-in failed: {response.status_code}")
+                                all_success = False
+                        else:
+                            self.log_test("Check-in/Renewal with No Overtime", True, "No available rooms (skipped)")
+                    else:
+                        self.log_test("Check-in/Renewal with No Overtime", False, f"Could not get rooms: {rooms_response.status_code}")
+                        all_success = False
+                        
+                except Exception as e:
+                    self.log_test("Check-in/Renewal with No Overtime", False, f"Exception: {str(e)}")
+                    all_success = False
+                
+                # Test overtime payment endpoint
+                try:
+                    # Test paying overtime (should fail if no overtime)
+                    payment_data = {"payment_method": "cash"}
+                    
+                    response = requests.post(
+                        f"{self.api_url}/customers/{test_customer_id}/pay-overtime",
+                        json=payment_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    # Should return 400 if no outstanding overtime
+                    no_overtime = response.status_code == 400
+                    self.log_test("Pay Overtime (No Outstanding)", no_overtime, f"Status: {response.status_code} (expected 400)")
+                    
+                    if not no_overtime:
+                        all_success = False
+                        
+                except Exception as e:
+                    self.log_test("Pay Overtime (No Outstanding)", False, f"Exception: {str(e)}")
+                    all_success = False
+            else:
+                self.log_test("Shift Limits with Overtime", False, f"Could not create test customer: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Shift Limits with Overtime", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting Comprehensive Backend API Testing...")
@@ -5969,6 +6626,16 @@ class BathhouseAPITester:
         self.test_checkin()
         self.test_active_checkins()
         self.test_checkout()
+        
+        # NEW 3-SHIFT LIMIT SYSTEM TESTING (REVIEW REQUEST)
+        print("\n" + "=" * 50)
+        print("🚦 3-SHIFT LIMIT SYSTEM TESTING (REVIEW REQUEST)")
+        print("=" * 50)
+        
+        self.test_3_shift_limit_system()
+        self.test_shift_limit_integration_scenarios()
+        self.test_shift_limit_with_employee_lockers()
+        self.test_shift_limit_with_unpaid_overtime()
         
         # REVIEW REQUEST SPECIFIC TESTS
         print("\n" + "=" * 50)
