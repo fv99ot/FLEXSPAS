@@ -746,6 +746,29 @@ async def pay_overtime_fees(customer_id: str, payment_data: dict, current_user: 
     
     payment_method = payment_data.get("payment_method", "cash")  # "cash" or "card"
     
+    # Create transaction record for overtime payment
+    transaction_doc = {
+        "id": str(uuid.uuid4()),
+        "customer_id": customer_id,
+        "customer_name": f"{customer['first_name']} {customer['last_name']}",
+        "transaction_type": "overtime_payment",
+        "items": [{"name": "Overtime Fees", "price": unpaid_amount, "quantity": 1}],
+        "subtotal": unpaid_amount,
+        "discount_name": None,
+        "discount_amount": 0.0,
+        "total_amount": unpaid_amount,
+        "payment_method": payment_method,
+        "checkin_id": None,
+        "membership_type": None,
+        "is_refund": False,
+        "original_transaction_id": None,
+        "created_by": current_user.id,
+        "created_at": datetime.now(timezone.utc),
+        "notes": f"Overtime payment for {customer['first_name']} {customer['last_name']}"
+    }
+    
+    await db.transactions.insert_one(transaction_doc)
+    
     # Clear the overtime debt
     await db.customers.update_one(
         {"id": customer_id},
@@ -760,7 +783,8 @@ async def pay_overtime_fees(customer_id: str, payment_data: dict, current_user: 
     return {
         "message": "Overtime fees paid successfully",
         "amount_paid": unpaid_amount,
-        "payment_method": payment_method
+        "payment_method": payment_method,
+        "transaction_id": transaction_doc["id"]
     }
 
 @api_router.put("/users/me/password")
