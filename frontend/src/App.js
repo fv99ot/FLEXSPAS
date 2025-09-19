@@ -2817,6 +2817,91 @@ function App() {
                         </Card>
                       </div>
                     </TabsContent>
+
+                    <TabsContent value="employees" className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-lg font-semibold text-white">Employee Management</h3>
+                        <Button onClick={() => setShowAddEmployee(true)} className="flex-button">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add New Employee
+                        </Button>
+                      </div>
+
+                      <div className="grid gap-4">
+                        {employees.map((employee) => (
+                          <div key={employee.id} className="flex items-center justify-between p-4 border border-white/20 rounded-lg bg-white/5">
+                            <div className="flex items-center space-x-4">
+                              <Avatar>
+                                <AvatarFallback className="bg-red-600 text-white">
+                                  {employee.username.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h3 className="font-semibold text-white">{employee.username}</h3>
+                                <p className="text-sm text-gray-300 capitalize">{employee.role}</p>
+                                {employee.assigned_locker_number && (
+                                  <p className="text-sm text-green-400">
+                                    Assigned Locker: #{employee.assigned_locker_number}
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-400">
+                                  Created: {new Date(employee.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/20 text-white hover:bg-white/10"
+                                onClick={() => {
+                                  setPasswordForm({
+                                    ...passwordForm,
+                                    targetUserId: employee.id,
+                                    targetUsername: employee.username
+                                  });
+                                  setPasswordDialogType('reset');
+                                  setShowPasswordDialog(true);
+                                }}
+                              >
+                                Reset Password
+                              </Button>
+                              <Button
+                                size="sm"
+                                className={employee.assigned_locker_number ? "bg-yellow-600 hover:bg-yellow-700 text-white" : "bg-green-600 hover:bg-green-700 text-white"}
+                                onClick={() => {
+                                  if (employee.assigned_locker_number) {
+                                    // Unassign current locker
+                                    if (window.confirm(`Unassign locker #${employee.assigned_locker_number} from ${employee.username}?`)) {
+                                      unassignLockerFromEmployee(employee.id);
+                                    }
+                                  } else {
+                                    // Assign new locker
+                                    const roomNumber = window.prompt(`Assign a locker to ${employee.username}:\n\nEnter locker number (40-153):`);
+                                    if (roomNumber && roomNumber >= 40 && roomNumber <= 153) {
+                                      assignLockerToEmployee(employee.id, roomNumber);
+                                    } else if (roomNumber) {
+                                      alert('Invalid locker number. Please enter a number between 40-153.');
+                                    }
+                                  }
+                                }}
+                              >
+                                {employee.assigned_locker_number ? 'Unassign Locker' : 'Assign Locker'}
+                              </Button>
+                              {employee.username !== 'admin' && employee.id !== user?.id && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => deleteEmployee(employee.id)}
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
                   </Tabs>
                 </CardContent>
               </Card>
