@@ -153,15 +153,53 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-def get_room_pricing(room_type: RoomType, is_weekend: bool) -> float:
-    pricing = {
-        RoomType.LOCKER: {"weekday": 25, "weekend": 28},
-        RoomType.SMALL_ROOM: {"weekday": 33, "weekend": 36},
-        RoomType.REGULAR_ROOM: {"weekday": 40, "weekend": 45},
-        RoomType.DELUXE_ROOM: {"weekday": 45, "weekend": 50}
+async def get_pricing_config() -> PricingConfig:
+    """Get current pricing configuration from database"""
+    pricing_doc = await db.pricing_config.find_one({})
+    if pricing_doc:
+        return PricingConfig(**{k: v for k, v in pricing_doc.items() if k != "_id"})
+    else:
+        # Return default pricing if none exists
+        default_pricing = PricingConfig()
+        # Save default pricing to database
+        await db.pricing_config.insert_one(default_pricing.dict())
+        return default_pricing
+
+async def get_room_pricing(room_type: RoomType, is_weekend: bool) -> float:
+    """Get room pricing based on type and weekend status"""
+    pricing_config = await get_pricing_config()
+    
+    pricing_map = {
+        RoomType.LOCKER: pricing_config.locker_weekend if is_weekend else pricing_config.locker_weekday,
+        RoomType.SMALL_ROOM: pricing_config.small_room_weekend if is_weekend else pricing_config.small_room_weekday,
+        RoomType.REGULAR_ROOM: pricing_config.regular_room_weekend if is_weekend else pricing_config.regular_room_weekday,
+        RoomType.DELUXE_ROOM: pricing_config.deluxe_room_weekend if is_weekend else pricing_config.deluxe_room_weekday,
     }
     
-    return pricing[room_type]["weekend" if is_weekend else "weekday"]
+    return pricing_map[room_type]
+
+def is_weekend_time() -> bool:
+    """Check if current time falls within weekend pricing period:
+    Weekend: Friday 4pm - Monday 12am
+    Weekday: Monday 12am - Friday 4pm"""
+    now = datetime.now(timezone.utc)
+    weekday = now.weekday()  # Monday = 0, Sunday = 6
+    hour = now.hour
+    
+    # Friday (4) at 4pm or later
+    if weekday == 4 and hour >= 16:
+        return True
+    # Saturday (5) or Sunday (6) - all day
+    elif weekday in [5, 6]:
+        return True
+    # Monday through Thursday - weekday pricing
+    elif weekday < 4:
+        return False
+    # Friday before 4pm - weekday pricing
+    elif weekday == 4 and hour < 16:
+        return False
+    
+    return False
 
 def get_membership_fee(membership_type: MembershipType) -> float:
     return 10 if membership_type == MembershipType.ONE_DAY else 25
