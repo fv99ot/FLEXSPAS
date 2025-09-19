@@ -102,9 +102,21 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "1. Verify the recent fixes are working correctly (QR code readability, membership button visibility, overtime payments in transaction history). 2. Fix QR code scanning issue where 2 important messages aren't easily legible because of color/font issues when users scan QR code with their phone."
+user_problem_statement: "Please test the waitlist removal issue. The user reports that when removing a customer from one specific waitlist (regular_room, small_room, or deluxe_room), it removes them from ALL waitlists instead of just the specific one."
 
 backend:
+  - task: "Waitlist Removal Issue Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "WAITLIST REMOVAL ISSUE TESTING COMPLETED - WORKING CORRECTLY: Comprehensive testing of the user-reported waitlist removal issue shows the system is functioning properly. ✅ CUSTOMER ADDED TO ALL 3 WAITLISTS: Successfully added test customer to regular_room, small_room, and deluxe_room waitlists - WORKING, ✅ VERIFIED ON ALL WAITLISTS: Confirmed customer appears on all 3 waitlists initially (3/3 waitlists) - WORKING, ✅ SPECIFIC WAITLIST REMOVAL: DELETE /api/waitlist/{entry_id} successfully removed customer from ONLY the regular_room waitlist - WORKING, ✅ REMAINING WAITLISTS INTACT: After removal, customer remained on small_room and deluxe_room waitlists as expected - WORKING, ✅ BACKEND LOGS CONFIRM: Server logs show successful POST /api/waitlist (200 OK), GET /api/waitlist (200 OK), and DELETE /api/waitlist/{entry_id} (200 OK) operations. The reported issue does not exist - waitlist removal is working correctly and only removes the specific waitlist entry, not all waitlists for the customer."
+
   - task: "Add Customer Authentication"
     implemented: true
     working: true
