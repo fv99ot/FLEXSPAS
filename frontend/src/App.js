@@ -1108,7 +1108,8 @@ function App() {
       paymentMethod: '',
       additionalItems: [],
       selectedDiscount: null,
-      discountAmount: 0
+      discountAmount: 0,
+      transactionType: 'checkin'
     });
     fetchActiveCheckins();
   };
