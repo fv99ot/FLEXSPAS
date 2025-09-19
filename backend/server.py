@@ -628,15 +628,17 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
         if assigned_locker:
             raise HTTPException(status_code=400, detail=f"Locker {room_number} is assigned to employee {assigned_locker['username']}")
     
-    # Check session limits for the day
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    today_checkins = await db.check_ins.find({
-        "customer_id": customer_id,
-        "check_in_time": {"$gte": today_start}
-    }).to_list(None)
+    # Check daily shift limit (3 shifts max per day, 24-hour waiting period after completing 3 shifts)
+    shift_check = await check_daily_shift_limit(customer_id)
+    if not shift_check["can_continue"]:
+        raise HTTPException(status_code=400, detail=shift_check["message"])
     
-    if len(today_checkins) >= 3:
-        raise HTTPException(status_code=400, detail="Customer has reached maximum 3 sessions for today")
+    # Verify this check-in won't exceed the daily limit
+    if shift_check["current_shifts"] >= 3:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Customer has already used {shift_check['current_shifts']}/3 shifts today. Cannot check in again until 24 hours after last checkout."
+        )
     
     # Calculate costs
     is_weekend = is_weekend_time()
@@ -657,7 +659,7 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
         "membership_fee": membership_fee,
         "room_fee": room_fee,
         "is_weekend": is_weekend,
-        "session_count": len(today_checkins) + 1,
+        "session_count": shift_check["current_shifts"] + 1,
         "payment_method": "cash"
     }
     
