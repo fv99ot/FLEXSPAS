@@ -1135,12 +1135,36 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
     if not checkin:
         raise HTTPException(status_code=404, detail="Active check-in not found")
     
+    customer_id = checkin["customer_id"]
+    current_renewal_count = checkin.get("renewal_count", 0)
+    
+    # Check if customer can renew (max 2 renewals = 3 total shifts)
+    if current_renewal_count >= 2:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot renew: Customer has reached maximum 3 shifts per day limit. Customer must check out and wait 24 hours before next check-in."
+        )
+    
+    # Check daily shift limit (this includes shifts from previous sessions today)
+    shift_check = await check_daily_shift_limit(customer_id)
+    if not shift_check["can_continue"]:
+        raise HTTPException(status_code=400, detail=shift_check["message"])
+    
+    # Check if renewal would exceed 3 shifts total for the day
+    future_total_shifts = shift_check["current_shifts"] + 1  # +1 for this renewal
+    if future_total_shifts > 3:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot renew: Customer has already used {shift_check['current_shifts']}/3 shifts today. This renewal would exceed the daily limit."
+        )
+    
     # Get current pricing
     is_weekend = is_weekend_time()
     room_fee = await get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
     
     # Update check-in time to current time (restarts the 8-hour timer)
     renewal_time = datetime.now(timezone.utc)
+    new_renewal_count = current_renewal_count + 1
     
     await db.check_ins.update_one(
         {"id": checkin_id},
@@ -1148,7 +1172,7 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
             "$set": {
                 "check_in_time": renewal_time,
                 "renewed_at": renewal_time,
-                "renewal_count": checkin.get("renewal_count", 0) + 1
+                "renewal_count": new_renewal_count
             }
         }
     )
@@ -1158,7 +1182,9 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
         "new_check_in_time": renewal_time,
         "new_checkout_time": renewal_time + timedelta(hours=8),
         "room_fee": room_fee,
-        "renewal_count": checkin.get("renewal_count", 0) + 1
+        "renewal_count": new_renewal_count,
+        "total_shifts_today": shift_check["current_shifts"] + 1,
+        "remaining_shifts": 3 - (shift_check["current_shifts"] + 1)
     }
 
 @api_router.post("/transactions", response_model=Transaction)
