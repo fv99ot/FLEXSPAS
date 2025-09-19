@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from './components/ui/alert';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://flexspa-manager.preview.emergentagent.com';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://flexspa-dashboard.preview.emergentagent.com';
 const API = `${BACKEND_URL}/api`;
 
 const MembershipForm = () => {
