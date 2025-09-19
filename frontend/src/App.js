@@ -3306,28 +3306,27 @@ function App() {
               <div className="border rounded-lg p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-medium text-gray-900">Additional Items</h4>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      // Open additional items selector (simplified for now)
-                      const item = window.prompt("Enter item name and price (format: Name,Price)");
-                      if (item) {
-                        const [name, price] = item.split(',');
-                        if (name && price) {
-                          const newItem = { name: name.trim(), price: parseFloat(price.trim()) || 0 };
-                          setPaymentData(prev => ({
-                            ...prev,
-                            additionalItems: [...prev.additionalItems, newItem],
-                            totalAmount: prev.totalAmount + newItem.price
-                          }));
-                        }
-                      }
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Item
-                  </Button>
+                  <Select onValueChange={(value) => {
+                    const item = additionalItems.find(item => item.id === value);
+                    if (item) {
+                      setPaymentData(prev => ({
+                        ...prev,
+                        additionalItems: [...prev.additionalItems, { name: item.name, price: item.price, id: item.id }],
+                        totalAmount: prev.totalAmount + item.price
+                      }));
+                    }
+                  }}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Add Item" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {additionalItems.filter(item => item.active).map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name} - ${item.price.toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="space-y-2">
