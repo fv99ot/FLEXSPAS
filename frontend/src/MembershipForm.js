@@ -249,7 +249,7 @@ const MembershipForm = () => {
               {error && (
                 <Alert className="bg-red-500/20 border-red-500/50">
                   <AlertTriangle className="h-4 w-4 text-red-400" />
-                  <AlertDescription className="text-red-50 font-medium">{error}</AlertDescription>
+                  <AlertDescription className="text-white font-semibold drop-shadow-lg">{error}</AlertDescription>
                 </Alert>
               )}
 
