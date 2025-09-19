@@ -104,14 +104,14 @@ const MembershipForm = () => {
             <div className="mb-6">
               <Alert className="bg-red-500/20 border-red-500/50 mb-4">
                 <AlertTriangle className="h-4 w-4 text-red-400" />
-                <AlertDescription className="text-red-200">
+                <AlertDescription className="text-red-50 font-medium">
                   <strong>IMPORTANT:</strong> You must have a valid, hard copy (physical) government-issued photo ID to complete registration. Digital copies or photos of IDs are not accepted.
                 </AlertDescription>
               </Alert>
               
               <Alert className="bg-blue-500/20 border-blue-500/50">
                 <AlertTriangle className="h-4 w-4 text-blue-400" />
-                <AlertDescription className="text-blue-200">
+                <AlertDescription className="text-blue-50 font-medium">
                   Please fill out this form completely and accurately. All information is required for membership processing and must match your physical ID exactly.
                 </AlertDescription>
               </Alert>
