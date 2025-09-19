@@ -605,6 +605,55 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+backend:
+  - task: "Employee Locker Assignment System"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "CRITICAL ISSUES FOUND: Employee Locker Assignment System has implementation issues. ✅ User model includes assigned_locker_number field correctly. ❌ PUT /api/users/{user_id}/assign-locker endpoint expects locker_number as query parameter, not JSON body (422 error). ❌ Assigned lockers not properly blocked from customer check-ins. ❌ Manager-only access control not working correctly. ✅ DELETE /api/users/{user_id}/assign-locker works for unassignment. ✅ GET /api/users/assigned-lockers endpoint works correctly. RECOMMENDATION: Fix endpoint parameter handling and check-in blocking logic."
+
+  - task: "Sales Report Fix"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "SALES REPORT FIX WORKING PERFECTLY: Comprehensive testing of GET /api/reports/daily-sales endpoint completed with 100% success. ✅ Proper sales data structure with all required fields (date, total_revenue, total_checkins, average_per_checkin, room_breakdown, membership_breakdown, employee_breakdown, payment_breakdown). ✅ Payment breakdown structure includes cash/card with count and revenue fields. ✅ Date parameter handling works correctly. ✅ Defaults to today when no date provided. All sales report functionality confirmed working as requested in review."
+
+  - task: "Check-in/Check-out Authentication"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "AUTHENTICATION ISSUES FOUND: Check-in/Check-out authentication has problems. ❌ POST /api/checkin without authorization returns 403 instead of 401 (should require JWT). ❌ Check-in with proper auth fails with 400 status (customer already checked in issue). ✅ PUT /api/checkin/{checkin_id}/checkout requires proper authorization. ✅ Invalid JWT tokens properly rejected with 401. RECOMMENDATION: Fix authentication middleware to return proper 401 status and resolve check-in blocking issues."
+
+  - task: "User Model Updates"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "USER MODEL UPDATES WORKING CORRECTLY: Comprehensive testing completed with success. ✅ User model includes assigned_locker_number field in all users. ✅ New users created with assigned_locker_number field (initially None). ✅ Existing users can have lockers assigned (when endpoint works correctly). ✅ Existing users can have lockers unassigned successfully. User model structure is properly updated as requested in review."
+
 agent_communication:
   - agent: "main"
     message: "USER REPORTED NEW ISSUES: Updated requirements from user feedback. Need to address: 1) Active check-in tab needs renew button, 2) Error checking out customer, 3) Error checking in customer, 4) Room map should show Renew/Upgrade/Check Out buttons instead of 1,2,3 options, 5) Error fetching sales report, 6) Employee tab improvements - show assigned locker after assignment and black out assigned lockers on map. Starting implementation."
