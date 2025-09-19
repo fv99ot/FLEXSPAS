@@ -165,6 +165,76 @@ async def get_pricing_config() -> PricingConfig:
         await db.pricing_config.insert_one(default_pricing.dict())
         return default_pricing
 
+async def check_daily_shift_limit(customer_id: str) -> dict:
+    """Check if customer has reached daily shift limit (3 shifts max)
+    Returns dict with: can_continue, current_shifts, last_session_end, message"""
+    
+    # Get today's date range (UTC)
+    now = datetime.now(timezone.utc)
+    start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+    
+    # Get all check-ins for this customer today (both active and completed)
+    todays_checkins = await db.check_ins.find({
+        "customer_id": customer_id,
+        "check_in_time": {
+            "$gte": start_of_day,
+            "$lte": end_of_day
+        }
+    }).to_list(100)
+    
+    if not todays_checkins:
+        return {
+            "can_continue": True,
+            "current_shifts": 0,
+            "last_session_end": None,
+            "message": "No sessions today - can check in"
+        }
+    
+    # Count total shifts (initial check-in + renewals)
+    total_shifts = 0
+    last_session_end = None
+    
+    for checkin in todays_checkins:
+        # Count initial check-in as 1 shift
+        shifts_in_session = 1 + checkin.get("renewal_count", 0)
+        total_shifts += shifts_in_session
+        
+        # Track the latest session end time
+        if checkin.get("check_out_time"):
+            checkout_time = checkin["check_out_time"]
+            if isinstance(checkout_time, str):
+                checkout_time = datetime.fromisoformat(checkout_time.replace('Z', '+00:00'))
+            
+            if not last_session_end or checkout_time > last_session_end:
+                last_session_end = checkout_time
+    
+    # Check if customer has reached the 3-shift limit
+    if total_shifts >= 3:
+        # If they completed 3 shifts, they need to wait 24 hours from last checkout
+        if last_session_end:
+            hours_since_last = (now - last_session_end).total_seconds() / 3600
+            if hours_since_last < 24:
+                return {
+                    "can_continue": False,
+                    "current_shifts": total_shifts,
+                    "last_session_end": last_session_end,
+                    "message": f"Customer completed 3 shifts today. Must wait {24 - hours_since_last:.1f} more hours before next check-in."
+                }
+        
+        return {
+            "can_continue": False,
+            "current_shifts": total_shifts,
+            "last_session_end": last_session_end,
+            "message": "Customer has reached maximum 3 shifts per day limit."
+        }
+    
+    return {
+        "can_continue": True,
+        "current_shifts": total_shifts,
+        "last_session_end": last_session_end,
+        "message": f"Customer has used {total_shifts}/3 shifts today - can continue"
+    }
 async def get_room_pricing(room_type: RoomType, is_weekend: bool) -> float:
     """Get room pricing based on type and weekend status"""
     pricing_config = await get_pricing_config()
