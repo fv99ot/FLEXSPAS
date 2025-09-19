@@ -949,7 +949,7 @@ class Transaction(BaseModel):
     membership_type: Optional[str] = None
     is_refund: bool = False
     original_transaction_id: Optional[str] = None
-    created_by: str
+    created_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     notes: Optional[str] = None
 
