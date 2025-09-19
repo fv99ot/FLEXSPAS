@@ -876,17 +876,7 @@ async def delete_user(user_id: str, current_user: User = Depends(get_current_use
     
     return {"message": "User deleted successfully"}
 
-# Pricing Models
-class PricingConfig(BaseModel):
-    locker_weekday: float = 25.0
-    locker_weekend: float = 28.0
-    small_room_weekday: float = 33.0
-    small_room_weekend: float = 36.0
-    regular_room_weekday: float = 40.0
-    regular_room_weekend: float = 45.0
-    deluxe_room_weekday: float = 45.0
-    deluxe_room_weekend: float = 50.0
-
+# Pricing Update Model
 class PricingUpdate(BaseModel):
     locker_weekday: Optional[float] = None
     locker_weekend: Optional[float] = None
