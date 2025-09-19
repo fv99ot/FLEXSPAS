@@ -1088,19 +1088,38 @@ function App() {
     console.log('🏁 handleCheckIn function END');
   };
 
-  const handlePaymentComplete = () => {
-    // Print receipt before clearing data
-    if (selectedCustomer && paymentData.checkInId) {
-      const checkInData = {
-        room_type: checkinForm.roomType,
-        room_number: checkinForm.roomNumber,
-        membership_type: checkinForm.membershipType,
-        check_in_time: new Date()
-      };
-      
-      printReceipt(selectedCustomer, checkInData, paymentData);
+  const handlePaymentComplete = async () => {
+    try {
+      // Handle different transaction types
+      if (paymentData.transactionType === 'renewal') {
+        // Call renewal API endpoint after payment is complete
+        const token = localStorage.getItem('token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        
+        const response = await axios.put(`${API}/api/checkin/${paymentData.checkInId}/renew`, {}, { headers });
+        
+        alert(`✅ Session renewed successfully for ${paymentData.customerName}!\n\nNew check-out time: ${new Date(response.data.new_checkout_time).toLocaleString()}\nRoom fee: $${response.data.room_fee.toFixed(2)}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
+      } else {
+        // Handle regular check-in transactions
+        // Print receipt before clearing data
+        if (selectedCustomer && paymentData.checkInId) {
+          const checkInData = {
+            room_type: checkinForm.roomType,
+            room_number: checkinForm.roomNumber,
+            membership_type: checkinForm.membershipType,
+            check_in_time: new Date()
+          };
+          
+          printReceipt(selectedCustomer, checkInData, paymentData);
+        }
+      }
+    } catch (error) {
+      console.error('Error completing transaction:', error);
+      alert(error.response?.data?.detail || 'Error completing transaction');
+      return; // Don't close dialog if there's an error
     }
     
+    // Close payment dialog and reset data
     setShowPayment(false);
     setPaymentData({
       checkInId: '',
