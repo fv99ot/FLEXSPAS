@@ -913,6 +913,22 @@ async def unassign_locker_from_employee(user_id: str, current_user: User = Depen
     
     return {"message": "Locker unassigned from employee successfully"}
 
+@api_router.get("/users/assigned-lockers")
+async def get_assigned_lockers(current_user: User = Depends(get_current_user)):
+    # Get all users with assigned lockers
+    users_with_lockers = await db.users.find({
+        "assigned_locker_number": {"$exists": True, "$ne": None}
+    }).to_list(1000)
+    
+    assigned_lockers = {}
+    for user in users_with_lockers:
+        assigned_lockers[user["assigned_locker_number"]] = {
+            "employee_username": user["username"],
+            "employee_id": user["id"]
+        }
+    
+    return assigned_lockers
+
 # Discount System Models
 class Discount(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
