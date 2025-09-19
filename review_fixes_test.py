@@ -423,8 +423,8 @@ class ReviewFixesTester:
             
             if response.status_code == 200:
                 data = response.json()
-                has_qr_code = 'qr_code' in data
-                has_form_url = 'form_url' in data
+                has_qr_code = 'qr_code_url' in data
+                has_form_url = 'membership_form_url' in data
                 
                 self.log_test("QR Code Generation", has_qr_code, 
                             f"QR code present: {has_qr_code}, Form URL: {has_form_url}")
