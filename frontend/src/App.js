@@ -143,6 +143,7 @@ function App() {
   const [selectedCustomerProfile, setSelectedCustomerProfile] = useState(null);
   const [profileNotes, setProfileNotes] = useState('');
   const [showProfile, setShowProfile] = useState(false);
+  const [customerMembershipStatus, setCustomerMembershipStatus] = useState(null);
   
   // Overtime payment state
   const [overtimeCustomer, setOvertimeCustomer] = useState(null);
