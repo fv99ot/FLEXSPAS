@@ -1578,6 +1578,27 @@ function App() {
                                   <div className="flex space-x-2">
                                     <Button
                                       size="sm"
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      onClick={() => {
+                                        // Renewal - same room, base rate
+                                        setPaymentData({
+                                          checkInId: checkin.id,
+                                          customerName: `${checkin.customer?.first_name} ${checkin.customer?.last_name}`,
+                                          totalAmount: getRoomBaseRate(checkin.room_type),
+                                          paymentMethod: '',
+                                          additionalItems: [],
+                                          selectedDiscount: null,
+                                          discountAmount: 0,
+                                          transactionType: 'renewal'
+                                        });
+                                        setShowPayment(true);
+                                      }}
+                                    >
+                                      Renew
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
                                       className="bg-blue-600 hover:bg-blue-700 text-white"
                                       onClick={() => {
                                         setSelectedCheckin(checkin);
