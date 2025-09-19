@@ -1488,22 +1488,19 @@ function App() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
         <Tabs defaultValue="search" className="space-y-6">
           <div className="space-y-2">
-            <TabsList className={`grid w-full ${user?.role === 'manager' ? 'grid-cols-4' : 'grid-cols-3'} bg-transparent`}>
+            <TabsList className="grid w-full grid-cols-4 md:grid-cols-8 gap-2 bg-white/10">
               <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
               <TabsTrigger value="pending" className="tab-dark">
-                Pending Approvals {pendingCustomers.length > 0 && (
-                  <Badge className="ml-1 bg-red-600 text-white">{pendingCustomers.length}</Badge>
+                Pending Approvals
+                {pendingCustomers.length > 0 && (
+                  <Badge variant="destructive" className="ml-1">{pendingCustomers.length}</Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="active" className="tab-dark">Active Check-ins</TabsTrigger>
               <TabsTrigger value="map" className="tab-dark">Room Map</TabsTrigger>
-            </TabsList>
-            <TabsList className={`grid w-full ${user?.role === 'manager' ? 'grid-cols-4' : 'grid-cols-2'} bg-transparent`}>
+              <TabsTrigger value="transactions" className="tab-dark">Transactions</TabsTrigger>
               <TabsTrigger value="qr" className="tab-dark">QR Code</TabsTrigger>
               <TabsTrigger value="reports" className="tab-dark">Sales Reports</TabsTrigger>
-              {user?.role === 'manager' && (
-                <TabsTrigger value="employees" className="tab-dark">Employees</TabsTrigger>
-              )}
               {user?.role === 'manager' && (
                 <TabsTrigger value="admin" className="tab-dark">Admin Settings</TabsTrigger>
               )}
