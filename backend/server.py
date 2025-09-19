@@ -205,6 +205,8 @@ async def check_daily_shift_limit(customer_id: str) -> dict:
             checkout_time = checkin["check_out_time"]
             if isinstance(checkout_time, str):
                 checkout_time = datetime.fromisoformat(checkout_time.replace('Z', '+00:00'))
+            elif isinstance(checkout_time, datetime) and checkout_time.tzinfo is None:
+                checkout_time = checkout_time.replace(tzinfo=timezone.utc)
             
             if not last_session_end or checkout_time > last_session_end:
                 last_session_end = checkout_time
