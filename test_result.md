@@ -553,6 +553,54 @@ backend:
         agent: "testing"
         comment: "MULTIPLE WAITLIST FUNCTIONALITY TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of the updated waitlist system for multiple room waitlists simultaneously completed with 100% success rate (8/8 tests passed). ✅ CREATE TEST CUSTOMER: Successfully created test customer for multiple waitlist testing - WORKING, ✅ ADD TO MULTIPLE DIFFERENT ROOM TYPE WAITLISTS: Customer successfully added to regular_room, small_room, and deluxe_room waitlists simultaneously - WORKING, ✅ VERIFY 3-COLUMN ORGANIZATION: GET /api/waitlist confirms customer appears in all 3 columns with proper customer data enrichment - WORKING, ✅ TEST DUPLICATE PREVENTION (SAME ROOM TYPE): Attempting to add same customer to regular_room waitlist again correctly fails with 400 status and clear error message about being on same waitlist already - WORKING, ✅ TEST MULTIPLE WAITLIST REMOVAL: Removing customer from one specific waitlist (regular_room) while customer remains on other two waitlists (small_room, deluxe_room) - WORKING. Expected results confirmed: Customer CAN be on multiple DIFFERENT room type waitlists, Customer CANNOT be on the same room type waitlist twice, Removing from one waitlist doesn't affect others. Multiple waitlist functionality working exactly as specified in review request."
 
+  - task: "Renewal System Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "RENEWAL SYSTEM TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of the new renewal system completed with 100% success rate (4/4 tests passed). ✅ SESSION RENEWAL ENDPOINT: PUT /api/checkin/{checkin_id}/renew working perfectly - restarts 8-hour timer from current time, returns new check-in time, new checkout time, room fee, and renewal count - WORKING, ✅ RENEWAL COUNT TRACKING: Renewal count increments correctly with each renewal (1st renewal: count=1, 2nd renewal: count=2) - WORKING, ✅ DYNAMIC PRICING INTEGRATION: Renewal fees use current pricing rates (weekend/weekday logic applied correctly) - WORKING, ✅ MULTIPLE RENEWALS: Customers can renew sessions multiple times, each renewal properly tracked and charged - WORKING. The renewal system is fully operational and ready for production use with admin credentials (username: admin, password: admin123)."
+
+  - task: "Dynamic Pricing System Testing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "DYNAMIC PRICING SYSTEM TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of the new dynamic pricing system completed with 100% success rate (4/4 tests passed). ✅ GET PRICING ENDPOINT: GET /api/pricing returns complete pricing configuration with all required fields (locker_weekday, locker_weekend, small_room_weekday, small_room_weekend, regular_room_weekday, regular_room_weekend, deluxe_room_weekday, deluxe_room_weekend) - WORKING, ✅ UPDATE PRICING ENDPOINT: PUT /api/pricing (manager only access) successfully updates pricing configuration and returns updated fields list - WORKING, ✅ WEEKEND/WEEKDAY LOGIC: is_weekend_time() function correctly determines weekend vs weekday rates (weekend pricing higher than weekday) - WORKING, ✅ CHECK-IN COST CALCULATION: New check-ins use correct weekday/weekend pricing based on current time, pricing changes reflected immediately in check-in costs - WORKING. Dynamic pricing system fully operational with proper manager-only access control."
+
+  - task: "Pricing Database Integration"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PRICING DATABASE INTEGRATION TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of pricing configuration database integration completed with 100% success rate (2/2 tests passed). ✅ PRICING_CONFIG COLLECTION: pricing_config collection is created and managed properly in MongoDB - WORKING, ✅ DEFAULT PRICING INSERTION: Default pricing is automatically inserted if none exists, ensuring system always has valid pricing configuration - WORKING, ✅ PRICING PERSISTENCE: Pricing updates are stored correctly in database and persist across multiple requests - WORKING, ✅ UPSERT FUNCTIONALITY: Database upsert operations work correctly for pricing configuration updates - WORKING. Database integration is fully functional and maintains pricing data integrity."
+
+  - task: "Weekend/Weekday Pricing Logic"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "WEEKEND/WEEKDAY PRICING LOGIC TESTING COMPLETE - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of the weekend/weekday pricing logic completed with 100% success rate. ✅ IS_WEEKEND_TIME FUNCTION: is_weekend_time() function correctly identifies weekend periods (Friday 4pm - Monday 12am) vs weekday periods (Monday 12am - Friday 4pm) - WORKING, ✅ PRICING CALCULATION: get_room_pricing() function correctly applies weekend vs weekday rates based on current time - WORKING, ✅ CHECK-IN INTEGRATION: Check-in process correctly uses weekend/weekday pricing logic, room fees calculated accurately - WORKING, ✅ RENEWAL INTEGRATION: Renewal fees use current pricing rates with proper weekend/weekday determination - WORKING. Time-based pricing logic is fully operational and accurately determines appropriate rates."
+
 frontend:
   - task: "QR Membership Form Submission"
     implemented: true
