@@ -4,7 +4,7 @@ import requests
 import json
 
 # Test the password endpoint step by step
-base_url = "https://flexspa-dashboard.preview.emergentagent.com"
+base_url = "https://flexspa-app.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # Step 1: Login
