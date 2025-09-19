@@ -1106,33 +1106,48 @@ function App() {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       
+      // Create transaction record for all transaction types
+      const transactionData = {
+        customer_id: paymentData.customerId || selectedCustomer?.id || '',
+        customer_name: paymentData.customerName,
+        transaction_type: paymentData.transactionType,
+        items: paymentData.additionalItems.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: 1
+        })),
+        subtotal: paymentData.totalAmount + (paymentData.selectedDiscount?.amount || 0),
+        discount_name: paymentData.selectedDiscount?.name || null,
+        discount_amount: paymentData.discountAmount,
+        total_amount: paymentData.totalAmount,
+        payment_method: paymentData.paymentMethod,
+        checkin_id: paymentData.checkInId || null,
+        membership_type: paymentData.membershipType || null,
+        created_by: user?.id || '',
+        notes: null
+      };
+      
       // Handle different transaction types
       if (paymentData.transactionType === 'renewal') {
         // Call renewal API endpoint after payment is complete
         const response = await axios.put(`${API}/api/checkin/${paymentData.checkInId}/renew`, {}, { headers });
         
-        // TODO: Record payment transaction for renewal
+        // Create transaction record
+        await axios.post(`${API}/api/transactions`, transactionData, { headers });
         
         alert(`✅ Session renewed successfully for ${paymentData.customerName}!\n\nNew check-out time: ${new Date(response.data.new_checkout_time).toLocaleString()}\nRoom fee: $${response.data.room_fee.toFixed(2)}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
         
       } else if (paymentData.transactionType === 'membership') {
         // Handle membership purchase
-        const membershipData = {
-          customer_id: paymentData.customerId,
-          membership_type: paymentData.membershipType,
-          payment_method: paymentData.paymentMethod,
-          amount: paymentData.totalAmount
-        };
-        
-        // TODO: Create membership purchase API endpoint
-        // const response = await axios.post(`${API}/api/memberships/purchase`, membershipData, { headers });
+        // Create transaction record
+        await axios.post(`${API}/api/transactions`, transactionData, { headers });
         
         alert(`✅ Membership purchased successfully for ${paymentData.customerName}!\n\nMembership: ${paymentData.membershipType}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
         
       } else if (paymentData.transactionType === 'standalone') {
         // Handle standalone transaction (additional items, etc.)
-        
-        // TODO: Create transaction record API endpoint
+        // Create transaction record
+        await axios.post(`${API}/api/transactions`, transactionData, { headers });
         
         alert(`✅ Transaction completed successfully for ${paymentData.customerName}!\n\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
         
@@ -1141,6 +1156,9 @@ function App() {
         
       } else {
         // Handle regular check-in transactions
+        // Create transaction record
+        await axios.post(`${API}/api/transactions`, transactionData, { headers });
+        
         // Print receipt before clearing data
         if (selectedCustomer && paymentData.checkInId) {
           const checkInData = {
