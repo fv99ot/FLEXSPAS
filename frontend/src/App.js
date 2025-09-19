@@ -3361,33 +3361,39 @@ function App() {
               <div className="border rounded-lg p-4">
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-medium text-gray-900">Discount</h4>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      // Open discount selector (simplified for now)
-                      const discountOptions = discounts.filter(d => d.active);
-                      if (discountOptions.length > 0) {
-                        const discountNames = discountOptions.map(d => `${d.name} ($${d.amount})`).join('\n');
-                        const selection = window.prompt(`Select discount:\n${discountNames}\n\nEnter discount name:`);
-                        if (selection) {
-                          const selectedDiscount = discountOptions.find(d => d.name.toLowerCase() === selection.toLowerCase());
-                          if (selectedDiscount) {
-                            setPaymentData(prev => ({
-                              ...prev,
-                              selectedDiscount: selectedDiscount,
-                              discountAmount: selectedDiscount.amount,
-                              totalAmount: Math.max(0, prev.totalAmount - selectedDiscount.amount + (prev.selectedDiscount?.amount || 0))
-                            }));
-                          }
-                        }
-                      } else {
-                        alert('No active discounts available');
+                  <Select onValueChange={(value) => {
+                    if (value === 'none') {
+                      // Remove discount
+                      setPaymentData(prev => ({
+                        ...prev,
+                        selectedDiscount: null,
+                        discountAmount: 0,
+                        totalAmount: prev.totalAmount + (prev.selectedDiscount?.amount || 0)
+                      }));
+                    } else {
+                      const discount = discounts.find(d => d.id === value);
+                      if (discount) {
+                        setPaymentData(prev => ({
+                          ...prev,
+                          selectedDiscount: discount,
+                          discountAmount: discount.amount,
+                          totalAmount: Math.max(0, prev.totalAmount - discount.amount + (prev.selectedDiscount?.amount || 0))
+                        }));
                       }
-                    }}
-                  >
-                    Apply Discount
-                  </Button>
+                    }
+                  }}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Select Discount" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Discount</SelectItem>
+                      {discounts.filter(d => d.active).map((discount) => (
+                        <SelectItem key={discount.id} value={discount.id}>
+                          {discount.name} - ${discount.amount.toFixed(2)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 {paymentData.selectedDiscount ? (
