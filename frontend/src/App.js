@@ -1098,6 +1098,24 @@ function App() {
     fetchActiveCheckins();
   };
 
+  const handleRenewal = async (checkinId, customerName) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      const response = await axios.put(`${API}/api/checkin/${checkinId}/renew`, {}, { headers });
+      
+      alert(`✅ Session renewed successfully for ${customerName}!\n\nNew check-out time: ${new Date(response.data.new_checkout_time).toLocaleString()}\nRoom fee: $${response.data.room_fee.toFixed(2)}`);
+      
+      // Refresh active check-ins to show updated times
+      fetchActiveCheckins();
+      
+    } catch (error) {
+      console.error('Error renewing session:', error);
+      alert(error.response?.data?.detail || 'Error renewing session');
+    }
+  };
+
   const handleCheckOut = async (checkinId) => {
     try {
       const token = localStorage.getItem('token');
