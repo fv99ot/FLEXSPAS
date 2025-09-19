@@ -1032,6 +1032,40 @@ async def update_pricing(pricing_update: PricingUpdate, current_user: User = Dep
     
     return {"message": "Pricing updated successfully", "updated_fields": list(update_data.keys())}
 
+@api_router.put("/checkin/{checkin_id}/renew")
+async def renew_session(checkin_id: str, current_user: User = Depends(get_current_user)):
+    """Renew a customer's session - restarts 8-hour timer from current time"""
+    # Find the active check-in
+    checkin = await db.check_ins.find_one({"id": checkin_id, "check_out_time": None})
+    if not checkin:
+        raise HTTPException(status_code=404, detail="Active check-in not found")
+    
+    # Get current pricing
+    is_weekend = is_weekend_time()
+    room_fee = await get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
+    
+    # Update check-in time to current time (restarts the 8-hour timer)
+    renewal_time = datetime.now(timezone.utc)
+    
+    await db.check_ins.update_one(
+        {"id": checkin_id},
+        {
+            "$set": {
+                "check_in_time": renewal_time,
+                "renewed_at": renewal_time,
+                "renewal_count": checkin.get("renewal_count", 0) + 1
+            }
+        }
+    )
+    
+    return {
+        "message": "Session renewed successfully",
+        "new_check_in_time": renewal_time,
+        "new_checkout_time": renewal_time + timedelta(hours=8),
+        "room_fee": room_fee,
+        "renewal_count": checkin.get("renewal_count", 0) + 1
+    }
+
 # Discount System Models
 class Discount(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
