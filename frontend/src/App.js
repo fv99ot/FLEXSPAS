@@ -1239,6 +1239,61 @@ function App() {
     setShowCurrentTransaction(false);
   };
 
+  const purchaseMembership = (customer, membershipType) => {
+    const membershipFees = {
+      '1_day': { amount: 10, description: '1 Day Membership' },
+      '6_month': { amount: 25, description: '6 Month Membership' }
+    };
+    
+    const membership = membershipFees[membershipType];
+    if (!membership) {
+      alert('Invalid membership type');
+      return;
+    }
+    
+    // Set up payment data for membership purchase
+    setPaymentData({
+      checkInId: '',
+      customerName: `${customer.first_name} ${customer.last_name}`,
+      totalAmount: membership.amount,
+      paymentMethod: '',
+      additionalItems: [],
+      selectedDiscount: null,
+      discountAmount: 0,
+      transactionType: 'membership',
+      membershipType: membershipType,
+      customerId: customer.id
+    });
+    
+    setShowPayment(true);
+  };
+
+  const purchaseAdditionalItem = (customer, item) => {
+    // Add item to current transaction or create new transaction
+    const transactionItem = {
+      type: 'additional_item',
+      name: item.name,
+      amount: item.price,
+      id: item.id
+    };
+    
+    if (currentTransaction.customer && currentTransaction.customer.id === customer.id) {
+      // Add to existing transaction
+      addToCurrentTransaction(transactionItem);
+    } else {
+      // Start new transaction
+      setCurrentTransaction({
+        customer: customer,
+        items: [transactionItem],
+        subtotal: item.price,
+        discount: null,
+        discountAmount: 0,
+        total: item.price
+      });
+      setShowCurrentTransaction(true);
+    }
+  };
+
   const handleRenewal = async (checkinId, customerName, roomType) => {
     // Set up renewal transaction to go through payment dialog
     setPaymentData({
