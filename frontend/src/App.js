@@ -2456,6 +2456,77 @@ function App() {
         </div>
       )}
 
+      {/* Room Management Dialog */}
+      {showRoomManagement && selectedRoomForManagement && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Manage {selectedRoomForManagement.room.type === 'locker' ? 'Locker' : 'Room'} #{selectedRoomForManagement.room.number}
+            </h3>
+            <div className="space-y-3 mb-6">
+              <p className="text-gray-700">
+                <strong>Customer:</strong> {selectedRoomForManagement.room.customer}
+              </p>
+              <p className="text-gray-700">
+                <strong>Time Remaining:</strong> {formatRemainingTime(selectedRoomForManagement.room.remaining_hours)}
+              </p>
+              {selectedRoomForManagement.room.is_overtime && (
+                <p className="text-red-600 font-semibold">OVERTIME</p>
+              )}
+            </div>
+            <div className="flex flex-col space-y-3">
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => {
+                  // Renewal - same room, base rate
+                  setPaymentData({
+                    checkInId: selectedRoomForManagement.checkin.id,
+                    customerName: `${selectedRoomForManagement.checkin.customer?.first_name} ${selectedRoomForManagement.checkin.customer?.last_name}`,
+                    totalAmount: getRoomBaseRate(selectedRoomForManagement.room.type),
+                    paymentMethod: '',
+                    additionalItems: [],
+                    selectedDiscount: null,
+                    discountAmount: 0,
+                    transactionType: 'renewal'
+                  });
+                  setShowRoomManagement(false);
+                  setShowPayment(true);
+                }}
+              >
+                Renew (Same Room/Locker - Base Rate)
+              </Button>
+              <Button
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                onClick={() => {
+                  // Upgrade - show upgrade options
+                  setSelectedCheckin(selectedRoomForManagement.checkin);
+                  setShowRoomManagement(false);
+                  setShowUpgrade(true);
+                }}
+              >
+                Upgrade (Move to Different Room/Locker)
+              </Button>
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={() => {
+                  // Check out
+                  handleCheckOut(selectedRoomForManagement.checkin.id);
+                  setShowRoomManagement(false);
+                }}
+              >
+                Check Out
+              </Button>
+              <Button
+                className="bg-gray-600 hover:bg-gray-700 text-white"
+                onClick={() => setShowRoomManagement(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Customer Dialog */}
       {showAddCustomer && (
         <div style={{
