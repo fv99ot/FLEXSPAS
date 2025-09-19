@@ -1616,20 +1616,7 @@ function App() {
                                     <Button
                                       size="sm"
                                       className="bg-green-600 hover:bg-green-700 text-white"
-                                      onClick={() => {
-                                        // Renewal - same room, base rate
-                                        setPaymentData({
-                                          checkInId: checkin.id,
-                                          customerName: `${checkin.customer?.first_name} ${checkin.customer?.last_name}`,
-                                          totalAmount: getRoomBaseRate(checkin.room_type),
-                                          paymentMethod: '',
-                                          additionalItems: [],
-                                          selectedDiscount: null,
-                                          discountAmount: 0,
-                                          transactionType: 'renewal'
-                                        });
-                                        setShowPayment(true);
-                                      }}
+                                      onClick={() => handleRenewal(checkin.id, `${checkin.customer?.first_name} ${checkin.customer?.last_name}`)}
                                     >
                                       Renew
                                     </Button>
