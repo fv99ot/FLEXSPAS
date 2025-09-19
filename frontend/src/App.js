@@ -471,7 +471,7 @@ function App() {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      await axios.put(`${API}/api/users/${userId}/assign-locker?locker_number=${lockerNumber}`, {}, { headers });
+      await axios.put(`${API}/api/users/${userId}/assign-locker`, { locker_number: lockerNumber }, { headers });
       fetchEmployees();
       fetchRoomMap(); // Refresh room map to update locker availability
       alert(`Locker ${lockerNumber} assigned successfully!`);
