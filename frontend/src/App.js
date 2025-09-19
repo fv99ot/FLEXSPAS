@@ -278,7 +278,9 @@ function App() {
 
   const fetchAdditionalItems = async () => {
     try {
-      const response = await axios.get(`${API}/api/additional-items`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/api/additional-items`, { headers });
       setAdditionalItems(response.data);
     } catch (error) {
       console.error('Error fetching additional items:', error);
@@ -287,7 +289,9 @@ function App() {
 
   const fetchDiscounts = async () => {
     try {
-      const response = await axios.get(`${API}/api/discounts`);
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/api/discounts`, { headers });
       setDiscounts(response.data);
     } catch (error) {
       console.error('Error fetching discounts:', error);
