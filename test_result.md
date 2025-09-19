@@ -102,7 +102,76 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Implement 6 new features for Flex Spa Los Angeles: 1) Update frontend check-in process to handle membership validation based on existing valid memberships, 2) Implement overtime payment prompt during checkout with 'Pay Now' or 'IOU' options, 3) Replace 'FLEX SPA LOS ANGELES' text with provided image on main page, 4) Modify main page tabs to display in two lines instead of one, 5) Enhance locker/room map to show remaining time for each customer in 'X hours Y min til checkout' format, 6) Add functionality to locker/room map to allow renewing or upgrading by clicking on occupied rooms, finalizing transactions and adding to history."
+user_problem_statement: "1. Verify the recent fixes are working correctly (QR code readability, membership button visibility, overtime payments in transaction history). 2. Fix QR code scanning issue where 2 important messages aren't easily legible because of color/font issues when users scan QR code with their phone."
+
+backend:
+  - task: "QR Code Text Readability Fix"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/MembershipForm.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Fixed readability issues in QR code membership form by changing alert text colors from light text-red-200/text-blue-200 to bright text-red-50/text-blue-50 with font-medium weight. The 2 important messages (ID requirement and form completion instructions) are now much more legible on mobile devices. Also fixed error message styling for consistency."
+
+  - task: "Verify Recent QR Code Size Fix"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "QR code size was previously increased to 400px in frontend and box_size=10 in backend for better readability. Need to verify this is still working."
+
+  - task: "Verify Membership Button Visibility Fix"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Check-in dialog should hide membership purchase/renewal buttons for customers with valid memberships. Need to verify this logic is still working correctly."
+
+  - task: "Verify Overtime Payments in Transaction History"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Overtime payment endpoint should create Transaction records. Need to verify overtime payments are properly recorded in transaction history."
+
+metadata:
+  created_by: "main_agent"
+  version: "3.0"
+  test_sequence: 2
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "QR Code Text Readability Fix"
+    - "Verify Recent QR Code Size Fix"
+    - "Verify Membership Button Visibility Fix"
+    - "Verify Overtime Payments in Transaction History"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "READABILITY FIX IMPLEMENTED: Fixed the 2 important messages in the QR code membership form that were hard to read on mobile devices. Changed alert text colors from light variants (text-red-200, text-blue-200) to bright white variants (text-red-50, text-blue-50) with medium font weight for much better contrast and readability. Now need to verify all recent fixes are still working properly."
 
 backend:
   - task: "3-Shift Limit System Implementation"
