@@ -1594,7 +1594,7 @@ function App() {
                                     <Button
                                       size="sm"
                                       className="bg-green-600 hover:bg-green-700 text-white"
-                                      onClick={() => handleRenewal(checkin.id, `${checkin.customer?.first_name} ${checkin.customer?.last_name}`)}
+                                      onClick={() => handleRenewal(checkin.id, `${checkin.customer?.first_name} ${checkin.customer?.last_name}`, checkin.room_type)}
                                     >
                                       Renew
                                     </Button>
