@@ -173,12 +173,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "QR Code Text Readability Fix"
-    - "Verify Recent QR Code Size Fix"
-    - "Verify Membership Button Visibility Fix"
-    - "Verify Overtime Payments in Transaction History"
+    - "Overtime Payment Transaction"
+    - "Room Upgrade Transaction"
+    - "Valid Membership Check-in"
+    - "Transaction History Verification"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
