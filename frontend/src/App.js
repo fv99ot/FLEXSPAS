@@ -3421,19 +3421,35 @@ function App() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Check In: {selectedCustomer.first_name} {selectedCustomer.last_name}
             </h3>
-            <form onSubmit={handleCheckIn} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Membership Type</label>
-                <Select onValueChange={(value) => setCheckinForm({...checkinForm, membership_type: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select membership type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1_day">1 Day ($10)</SelectItem>
-                    <SelectItem value="6_month">6 Month ($25)</SelectItem>
-                  </SelectContent>
-                </Select>
+            
+            {/* Show membership status if available */}
+            {customerMembershipStatus && (
+              <div className={`mb-4 p-3 rounded-lg ${customerMembershipStatus.has_valid_membership ? 'bg-green-100 border border-green-300' : 'bg-yellow-100 border border-yellow-300'}`}>
+                <p className={`text-sm font-medium ${customerMembershipStatus.has_valid_membership ? 'text-green-800' : 'text-yellow-800'}`}>
+                  {customerMembershipStatus.has_valid_membership 
+                    ? `✅ Valid 6-month membership (${customerMembershipStatus.days_remaining} days remaining)`
+                    : '⚠️ No valid membership - purchase required'
+                  }
+                </p>
               </div>
+            )}
+            
+            <form onSubmit={handleCheckIn} className="space-y-4">
+              {/* Only show membership selection if customer doesn't have valid membership */}
+              {(!customerMembershipStatus || !customerMembershipStatus.has_valid_membership) && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Membership Type</label>
+                  <Select onValueChange={(value) => setCheckinForm({...checkinForm, membership_type: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select membership type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1_day">1 Day ($10)</SelectItem>
+                      <SelectItem value="6_month">6 Month ($25)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Accommodation Type</label>
