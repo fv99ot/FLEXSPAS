@@ -1655,7 +1655,8 @@ async def get_membership_form_qr():
     """Generate QR code for membership form"""
     try:
         # Create QR code pointing to the membership form
-        # Use the production frontend URL from the environment
+        # In production, this will use the deployed URL
+        # In development, this will use the preview URL
         frontend_url = os.environ.get('FRONTEND_URL', 'https://flexspa-dashboard.preview.emergentagent.com')
         membership_form_url = f"{frontend_url}/membership"
         
@@ -1681,10 +1682,11 @@ async def get_membership_form_qr():
             "membership_form_url": membership_form_url
         }
     except Exception as e:
-        # Fallback with production URL
+        # Fallback with current environment URL
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://flexspa-dashboard.preview.emergentagent.com')
         return {
             "qr_code_url": "https://via.placeholder.com/200x200?text=QR+Code",
-            "membership_form_url": f"{os.environ.get('FRONTEND_URL', 'https://flexspa-dashboard.preview.emergentagent.com')}/membership"
+            "membership_form_url": f"{frontend_url}/membership"
         }
 
 @api_router.get("/reports/daily-sales")
