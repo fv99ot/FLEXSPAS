@@ -2406,9 +2406,10 @@ function App() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="discounts" className="space-y-4">
-                    <TabsList className="grid w-full grid-cols-3 bg-white/10">
+                    <TabsList className="grid w-full grid-cols-4 bg-white/10">
                       <TabsTrigger value="discounts" className="tab-dark">Discounts</TabsTrigger>
                       <TabsTrigger value="items" className="tab-dark">Additional Items</TabsTrigger>
+                      <TabsTrigger value="pricing" className="tab-dark">Pricing</TabsTrigger>
                       <TabsTrigger value="passwords" className="tab-dark">Password Management</TabsTrigger>
                     </TabsList>
 
