@@ -1244,8 +1244,8 @@ async def upgrade_room(checkin_id: str, upgrade_data: dict, current_user: User =
     
     # Calculate upgrade cost
     is_weekend = is_weekend_day()
-    old_room_fee = get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
-    new_room_fee = get_room_pricing(RoomType(new_room_type), is_weekend)
+    old_room_fee = await get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
+    new_room_fee = await get_room_pricing(RoomType(new_room_type), is_weekend)
     upgrade_fee = max(0, new_room_fee - old_room_fee)
     
     # Cleaning fee only applies if customer is upgrading from or to a room (not locker)
