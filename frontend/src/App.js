@@ -22,7 +22,9 @@ import {
   FileText,
   Settings,
   User,
-  Lock
+  Lock,
+  ShoppingCart,
+  CreditCard
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import MembershipForm from './MembershipForm';
