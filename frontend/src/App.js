@@ -2711,6 +2711,130 @@ function App() {
         </div>
       )}
 
+      {/* Pricing Management Dialog */}
+      {showPricingDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Pricing</h3>
+            
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-3">Weekday Pricing</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Locker</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.locker_weekday}
+                      onChange={(e) => setPricingConfig({...pricingConfig, locker_weekday: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Small Room</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.small_room_weekday}
+                      onChange={(e) => setPricingConfig({...pricingConfig, small_room_weekday: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Regular Room</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.regular_room_weekday}
+                      onChange={(e) => setPricingConfig({...pricingConfig, regular_room_weekday: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Deluxe Room</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.deluxe_room_weekday}
+                      onChange={(e) => setPricingConfig({...pricingConfig, deluxe_room_weekday: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-3">Weekend Pricing</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Locker</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.locker_weekend}
+                      onChange={(e) => setPricingConfig({...pricingConfig, locker_weekend: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Small Room</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.small_room_weekend}
+                      onChange={(e) => setPricingConfig({...pricingConfig, small_room_weekend: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Regular Room</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.regular_room_weekend}
+                      onChange={(e) => setPricingConfig({...pricingConfig, regular_room_weekend: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Deluxe Room</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={pricingConfig.deluxe_room_weekend}
+                      onChange={(e) => setPricingConfig({...pricingConfig, deluxe_room_weekend: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+              <div className="text-sm text-gray-600">
+                <strong>Weekend Schedule:</strong> Friday 4pm - Monday 12am<br/>
+                <strong>Weekday Schedule:</strong> Monday 12am - Friday 4pm
+              </div>
+              <div className="flex space-x-3">
+                <Button
+                  className="bg-gray-600 hover:bg-gray-700 text-white"
+                  onClick={() => setShowPricingDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={updatePricing}
+                >
+                  Save Pricing
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Customer Dialog */}
       {showAddCustomer && (
         <div style={{
