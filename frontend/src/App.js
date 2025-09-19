@@ -1346,15 +1346,22 @@ function App() {
       return;
     }
     
-    if (!currentTransaction.customer) {
-      alert('Please select a customer first');
+    // Allow transactions without customer for additional items only
+    const hasOnlyAdditionalItems = currentTransaction.items.every(item => item.type === 'additional_item');
+    const hasMembershipItems = currentTransaction.items.some(item => item.type === 'membership');
+    
+    if (hasMembershipItems && !currentTransaction.customer) {
+      alert('Please select a customer to purchase memberships');
       return;
     }
     
     // Set up payment data from current transaction
     setPaymentData({
       checkInId: '', // Not applicable for standalone transactions
-      customerName: `${currentTransaction.customer.first_name} ${currentTransaction.customer.last_name}`,
+      customerName: currentTransaction.customer ? 
+        `${currentTransaction.customer.first_name} ${currentTransaction.customer.last_name}` : 
+        'Walk-in Customer',
+      customerId: currentTransaction.customer?.id || null,
       totalAmount: currentTransaction.total,
       paymentMethod: '',
       additionalItems: currentTransaction.items.filter(item => item.type === 'additional_item'),
