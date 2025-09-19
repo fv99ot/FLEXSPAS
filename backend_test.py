@@ -7096,6 +7096,12 @@ class BathhouseAPITester:
         
         self.test_invalid_login()
         
+        # PRIORITY: Test the 4 critical fixes from review request FIRST
+        print("\n" + "=" * 50)
+        print("🔥 CRITICAL FIXES TESTING (REVIEW REQUEST)")
+        print("=" * 50)
+        self.test_critical_fixes_review_request()
+        
         # Customer management
         self.test_create_customer()
         self.test_search_customers()
