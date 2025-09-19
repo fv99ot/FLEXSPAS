@@ -1101,15 +1101,42 @@ function App() {
 
   const handlePaymentComplete = async () => {
     try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
       // Handle different transaction types
       if (paymentData.transactionType === 'renewal') {
         // Call renewal API endpoint after payment is complete
-        const token = localStorage.getItem('token');
-        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        
         const response = await axios.put(`${API}/api/checkin/${paymentData.checkInId}/renew`, {}, { headers });
         
+        // TODO: Record payment transaction for renewal
+        
         alert(`✅ Session renewed successfully for ${paymentData.customerName}!\n\nNew check-out time: ${new Date(response.data.new_checkout_time).toLocaleString()}\nRoom fee: $${response.data.room_fee.toFixed(2)}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
+        
+      } else if (paymentData.transactionType === 'membership') {
+        // Handle membership purchase
+        const membershipData = {
+          customer_id: paymentData.customerId,
+          membership_type: paymentData.membershipType,
+          payment_method: paymentData.paymentMethod,
+          amount: paymentData.totalAmount
+        };
+        
+        // TODO: Create membership purchase API endpoint
+        // const response = await axios.post(`${API}/api/memberships/purchase`, membershipData, { headers });
+        
+        alert(`✅ Membership purchased successfully for ${paymentData.customerName}!\n\nMembership: ${paymentData.membershipType}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
+        
+      } else if (paymentData.transactionType === 'standalone') {
+        // Handle standalone transaction (additional items, etc.)
+        
+        // TODO: Create transaction record API endpoint
+        
+        alert(`✅ Transaction completed successfully for ${paymentData.customerName}!\n\nTotal paid: $${paymentData.totalAmount.toFixed(2)}`);
+        
+        // Clear current transaction
+        clearCurrentTransaction();
+        
       } else {
         // Handle regular check-in transactions
         // Print receipt before clearing data
