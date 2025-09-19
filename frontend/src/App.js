@@ -1217,14 +1217,42 @@ function App() {
     }
   };
 
+  const isWeekendTime = () => {
+    const now = new Date();
+    const weekday = now.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
+    const hour = now.getHours();
+    
+    // Friday (5) at 4pm or later
+    if (weekday === 5 && hour >= 16) {
+      return true;
+    }
+    // Saturday (6) or Sunday (0) - all day
+    else if (weekday === 6 || weekday === 0) {
+      return true;
+    }
+    // Monday through Thursday - weekday pricing
+    else if (weekday >= 1 && weekday <= 4) {
+      return false;
+    }
+    // Friday before 4pm - weekday pricing
+    else if (weekday === 5 && hour < 16) {
+      return false;
+    }
+    
+    return false;
+  };
+
   const getRoomBaseRate = (roomType) => {
-    const rates = {
-      'locker': 10,
-      'small_room': 15,
-      'regular_room': 20,
-      'deluxe_room': 25
+    const isWeekend = isWeekendTime();
+    
+    const rateMap = {
+      'locker': isWeekend ? pricingConfig.locker_weekend : pricingConfig.locker_weekday,
+      'small_room': isWeekend ? pricingConfig.small_room_weekend : pricingConfig.small_room_weekday,
+      'regular_room': isWeekend ? pricingConfig.regular_room_weekend : pricingConfig.regular_room_weekday,
+      'deluxe_room': isWeekend ? pricingConfig.deluxe_room_weekend : pricingConfig.deluxe_room_weekday
     };
-    return rates[roomType] || 10;
+    
+    return rateMap[roomType] || (isWeekend ? pricingConfig.locker_weekend : pricingConfig.locker_weekday);
   };
 
   return (
