@@ -1681,9 +1681,10 @@ async def get_membership_form_qr():
             "membership_form_url": membership_form_url
         }
     except Exception as e:
+        # Fallback with production URL
         return {
             "qr_code_url": "https://via.placeholder.com/200x200?text=QR+Code",
-            "membership_form_url": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/membership"
+            "membership_form_url": f"{os.environ.get('FRONTEND_URL', 'https://flexspa-dashboard.preview.emergentagent.com')}/membership"
         }
 
 @api_router.get("/reports/daily-sales")
