@@ -928,6 +928,31 @@ class PricingUpdate(BaseModel):
 class LockerAssignment(BaseModel):
     locker_number: str
 
+# Transaction Models
+class TransactionItem(BaseModel):
+    name: str
+    price: float
+    quantity: int = 1
+
+class Transaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    customer_id: str
+    customer_name: str
+    transaction_type: str  # 'checkin', 'renewal', 'membership', 'standalone', 'refund'
+    items: List[TransactionItem] = []
+    subtotal: float = 0.0
+    discount_name: Optional[str] = None
+    discount_amount: float = 0.0
+    total_amount: float = 0.0
+    payment_method: str  # 'cash', 'card'
+    checkin_id: Optional[str] = None
+    membership_type: Optional[str] = None
+    is_refund: bool = False
+    original_transaction_id: Optional[str] = None
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    notes: Optional[str] = None
+
 @api_router.put("/users/{user_id}/assign-locker")
 async def assign_locker_to_employee(user_id: str, assignment: LockerAssignment, current_user: User = Depends(get_current_user)):
     if current_user.role != UserRole.MANAGER:
