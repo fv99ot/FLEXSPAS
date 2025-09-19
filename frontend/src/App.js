@@ -1107,6 +1107,9 @@ function App() {
       
       alert(`✅ Session renewed successfully for ${customerName}!\n\nNew check-out time: ${new Date(response.data.new_checkout_time).toLocaleString()}\nRoom fee: $${response.data.room_fee.toFixed(2)}`);
       
+      // Close any open modals
+      setShowRoomManagement(false);
+      
       // Refresh active check-ins to show updated times
       fetchActiveCheckins();
       
