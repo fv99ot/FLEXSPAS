@@ -1223,6 +1223,38 @@ function App() {
     }
   };
 
+  const fetchTransactions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await axios.get(`${API}/api/transactions?limit=50`, { headers });
+      setTransactions(response.data);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    }
+  };
+
+  const processRefund = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      await axios.post(`${API}/api/transactions/${selectedTransaction.id}/refund?refund_amount=${refundAmount}&notes=${encodeURIComponent(refundNotes)}`, {}, { headers });
+      
+      alert(`✅ Refund processed successfully!\n\nRefund Amount: $${refundAmount.toFixed(2)}\nOriginal Transaction: ${selectedTransaction.customer_name}\nPayment Method: ${selectedTransaction.payment_method}`);
+      
+      setShowRefundDialog(false);
+      setRefundAmount(0);
+      setRefundNotes('');
+      setSelectedTransaction(null);
+      fetchTransactions(); // Refresh transaction list
+      
+    } catch (error) {
+      console.error('Error processing refund:', error);
+      alert(error.response?.data?.detail || 'Error processing refund');
+    }
+  };
+
   const addToCurrentTransaction = (item) => {
     setCurrentTransaction(prev => {
       const newItems = [...prev.items, item];
