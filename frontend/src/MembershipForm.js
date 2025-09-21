@@ -194,8 +194,8 @@ const MembershipForm = () => {
                     value={formData.id_expiration_date}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-white/10 border-white/20 text-white focus:bg-white/15 focus:border-red-600"
-                    style={{ color: '#ffffff !important' }}
+                    className="w-full bg-white/90 border-gray-300 text-black focus:bg-white focus:border-red-600 focus:ring-2 focus:ring-red-600/20"
+                    style={{ color: '#000000 !important', backgroundColor: 'rgba(255,255,255,0.9) !important' }}
                   />
                 </div>
               </div>
