@@ -269,7 +269,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Waitlist Removal Issue Testing"
+    - "URGENT Customer Search Functionality Testing"
+    - "Customer Authentication and JWT Token Validation"
+    - "Database Connection and Customer Data Integrity"
+    - "API Response Format and Frontend Compatibility"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
