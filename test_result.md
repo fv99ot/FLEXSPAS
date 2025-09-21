@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Please test the waitlist removal issue. The user reports that when removing a customer from one specific waitlist (regular_room, small_room, or deluxe_room), it removes them from ALL waitlists instead of just the specific one."
+user_problem_statement: "URGENT PRODUCTION ISSUE: Customer search functionality for check-in is broken. The user reports that their deployed app was working yesterday but today they cannot search up customers at all to begin the check-in process."
 
 backend:
   - task: "Waitlist Removal Issue Testing"
