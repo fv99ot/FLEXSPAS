@@ -247,9 +247,9 @@ const MembershipForm = () => {
               </div>
 
               {error && (
-                <Alert className="bg-red-500/40 border-red-500/70">
-                  <AlertTriangle className="h-4 w-4 text-red-400" />
-                  <AlertDescription className="text-white font-semibold drop-shadow-lg">{error}</AlertDescription>
+                <Alert className="bg-red-700/90 border-red-500/90">
+                  <AlertTriangle className="h-4 w-4 text-red-100" />
+                  <AlertDescription className="text-white font-bold drop-shadow-2xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)', color: '#ffffff' }}>{error}</AlertDescription>
                 </Alert>
               )}
 
