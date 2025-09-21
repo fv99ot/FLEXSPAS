@@ -7524,6 +7524,12 @@ class BathhouseAPITester:
         print(f"   API URL: {self.api_url}")
         print("=" * 80)
         
+        # URGENT: Test customer search functionality FIRST (production issue)
+        print("\n" + "=" * 60)
+        print("🚨 URGENT PRODUCTION ISSUE: CUSTOMER SEARCH TESTING")
+        print("=" * 60)
+        self.test_urgent_customer_search_issue()
+        
         # Core authentication and basic functionality
         if not self.test_login():
             print("❌ Authentication failed - cannot continue with other tests")
