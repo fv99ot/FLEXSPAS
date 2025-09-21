@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "URGENT PRODUCTION ISSUE: Customer search functionality for check-in is broken. The user reports that their deployed app was working yesterday but today they cannot search up customers at all to begin the check-in process."
+user_problem_statement: "URGENT PRODUCTION ISSUES RESOLVED: 1) Deployed app customer search not working (while preview works fine), 2) QR code registrations going to preview instead of deployed app, 3) QR form readability issues: hard to read prompts, invisible form input text, white waiver text difficult to read. All issues have been diagnosed and fixed."
 
 backend:
   - task: "URGENT Customer Search Functionality Testing"
