@@ -217,11 +217,11 @@ const MembershipForm = () => {
                 />
               </div>
 
-              <div className="bg-black/40 p-4 rounded-lg border border-white/20">
-                <h3 className="font-semibold text-white mb-3">
+              <div className="bg-white/95 p-4 rounded-lg border border-gray-300">
+                <h3 className="font-semibold text-black mb-3">
                   MEMBERSHIP AGREEMENT & LIABILITY WAIVER
                 </h3>
-                <div className="text-sm text-gray-300 space-y-3 max-h-64 overflow-y-auto">
+                <div className="text-sm text-black space-y-3 max-h-64 overflow-y-auto" style={{ color: '#000000' }}>
                   <p>
                     I am fully aware that this is a gay men's private club, which promotes exclusively the social, political, spiritual, health and fitness requirements of our members in a non-threatening environment, and I am not offended by any homosexual activities. ALL persons who are NOT gay or bi-sexual are violating our rights to privacy, freedom to associate, to promote our minority-group's interests and we insist that you not patronize this establishment.
                   </p>
