@@ -163,8 +163,8 @@ const MembershipForm = () => {
                   onChange={handleInputChange}
                   placeholder="Driver's License or State ID Number"
                   required
-                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-red-600"
-                  style={{ color: '#ffffff !important' }}
+                  className="w-full bg-white/90 border-gray-300 text-black placeholder:text-gray-600 focus:bg-white focus:border-red-600 focus:ring-2 focus:ring-red-600/20"
+                  style={{ color: '#000000 !important', backgroundColor: 'rgba(255,255,255,0.9) !important' }}
                 />
               </div>
 
