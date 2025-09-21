@@ -102,16 +102,16 @@ const MembershipForm = () => {
           
           <CardContent className="p-6">
             <div className="mb-6">
-              <Alert className="bg-red-500/40 border-red-500/70 mb-4">
-                <AlertTriangle className="h-4 w-4 text-red-400" />
-                <AlertDescription className="text-white font-semibold drop-shadow-lg">
+              <Alert className="bg-red-700/90 border-red-500/90 mb-4">
+                <AlertTriangle className="h-4 w-4 text-red-100" />
+                <AlertDescription className="text-white font-bold drop-shadow-2xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)', color: '#ffffff' }}>
                   <strong>IMPORTANT:</strong> You must have a valid, hard copy (physical) government-issued photo ID to complete registration. Digital copies or photos of IDs are not accepted.
                 </AlertDescription>
               </Alert>
               
-              <Alert className="bg-blue-500/40 border-blue-500/70">
-                <AlertTriangle className="h-4 w-4 text-blue-400" />
-                <AlertDescription className="text-white font-semibold drop-shadow-lg">
+              <Alert className="bg-blue-700/90 border-blue-500/90">
+                <AlertTriangle className="h-4 w-4 text-blue-100" />
+                <AlertDescription className="text-white font-bold drop-shadow-2xl" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)', color: '#ffffff' }}>
                   Please fill out this form completely and accurately. All information is required for membership processing and must match your physical ID exactly.
                 </AlertDescription>
               </Alert>
