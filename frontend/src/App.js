@@ -933,6 +933,7 @@ function App() {
             customer: occupied ? occupied.customer : null,
             color: 'purple',
             remaining_hours: occupied ? occupied.remaining_hours : null,
+            checkout_time: occupied ? occupied.checkout_time : null,
             is_overtime: occupied ? occupied.is_overtime : false,
             checkin_id: occupied ? occupied.checkin_id : null
           };
