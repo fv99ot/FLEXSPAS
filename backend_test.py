@@ -2442,6 +2442,393 @@ class BathhouseAPITester:
         except Exception as e:
             return self.log_test("Duplicate ID Prevention", False, f"Exception: {str(e)}")
 
+    def test_renewal_system_fix(self):
+        """Test the corrected renewal system to ensure it properly adds 8 hours to existing checkout time"""
+        print("\n🔄 Testing RENEWAL SYSTEM FIX...")
+        print("   Testing that renewals add 8 hours to existing checkout time instead of restarting timer")
+        
+        if not self.token:
+            return self.log_test("Renewal System Fix", False, "No authentication token")
+        
+        all_success = True
+        
+        # Step 1: Create test customer and check-in
+        print("   STEP 1: Create Test Customer and Check-in...")
+        
+        # Generate unique ID for test customer
+        unique_id = f"RENEWAL{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        customer_data = {
+            "first_name": "Renewal",
+            "last_name": "TestUser",
+            "id_number": unique_id,
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        test_customer_id = None
+        test_checkin_id = None
+        
+        try:
+            # Create customer
+            customer_response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if customer_response.status_code == 200:
+                test_customer_id = customer_response.json()['id']
+                self.log_test("Create Test Customer", True, f"Customer ID: {test_customer_id}")
+            else:
+                self.log_test("Create Test Customer", False, f"Status: {customer_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # Get available room for check-in
+        try:
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code != 200:
+                self.log_test("Get Available Rooms", False, "Could not get available rooms")
+                return False
+            
+            available_rooms = rooms_response.json()['available_rooms']
+            if not available_rooms:
+                self.log_test("Get Available Rooms", False, "No available rooms")
+                return False
+            
+            test_room_number = available_rooms[0]
+            
+        except Exception as e:
+            self.log_test("Get Available Rooms", False, f"Exception: {str(e)}")
+            return False
+        
+        # Perform initial check-in
+        try:
+            checkin_data = {
+                "customer_id": test_customer_id,
+                "membership_type": "1_day",
+                "room_type": "locker",
+                "room_number": test_room_number
+            }
+            
+            checkin_response = requests.post(
+                f"{self.api_url}/checkin",
+                json=checkin_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if checkin_response.status_code == 200:
+                checkin_data_response = checkin_response.json()
+                test_checkin_id = checkin_data_response['id']
+                initial_checkin_time = checkin_data_response['check_in_time']
+                
+                # Parse initial check-in time
+                if isinstance(initial_checkin_time, str):
+                    initial_checkin_time = datetime.fromisoformat(initial_checkin_time.replace('Z', '+00:00'))
+                
+                # Calculate expected initial checkout time (8 hours from check-in)
+                expected_initial_checkout = initial_checkin_time + timedelta(hours=8)
+                
+                self.log_test("Initial Check-in", True, 
+                            f"Check-in ID: {test_checkin_id}, Room: {test_room_number}")
+                
+                # Verify initial 8-hour checkout time via active check-ins
+                active_response = requests.get(
+                    f"{self.api_url}/checkins/active",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if active_response.status_code == 200:
+                    active_checkins = active_response.json()
+                    our_checkin = next((c for c in active_checkins if c['id'] == test_checkin_id), None)
+                    
+                    if our_checkin:
+                        initial_checkout_time = datetime.fromisoformat(our_checkin['checkout_time'].replace('Z', '+00:00'))
+                        initial_total_hours = our_checkin['total_allocated_hours']
+                        initial_remaining_hours = our_checkin['remaining_hours']
+                        
+                        # Verify initial state
+                        correct_initial_hours = initial_total_hours == 8
+                        correct_checkout_time = abs((initial_checkout_time - expected_initial_checkout).total_seconds()) < 60  # Within 1 minute
+                        
+                        self.log_test("Initial 8-Hour Checkout Time", correct_initial_hours and correct_checkout_time,
+                                    f"Total hours: {initial_total_hours}, Remaining: {initial_remaining_hours:.2f}")
+                        
+                        if not (correct_initial_hours and correct_checkout_time):
+                            all_success = False
+                    else:
+                        self.log_test("Initial 8-Hour Checkout Time", False, "Check-in not found in active list")
+                        all_success = False
+                else:
+                    self.log_test("Initial 8-Hour Checkout Time", False, f"Status: {active_response.status_code}")
+                    all_success = False
+                    
+            else:
+                self.log_test("Initial Check-in", False, f"Status: {checkin_response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Initial Check-in", False, f"Exception: {str(e)}")
+            return False
+        
+        if not test_checkin_id:
+            print("   ❌ Cannot continue - initial check-in failed")
+            return False
+        
+        # Step 2: Test First Renewal (should extend to 16 hours total)
+        print("   STEP 2: Test First Renewal...")
+        
+        try:
+            renewal_response = requests.put(
+                f"{self.api_url}/checkin/{test_checkin_id}/renew",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if renewal_response.status_code == 200:
+                renewal_data = renewal_response.json()
+                
+                # Verify renewal response data
+                renewal_count = renewal_data.get('renewal_count', 0)
+                total_hours_allocated = renewal_data.get('total_hours_allocated', 0)
+                new_checkout_time = renewal_data.get('new_checkout_time')
+                
+                # Parse new checkout time
+                if isinstance(new_checkout_time, str):
+                    new_checkout_time = datetime.fromisoformat(new_checkout_time.replace('Z', '+00:00'))
+                
+                # Calculate expected checkout time (original check-in + 16 hours)
+                expected_first_renewal_checkout = initial_checkin_time + timedelta(hours=16)
+                
+                # Verify first renewal
+                correct_renewal_count = renewal_count == 1
+                correct_total_hours = total_hours_allocated == 16
+                correct_checkout_time = abs((new_checkout_time - expected_first_renewal_checkout).total_seconds()) < 60
+                
+                first_renewal_success = correct_renewal_count and correct_total_hours and correct_checkout_time
+                
+                self.log_test("First Renewal (16 hours total)", first_renewal_success,
+                            f"Renewal count: {renewal_count}, Total hours: {total_hours_allocated}, Checkout time correct: {correct_checkout_time}")
+                
+                if not first_renewal_success:
+                    all_success = False
+                
+                # Verify via active check-ins endpoint
+                active_response = requests.get(
+                    f"{self.api_url}/checkins/active",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if active_response.status_code == 200:
+                    active_checkins = active_response.json()
+                    our_checkin = next((c for c in active_checkins if c['id'] == test_checkin_id), None)
+                    
+                    if our_checkin:
+                        active_total_hours = our_checkin['total_allocated_hours']
+                        active_remaining_hours = our_checkin['remaining_hours']
+                        active_checkout_time = datetime.fromisoformat(our_checkin['checkout_time'].replace('Z', '+00:00'))
+                        
+                        active_data_correct = (active_total_hours == 16 and 
+                                             abs((active_checkout_time - expected_first_renewal_checkout).total_seconds()) < 60)
+                        
+                        self.log_test("First Renewal Active Check-ins Data", active_data_correct,
+                                    f"Active total hours: {active_total_hours}, Remaining: {active_remaining_hours:.2f}")
+                        
+                        if not active_data_correct:
+                            all_success = False
+                    else:
+                        self.log_test("First Renewal Active Check-ins Data", False, "Check-in not found")
+                        all_success = False
+                        
+            else:
+                self.log_test("First Renewal (16 hours total)", False, f"Status: {renewal_response.status_code}, Response: {renewal_response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("First Renewal (16 hours total)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 3: Test Second Renewal (should extend to 24 hours total)
+        print("   STEP 3: Test Second Renewal...")
+        
+        try:
+            second_renewal_response = requests.put(
+                f"{self.api_url}/checkin/{test_checkin_id}/renew",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if second_renewal_response.status_code == 200:
+                second_renewal_data = second_renewal_response.json()
+                
+                # Verify second renewal response data
+                renewal_count = second_renewal_data.get('renewal_count', 0)
+                total_hours_allocated = second_renewal_data.get('total_hours_allocated', 0)
+                new_checkout_time = second_renewal_data.get('new_checkout_time')
+                
+                # Parse new checkout time
+                if isinstance(new_checkout_time, str):
+                    new_checkout_time = datetime.fromisoformat(new_checkout_time.replace('Z', '+00:00'))
+                
+                # Calculate expected checkout time (original check-in + 24 hours)
+                expected_second_renewal_checkout = initial_checkin_time + timedelta(hours=24)
+                
+                # Verify second renewal
+                correct_renewal_count = renewal_count == 2
+                correct_total_hours = total_hours_allocated == 24
+                correct_checkout_time = abs((new_checkout_time - expected_second_renewal_checkout).total_seconds()) < 60
+                
+                second_renewal_success = correct_renewal_count and correct_total_hours and correct_checkout_time
+                
+                self.log_test("Second Renewal (24 hours total)", second_renewal_success,
+                            f"Renewal count: {renewal_count}, Total hours: {total_hours_allocated}, Checkout time correct: {correct_checkout_time}")
+                
+                if not second_renewal_success:
+                    all_success = False
+                
+                # Verify via active check-ins endpoint
+                active_response = requests.get(
+                    f"{self.api_url}/checkins/active",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if active_response.status_code == 200:
+                    active_checkins = active_response.json()
+                    our_checkin = next((c for c in active_checkins if c['id'] == test_checkin_id), None)
+                    
+                    if our_checkin:
+                        active_total_hours = our_checkin['total_allocated_hours']
+                        active_remaining_hours = our_checkin['remaining_hours']
+                        active_checkout_time = datetime.fromisoformat(our_checkin['checkout_time'].replace('Z', '+00:00'))
+                        
+                        active_data_correct = (active_total_hours == 24 and 
+                                             abs((active_checkout_time - expected_second_renewal_checkout).total_seconds()) < 60)
+                        
+                        self.log_test("Second Renewal Active Check-ins Data", active_data_correct,
+                                    f"Active total hours: {active_total_hours}, Remaining: {active_remaining_hours:.2f}")
+                        
+                        if not active_data_correct:
+                            all_success = False
+                    else:
+                        self.log_test("Second Renewal Active Check-ins Data", False, "Check-in not found")
+                        all_success = False
+                        
+            else:
+                self.log_test("Second Renewal (24 hours total)", False, f"Status: {second_renewal_response.status_code}, Response: {second_renewal_response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Second Renewal (24 hours total)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 4: Test Maximum Renewal Limit (third renewal should be blocked)
+        print("   STEP 4: Test Maximum Renewal Limit...")
+        
+        try:
+            third_renewal_response = requests.put(
+                f"{self.api_url}/checkin/{test_checkin_id}/renew",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Third renewal should be blocked with 400 status
+            if third_renewal_response.status_code == 400:
+                error_message = third_renewal_response.json().get('detail', '')
+                contains_limit_message = '3 shifts' in error_message or 'maximum' in error_message.lower()
+                
+                self.log_test("Third Renewal Blocked (3-shift limit)", contains_limit_message,
+                            f"Status: {third_renewal_response.status_code}, Message contains limit info: {contains_limit_message}")
+                
+                if not contains_limit_message:
+                    all_success = False
+            else:
+                self.log_test("Third Renewal Blocked (3-shift limit)", False,
+                            f"Expected 400 status, got: {third_renewal_response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Third Renewal Blocked (3-shift limit)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 5: Final verification of active check-ins data
+        print("   STEP 5: Final Verification of Active Check-ins Data...")
+        
+        try:
+            final_active_response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if final_active_response.status_code == 200:
+                active_checkins = final_active_response.json()
+                our_checkin = next((c for c in active_checkins if c['id'] == test_checkin_id), None)
+                
+                if our_checkin:
+                    # Verify final state after 2 renewals
+                    final_total_hours = our_checkin['total_allocated_hours']
+                    final_remaining_hours = our_checkin['remaining_hours']
+                    final_checkout_time = datetime.fromisoformat(our_checkin['checkout_time'].replace('Z', '+00:00'))
+                    
+                    # Should still be 24 hours total (2 renewals + initial 8 hours)
+                    expected_final_checkout = initial_checkin_time + timedelta(hours=24)
+                    
+                    final_verification_success = (
+                        final_total_hours == 24 and
+                        abs((final_checkout_time - expected_final_checkout).total_seconds()) < 60 and
+                        final_remaining_hours > 0  # Should still have time remaining
+                    )
+                    
+                    self.log_test("Final Active Check-ins Verification", final_verification_success,
+                                f"Total hours: {final_total_hours}, Remaining: {final_remaining_hours:.2f}, Checkout time correct: {abs((final_checkout_time - expected_final_checkout).total_seconds()) < 60}")
+                    
+                    if not final_verification_success:
+                        all_success = False
+                else:
+                    self.log_test("Final Active Check-ins Verification", False, "Check-in not found")
+                    all_success = False
+            else:
+                self.log_test("Final Active Check-ins Verification", False, f"Status: {final_active_response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Final Active Check-ins Verification", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Cleanup: Check out the test customer
+        if test_checkin_id:
+            try:
+                checkout_response = requests.put(
+                    f"{self.api_url}/checkin/{test_checkin_id}/checkout",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if checkout_response.status_code == 200:
+                    self.log_test("Cleanup Checkout", True, "Test customer checked out successfully")
+                else:
+                    self.log_test("Cleanup Checkout", False, f"Status: {checkout_response.status_code}")
+                    
+            except Exception as e:
+                self.log_test("Cleanup Checkout", False, f"Exception: {str(e)}")
+        
+        return all_success
+
     def test_overtime_ceiling_rounding(self):
         """Test NEW overtime ceiling rounding logic - specific scenarios from review request"""
         print("\n🔢 Testing Overtime Ceiling Rounding Logic (NEW FEATURE)...")
