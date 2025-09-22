@@ -281,14 +281,14 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Delete All Preset Discounts and Additional Items"
+    - "Renewal System Fix - Cumulative Time Allocation"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "testing"
-    message: "PRESET DATA DELETION COMPLETED SUCCESSFULLY - ALL SYSTEMS WORKING PERFECTLY: Conducted comprehensive testing of the preset data deletion request with 100% success rate (8/8 tests passed). ✅ DELETE ALL DISCOUNTS: Successfully deleted 37 existing discounts using DELETE /api/discounts/{discount_id} endpoint - all discounts properly soft-deleted (active=false) - WORKING, ✅ DELETE ALL ADDITIONAL ITEMS: Successfully deleted 41 existing additional items using DELETE /api/additional-items/{item_id} endpoint - all items properly soft-deleted (active=false) - WORKING, ✅ VERIFY DATABASE CLEANUP: GET /api/discounts returns empty array (0 active discounts), GET /api/additional-items returns empty array (0 active items) - WORKING, ✅ ADMIN ENDPOINTS VERIFICATION: GET /api/admin/discounts shows all 37 discounts as inactive (active=false), GET /api/admin/additional-items shows all 41 items as inactive (active=false) - WORKING, ✅ AUTHENTICATION: Admin credentials (admin/admin123) working perfectly for all operations - WORKING. TECHNICAL DETAILS: Backend uses soft delete approach (setting active=false) rather than hard delete, which preserves data integrity while making items unavailable for use. All preset items including condoms, dildos, cleaning fees, lost key fees have been successfully deactivated. Database is now clean and ready for fresh data setup. The system is ready for the main agent to add new discounts and additional items as needed."
+    message: "RENEWAL SYSTEM FIX TESTING COMPLETED - ALL SYSTEMS WORKING PERFECTLY: Conducted comprehensive testing of the corrected renewal system as requested in review with 100% success rate (12/12 tests passed). ✅ TEST CUSTOMER AND CHECK-IN: Successfully created test customer and performed initial check-in with proper 8-hour checkout time allocation - WORKING, ✅ FIRST RENEWAL: Renewal properly adds 8 hours to existing checkout time (total 16 hours from original check-in), renewal_count=1, remaining hours calculation correct - WORKING, ✅ SECOND RENEWAL: Second renewal adds another 8 hours (total 24 hours from original check-in), renewal_count=2, remaining hours calculation correct - WORKING, ✅ MAXIMUM RENEWAL LIMIT: Third renewal properly blocked with 400 status and appropriate error message about 3-shift limit - WORKING, ✅ ACTIVE CHECK-INS DATA VERIFICATION: GET /api/checkins/active returns correct checkout_time, remaining_hours, and total_allocated_hours throughout the entire renewal process - WORKING. TECHNICAL VERIFICATION: The renewal system now correctly calculates total allocated hours as 8 + (renewal_count * 8) and adds 8 hours to existing checkout time instead of restarting the timer. The fix ensures cumulative time allocation as requested in the review. All renewal functionality is working perfectly and ready for production use."
 
 backend:
   - task: "Renewal System Fix - Cumulative Time Allocation"
