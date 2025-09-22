@@ -985,6 +985,7 @@ async def get_active_checkins(current_user: User = Depends(get_current_user)):
         remaining_time = eight_hours_later - datetime.now(timezone.utc)
         checkin_info["remaining_hours"] = max(0, remaining_time.total_seconds() / 3600)
         checkin_info["is_overtime"] = remaining_time.total_seconds() < 0
+        checkin_info["checkout_time"] = eight_hours_later  # Add checkout time
         
         result.append(checkin_info)
     
