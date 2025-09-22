@@ -1402,6 +1402,33 @@ async def delete_discount(discount_id: str, current_user: User = Depends(get_cur
         raise HTTPException(status_code=404, detail="Discount not found")
     return {"message": "Discount deleted successfully"}
 
+@api_router.put("/discounts/{discount_id}", response_model=Discount)
+async def update_discount(discount_id: str, discount_update: DiscountCreate, current_user: User = Depends(get_current_user)):
+    """Edit/update an existing discount"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can edit discounts")
+    
+    # Check if discount exists
+    existing_discount = await db.discounts.find_one({"id": discount_id})
+    if not existing_discount:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    
+    # Update the discount
+    update_data = discount_update.dict()
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
+    result = await db.discounts.update_one(
+        {"id": discount_id}, 
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    
+    # Return updated discount
+    updated_discount = await db.discounts.find_one({"id": discount_id})
+    return Discount(**updated_discount)
+
 # Waitlist Management
 @api_router.get("/waitlist")
 async def get_waitlist(current_user: User = Depends(get_current_user)):
