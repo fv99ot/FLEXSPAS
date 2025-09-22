@@ -131,6 +131,390 @@ class BathhouseAPITester:
         except Exception as e:
             return self.log_test("Search Customers", False, f"Exception: {str(e)}")
 
+    def test_customer_search_comprehensive(self):
+        """Comprehensive test of customer search functionality as requested in review"""
+        print("\n🔍 COMPREHENSIVE CUSTOMER SEARCH FUNCTIONALITY TESTING...")
+        print("   Testing the customer search endpoint to identify 'error searching customer' issues")
+        
+        if not self.token:
+            return self.log_test("Customer Search Comprehensive", False, "No authentication token")
+        
+        all_success = True
+        
+        # Create test customers with different data patterns for comprehensive testing
+        test_customers = []
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        test_data = [
+            {
+                "first_name": "John",
+                "last_name": "Doe", 
+                "id_number": f"SEARCH_TEST_123_{unique_timestamp}",
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            },
+            {
+                "first_name": "Jane",
+                "last_name": "Smith", 
+                "id_number": f"SEARCH_TEST_456_{unique_timestamp}",
+                "date_of_birth": "1985-05-15",
+                "id_expiration_date": "2026-06-30",
+                "state_of_id": "NY"
+            },
+            {
+                "first_name": "Michael",
+                "last_name": "Johnson", 
+                "id_number": f"SEARCH_TEST_789_{unique_timestamp}",
+                "date_of_birth": "1992-12-25",
+                "id_expiration_date": "2027-01-15",
+                "state_of_id": "TX"
+            }
+        ]
+        
+        # Create test customers
+        print("   Creating test customers for search testing...")
+        for i, customer_data in enumerate(test_data):
+            try:
+                response = requests.post(
+                    f"{self.api_url}/customers",
+                    json=customer_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    test_customers.append(data)
+                    self.log_test(f"Create Test Customer {i+1}", True, f"Created: {data['first_name']} {data['last_name']}")
+                else:
+                    self.log_test(f"Create Test Customer {i+1}", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Create Test Customer {i+1}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 1: Customer search without query parameter (should return first 50 customers)
+        print("   TEST 1: Customer search without query parameter...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0:
+                    # Check if response contains valid customer objects
+                    valid_customers = all('id' in customer and 'first_name' in customer and 'last_name' in customer for customer in data)
+                    self.log_test("Search Without Query", valid_customers, f"Returned {len(data)} customers, valid format: {valid_customers}")
+                    if not valid_customers:
+                        all_success = False
+                else:
+                    self.log_test("Search Without Query", False, "Empty or invalid response")
+                    all_success = False
+            else:
+                self.log_test("Search Without Query", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Search Without Query", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 2: Search by first name
+        print("   TEST 2: Search by first name...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=John",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_john = any(customer.get('first_name', '').lower() == 'john' for customer in data)
+                    self.log_test("Search By First Name", found_john, f"Found {len(data)} customers, John found: {found_john}")
+                    if not found_john:
+                        all_success = False
+                else:
+                    self.log_test("Search By First Name", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Search By First Name", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Search By First Name", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 3: Search by last name
+        print("   TEST 3: Search by last name...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=Doe",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_doe = any(customer.get('last_name', '').lower() == 'doe' for customer in data)
+                    self.log_test("Search By Last Name", found_doe, f"Found {len(data)} customers, Doe found: {found_doe}")
+                    if not found_doe:
+                        all_success = False
+                else:
+                    self.log_test("Search By Last Name", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Search By Last Name", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Search By Last Name", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 4: Search by ID number
+        print("   TEST 4: Search by ID number...")
+        try:
+            search_id = f"SEARCH_TEST_123_{unique_timestamp}"
+            response = requests.get(
+                f"{self.api_url}/customers?q={search_id}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    found_id = any(customer.get('id_number') == search_id for customer in data)
+                    self.log_test("Search By ID Number", found_id, f"Found {len(data)} customers, ID found: {found_id}")
+                    if not found_id:
+                        all_success = False
+                else:
+                    self.log_test("Search By ID Number", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Search By ID Number", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Search By ID Number", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 5: Search with empty query parameter
+        print("   TEST 5: Search with empty query parameter...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    # Empty query should return first 50 customers (same as no query)
+                    self.log_test("Search With Empty Query", True, f"Returned {len(data)} customers")
+                else:
+                    self.log_test("Search With Empty Query", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Search With Empty Query", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Search With Empty Query", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 6: Search with special characters
+        print("   TEST 6: Search with special characters...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=@#$%",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    # Should return empty list or handle gracefully
+                    self.log_test("Search With Special Characters", True, f"Handled gracefully, returned {len(data)} customers")
+                else:
+                    self.log_test("Search With Special Characters", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Search With Special Characters", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Search With Special Characters", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 7: Search without authentication (should return 401 or 403)
+        print("   TEST 7: Search without authentication...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=test",
+                headers={'Content-Type': 'application/json'},  # No auth header
+                timeout=10
+            )
+            
+            auth_required = response.status_code in [401, 403]
+            self.log_test("Search Requires Authentication", auth_required, f"Status: {response.status_code} (should be 401 or 403)")
+            if not auth_required:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Search Requires Authentication", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 8: Search with invalid/expired token
+        print("   TEST 8: Search with invalid token...")
+        try:
+            invalid_headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer invalid_token_12345'}
+            response = requests.get(
+                f"{self.api_url}/customers?q=test",
+                headers=invalid_headers,
+                timeout=10
+            )
+            
+            invalid_token_rejected = response.status_code in [401, 403]
+            self.log_test("Invalid Token Rejected", invalid_token_rejected, f"Status: {response.status_code} (should be 401 or 403)")
+            if not invalid_token_rejected:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid Token Rejected", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 9: Test response format and serialization
+        print("   TEST 9: Test response format and serialization...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=John",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0:
+                    # Check for proper JSON serialization and required fields
+                    first_customer = data[0]
+                    required_fields = ['id', 'first_name', 'last_name', 'id_number', 'created_at']
+                    has_required_fields = all(field in first_customer for field in required_fields)
+                    
+                    # Check for MongoDB artifacts that could cause frontend issues
+                    has_mongodb_artifacts = '_id' in first_customer
+                    
+                    # Check for proper datetime serialization
+                    created_at = first_customer.get('created_at')
+                    datetime_serialized = isinstance(created_at, str) or created_at is None
+                    
+                    format_valid = has_required_fields and not has_mongodb_artifacts and datetime_serialized
+                    details = f"Required fields: {has_required_fields}, No MongoDB artifacts: {not has_mongodb_artifacts}, DateTime serialized: {datetime_serialized}"
+                    self.log_test("Response Format Valid", format_valid, details)
+                    if not format_valid:
+                        all_success = False
+                else:
+                    self.log_test("Response Format Valid", False, "Empty response or invalid format")
+                    all_success = False
+            else:
+                self.log_test("Response Format Valid", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Response Format Valid", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 10: Test with 0 results, 1 result, and multiple results
+        print("   TEST 10: Test different result counts...")
+        
+        # Test with query that should return 0 results
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers?q=NONEXISTENT_CUSTOMER_12345",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                zero_results = isinstance(data, list) and len(data) == 0
+                self.log_test("Zero Results Handling", zero_results, f"Returned {len(data)} customers for nonexistent query")
+                if not zero_results:
+                    all_success = False
+            else:
+                self.log_test("Zero Results Handling", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Zero Results Handling", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test with query that should return exactly 1 result
+        try:
+            unique_search = f"SEARCH_TEST_123_{unique_timestamp}"
+            response = requests.get(
+                f"{self.api_url}/customers?q={unique_search}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                one_result = isinstance(data, list) and len(data) == 1
+                self.log_test("Single Result Handling", one_result, f"Returned {len(data)} customers for unique query")
+                if not one_result:
+                    all_success = False
+            else:
+                self.log_test("Single Result Handling", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Single Result Handling", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 11: Test database connection and data integrity
+        print("   TEST 11: Test database connection and data integrity...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0:
+                    # Check data integrity
+                    sample_customer = data[0]
+                    has_overtime_fields = 'unpaid_overtime_hours' in sample_customer and 'unpaid_overtime_amount' in sample_customer
+                    has_proper_structure = all(key in sample_customer for key in ['id', 'first_name', 'last_name', 'id_number'])
+                    
+                    data_integrity = has_overtime_fields and has_proper_structure
+                    details = f"Overtime fields: {has_overtime_fields}, Proper structure: {has_proper_structure}"
+                    self.log_test("Database Data Integrity", data_integrity, details)
+                    if not data_integrity:
+                        all_success = False
+                else:
+                    self.log_test("Database Data Integrity", False, "No customers found in database")
+                    all_success = False
+            else:
+                self.log_test("Database Data Integrity", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Database Data Integrity", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def test_get_customer(self):
         """Test getting a specific customer"""
         if not self.token or not self.created_customer_id:
