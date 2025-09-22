@@ -7761,6 +7761,12 @@ class BathhouseAPITester:
         
         self.test_invalid_login()
         
+        # RENEWAL SYSTEM FIX TESTING (PRIORITY)
+        print("\n" + "=" * 60)
+        print("🔄 RENEWAL SYSTEM FIX TESTING (PRIORITY)")
+        print("=" * 60)
+        self.test_renewal_system_fix()
+        
         # PRIORITY: Test the 4 critical fixes from review request FIRST
         print("\n" + "=" * 50)
         print("🔥 CRITICAL FIXES TESTING (REVIEW REQUEST)")
