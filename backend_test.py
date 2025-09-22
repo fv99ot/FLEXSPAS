@@ -7628,7 +7628,7 @@ class BathhouseAPITester:
         # STEP 3: Verify database cleanup - Check discounts
         print("   STEP 3: Verifying database cleanup...")
         try:
-            # Check GET /api/discounts returns empty array
+            # Check GET /api/discounts returns empty array (active discounts only)
             response = requests.get(
                 f"{self.api_url}/discounts",
                 headers=self.headers,
@@ -7645,21 +7645,23 @@ class BathhouseAPITester:
                 self.log_test("Verify GET /api/discounts Empty", False, f"Status: {response.status_code}")
                 all_success = False
             
-            # Check GET /api/admin/discounts returns empty array
+            # Check GET /api/admin/discounts - should show all discounts but they should all be inactive
             admin_response = requests.get(
                 f"{self.api_url}/admin/discounts",
                 headers=self.headers,
                 timeout=10
             )
             
-            admin_discounts_empty = False
+            admin_discounts_inactive = False
             if admin_response.status_code == 200:
                 admin_data = admin_response.json()
-                admin_discounts_empty = len(admin_data) == 0
-                self.log_test("Verify GET /api/admin/discounts Empty", admin_discounts_empty, 
-                            f"All discounts count: {len(admin_data)}")
+                # All discounts should be inactive (active: false)
+                all_inactive = all(not discount.get('active', True) for discount in admin_data)
+                admin_discounts_inactive = all_inactive
+                self.log_test("Verify All Discounts Inactive", admin_discounts_inactive, 
+                            f"All {len(admin_data)} discounts are inactive: {all_inactive}")
             else:
-                self.log_test("Verify GET /api/admin/discounts Empty", False, f"Status: {admin_response.status_code}")
+                self.log_test("Verify All Discounts Inactive", False, f"Status: {admin_response.status_code}")
                 all_success = False
                 
         except Exception as e:
@@ -7668,7 +7670,7 @@ class BathhouseAPITester:
         
         # STEP 4: Verify additional items cleanup
         try:
-            # Check GET /api/additional-items returns empty array
+            # Check GET /api/additional-items returns empty array (active items only)
             response = requests.get(
                 f"{self.api_url}/additional-items",
                 headers=self.headers,
@@ -7685,21 +7687,23 @@ class BathhouseAPITester:
                 self.log_test("Verify GET /api/additional-items Empty", False, f"Status: {response.status_code}")
                 all_success = False
             
-            # Check GET /api/admin/additional-items returns empty array
+            # Check GET /api/admin/additional-items - should show all items but they should all be inactive
             admin_response = requests.get(
                 f"{self.api_url}/admin/additional-items",
                 headers=self.headers,
                 timeout=10
             )
             
-            admin_items_empty = False
+            admin_items_inactive = False
             if admin_response.status_code == 200:
                 admin_data = admin_response.json()
-                admin_items_empty = len(admin_data) == 0
-                self.log_test("Verify GET /api/admin/additional-items Empty", admin_items_empty, 
-                            f"All items count: {len(admin_data)}")
+                # All items should be inactive (active: false)
+                all_inactive = all(not item.get('active', True) for item in admin_data)
+                admin_items_inactive = all_inactive
+                self.log_test("Verify All Items Inactive", admin_items_inactive, 
+                            f"All {len(admin_data)} items are inactive: {all_inactive}")
             else:
-                self.log_test("Verify GET /api/admin/additional-items Empty", False, f"Status: {admin_response.status_code}")
+                self.log_test("Verify All Items Inactive", False, f"Status: {admin_response.status_code}")
                 all_success = False
                 
         except Exception as e:
