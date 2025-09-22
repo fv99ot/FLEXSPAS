@@ -267,12 +267,47 @@ function App() {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      if (!token) {
+        alert('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
       const response = await axios.get(`${API}/api/customers?q=${searchQuery}`, { headers });
-      setCustomers(response.data);
+      
+      if (response.data && Array.isArray(response.data)) {
+        setCustomers(response.data);
+        if (response.data.length === 0) {
+          alert(`No customers found matching "${searchQuery}"`);
+        }
+      } else {
+        console.error('Invalid response format:', response.data);
+        alert('Received invalid response from server');
+      }
     } catch (error) {
       console.error('Error searching customers:', error);
-      alert('Error searching customers');
+      
+      if (error.response) {
+        // Server responded with error status
+        const status = error.response.status;
+        const message = error.response.data?.detail || error.response.data?.message || 'Unknown server error';
+        
+        if (status === 401 || status === 403) {
+          alert('Authentication failed. Please log in again.');
+          // Optionally redirect to login
+        } else if (status === 500) {
+          alert('Server error occurred. Please try again later.');
+        } else {
+          alert(`Search failed: ${message} (Status: ${status})`);
+        }
+      } else if (error.request) {
+        // Network error
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        // Other error
+        alert('An unexpected error occurred while searching customers.');
+      }
     }
     setLoading(false);
   };
