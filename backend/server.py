@@ -1603,36 +1603,7 @@ async def upgrade_room(checkin_id: str, upgrade_data: dict, current_user: User =
         "message": "Room upgraded successfully"
     }
 
-@api_router.post("/admin/seed-default-items")
-async def seed_default_items(current_user: User = Depends(get_current_user)):
-    """Seed default additional items if they don't exist"""
-    if current_user.role != UserRole.MANAGER:
-        raise HTTPException(status_code=403, detail="Only managers can seed default items")
-    
-    default_items = [
-        {"name": "Condoms", "price": 2.0, "category": "health"},
-        {"name": "Dildos", "price": 15.0, "category": "accessories"},
-        {"name": "Cleaning Fee", "price": 5.0, "category": "fees"},
-        {"name": "Lost Key Fee", "price": 10.0, "category": "fees"}
-    ]
-    
-    created_items = []
-    for item_data in default_items:
-        # Check if item already exists
-        existing = await db.additional_items.find_one({"name": item_data["name"], "active": True})
-        if not existing:
-            item_doc = {
-                "id": str(uuid.uuid4()),
-                "name": item_data["name"],
-                "price": item_data["price"],
-                "category": item_data["category"],
-                "active": True,
-                "created_at": datetime.now(timezone.utc)
-            }
-            await db.additional_items.insert_one(item_doc)
-            created_items.append(item_doc["name"])
-    
-    return {"message": f"Created {len(created_items)} default items", "items": created_items}
+# Default items seeding removed - start fresh
 
 @api_router.get("/admin/additional-items", response_model=List[AdditionalItem])
 async def get_all_additional_items(current_user: User = Depends(get_current_user)):
