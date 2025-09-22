@@ -3157,6 +3157,17 @@ function App() {
                                 size="sm"
                                 variant="outline"
                                 className="border-white/20 text-white hover:bg-white/10"
+                                onClick={() => {
+                                  setEditingDiscount(discount);
+                                  setShowEditDiscount(true);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/20 text-white hover:bg-white/10"
                                 onClick={() => toggleDiscount(discount.id, discount.active)}
                               >
                                 {discount.active ? 'Disable' : 'Enable'}
