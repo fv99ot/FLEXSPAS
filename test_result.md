@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "URGENT PRODUCTION ISSUES RESOLVED: 1) Deployed app customer search not working (while preview works fine), 2) QR code registrations going to preview instead of deployed app, 3) QR form readability issues: hard to read prompts, invisible form input text, white waiver text difficult to read. All issues have been diagnosed and fixed."
+user_problem_statement: "CURRENT ISSUES TO FIX: 1) Delete all preset discounts and additional items, 2) Add edit functionality for discounts/additional items, 3) Fix 'error search customer' when beginning check-in process, 4) Fix 'error searching customer' when adding to transaction, 5) Show checkout time (not just remaining time) on locker/room map."
 
 backend:
   - task: "URGENT Customer Search Functionality Testing"
