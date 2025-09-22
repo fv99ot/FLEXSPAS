@@ -952,7 +952,6 @@ function App() {
             is_overtime: occupied ? occupied.is_overtime : false,
             checkin_id: occupied ? occupied.checkin_id : null
           };
-          };
         })
       ];
 
