@@ -7517,6 +7517,226 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_delete_all_preset_data(self):
+        """DELETE ALL PRESET DATA: Delete all existing discounts and additional items from database"""
+        print("\n🗑️ DELETING ALL PRESET DATA...")
+        print("   This will remove ALL existing discounts and additional items to start fresh")
+        
+        if not self.token:
+            return self.log_test("Delete All Preset Data", False, "No authentication token")
+        
+        all_success = True
+        deleted_discounts = 0
+        deleted_items = 0
+        
+        # STEP 1: Delete ALL existing discounts
+        print("   STEP 1: Deleting all existing discounts...")
+        try:
+            # Get all discounts (admin endpoint to see all, including inactive)
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_discounts = response.json()
+                print(f"   Found {len(all_discounts)} existing discounts to delete")
+                
+                # Delete each discount
+                for discount in all_discounts:
+                    discount_id = discount.get('id')
+                    discount_name = discount.get('name', 'Unknown')
+                    
+                    try:
+                        delete_response = requests.delete(
+                            f"{self.api_url}/discounts/{discount_id}",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if delete_response.status_code == 200:
+                            deleted_discounts += 1
+                            print(f"   ✅ Deleted discount: {discount_name}")
+                        else:
+                            print(f"   ❌ Failed to delete discount {discount_name}: {delete_response.status_code}")
+                            all_success = False
+                            
+                    except Exception as e:
+                        print(f"   ❌ Exception deleting discount {discount_name}: {str(e)}")
+                        all_success = False
+                
+                self.log_test("Delete All Discounts", deleted_discounts == len(all_discounts), 
+                            f"Deleted {deleted_discounts}/{len(all_discounts)} discounts")
+                
+            else:
+                self.log_test("Delete All Discounts", False, f"Could not fetch discounts: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Delete All Discounts", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 2: Delete ALL existing additional items
+        print("   STEP 2: Deleting all existing additional items...")
+        try:
+            # Get all additional items (admin endpoint to see all, including inactive)
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_items = response.json()
+                print(f"   Found {len(all_items)} existing additional items to delete")
+                
+                # Delete each additional item
+                for item in all_items:
+                    item_id = item.get('id')
+                    item_name = item.get('name', 'Unknown')
+                    
+                    try:
+                        delete_response = requests.delete(
+                            f"{self.api_url}/additional-items/{item_id}",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if delete_response.status_code == 200:
+                            deleted_items += 1
+                            print(f"   ✅ Deleted additional item: {item_name}")
+                        else:
+                            print(f"   ❌ Failed to delete item {item_name}: {delete_response.status_code}")
+                            all_success = False
+                            
+                    except Exception as e:
+                        print(f"   ❌ Exception deleting item {item_name}: {str(e)}")
+                        all_success = False
+                
+                self.log_test("Delete All Additional Items", deleted_items == len(all_items), 
+                            f"Deleted {deleted_items}/{len(all_items)} additional items")
+                
+            else:
+                self.log_test("Delete All Additional Items", False, f"Could not fetch items: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Delete All Additional Items", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 3: Verify database cleanup - Check discounts
+        print("   STEP 3: Verifying database cleanup...")
+        try:
+            # Check GET /api/discounts returns empty array
+            response = requests.get(
+                f"{self.api_url}/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            discounts_empty = False
+            if response.status_code == 200:
+                data = response.json()
+                discounts_empty = len(data) == 0
+                self.log_test("Verify GET /api/discounts Empty", discounts_empty, 
+                            f"Active discounts count: {len(data)}")
+            else:
+                self.log_test("Verify GET /api/discounts Empty", False, f"Status: {response.status_code}")
+                all_success = False
+            
+            # Check GET /api/admin/discounts returns empty array
+            admin_response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            admin_discounts_empty = False
+            if admin_response.status_code == 200:
+                admin_data = admin_response.json()
+                admin_discounts_empty = len(admin_data) == 0
+                self.log_test("Verify GET /api/admin/discounts Empty", admin_discounts_empty, 
+                            f"All discounts count: {len(admin_data)}")
+            else:
+                self.log_test("Verify GET /api/admin/discounts Empty", False, f"Status: {admin_response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Verify Discounts Cleanup", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 4: Verify additional items cleanup
+        try:
+            # Check GET /api/additional-items returns empty array
+            response = requests.get(
+                f"{self.api_url}/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            items_empty = False
+            if response.status_code == 200:
+                data = response.json()
+                items_empty = len(data) == 0
+                self.log_test("Verify GET /api/additional-items Empty", items_empty, 
+                            f"Active items count: {len(data)}")
+            else:
+                self.log_test("Verify GET /api/additional-items Empty", False, f"Status: {response.status_code}")
+                all_success = False
+            
+            # Check GET /api/admin/additional-items returns empty array
+            admin_response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            admin_items_empty = False
+            if admin_response.status_code == 200:
+                admin_data = admin_response.json()
+                admin_items_empty = len(admin_data) == 0
+                self.log_test("Verify GET /api/admin/additional-items Empty", admin_items_empty, 
+                            f"All items count: {len(admin_data)}")
+            else:
+                self.log_test("Verify GET /api/admin/additional-items Empty", False, f"Status: {admin_response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Verify Items Cleanup", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Final summary
+        print(f"\n   📊 CLEANUP SUMMARY:")
+        print(f"   • Deleted {deleted_discounts} discounts")
+        print(f"   • Deleted {deleted_items} additional items")
+        print(f"   • Database cleanup verified: {all_success}")
+        
+        return self.log_test("Complete Preset Data Deletion", all_success, 
+                           f"Deleted {deleted_discounts} discounts, {deleted_items} items")
+
+    def run_preset_data_deletion_only(self):
+        """Run ONLY the preset data deletion test as requested"""
+        print("🗑️ PRESET DATA DELETION TEST ONLY...")
+        print(f"🌐 Testing against: {self.base_url}")
+        print("=" * 80)
+        
+        # Login first
+        if not self.test_login():
+            print("❌ Login failed - cannot continue with deletion")
+            return False
+        
+        # Run the deletion test
+        success = self.test_delete_all_preset_data()
+        
+        # Print final results
+        print("\n" + "=" * 80)
+        print(f"🏁 Preset Data Deletion Complete: {self.tests_passed}/{self.tests_run} tests passed")
+        success_rate = (self.tests_passed / self.tests_run * 100) if self.tests_run > 0 else 0
+        print(f"📊 Success Rate: {success_rate:.1f}%")
+        
+        return success
+
     def run_all_tests(self):
         """Run all tests in sequence"""
         print("🚀 Starting Comprehensive Backend API Testing...")
