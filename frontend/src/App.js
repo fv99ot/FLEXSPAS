@@ -1536,6 +1536,16 @@ function App() {
     return `${wholeHours}h ${minutes}m`;
   };
 
+  const formatCheckoutTime = (checkoutTimeStr) => {
+    if (!checkoutTimeStr) return 'Unknown';
+    const checkoutTime = new Date(checkoutTimeStr);
+    return checkoutTime.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  };
+
   const handleRoomClick = (room) => {
     if (!room.available && room.checkin_id) {
       // Room is occupied, show management modal
