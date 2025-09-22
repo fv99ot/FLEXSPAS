@@ -107,6 +107,12 @@ function App() {
   const [adminDiscounts, setAdminDiscounts] = useState([]);
   const [adminItems, setAdminItems] = useState([]);
   
+  // Edit state
+  const [editingDiscount, setEditingDiscount] = useState(null);
+  const [showEditDiscount, setShowEditDiscount] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [showEditItem, setShowEditItem] = useState(false);
+  
   // Map state
   const [roomMap, setRoomMap] = useState({
     lockers: [],
