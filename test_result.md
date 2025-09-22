@@ -275,16 +275,13 @@ backend:
 
 metadata:
   created_by: "main_agent"
-  version: "3.0"
-  test_sequence: 2
+  version: "4.0"
+  test_sequence: 3
   run_ui: false
 
 test_plan:
   current_focus:
-    - "URGENT Customer Search Functionality Testing"
-    - "Customer Authentication and JWT Token Validation"
-    - "Database Connection and Customer Data Integrity"
-    - "API Response Format and Frontend Compatibility"
+    - "Delete All Preset Discounts and Additional Items"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
