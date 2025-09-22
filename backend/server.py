@@ -974,18 +974,23 @@ async def get_active_checkins(current_user: User = Depends(get_current_user)):
         checkin_info["customer"] = Customer(**customer).dict() if customer else None
         checkin_info["employee"] = employee["username"] if employee else "Unknown"
         
-        # Calculate remaining time (8 hours from check-in)
+        # Calculate remaining time accounting for renewals
         check_in_time = checkin["check_in_time"]
         if isinstance(check_in_time, str):
             check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
         elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
             check_in_time = check_in_time.replace(tzinfo=timezone.utc)
         
-        eight_hours_later = check_in_time + timedelta(hours=8)
-        remaining_time = eight_hours_later - datetime.now(timezone.utc)
+        # Calculate total allocated hours: base 8 hours + (renewals * 8 hours)
+        renewal_count = checkin.get("renewal_count", 0)
+        total_allocated_hours = 8 + (renewal_count * 8)
+        
+        checkout_time = check_in_time + timedelta(hours=total_allocated_hours)
+        remaining_time = checkout_time - datetime.now(timezone.utc)
         checkin_info["remaining_hours"] = max(0, remaining_time.total_seconds() / 3600)
         checkin_info["is_overtime"] = remaining_time.total_seconds() < 0
-        checkin_info["checkout_time"] = eight_hours_later  # Add checkout time
+        checkin_info["checkout_time"] = checkout_time  # Add checkout time
+        checkin_info["total_allocated_hours"] = total_allocated_hours  # Add for debugging
         
         result.append(checkin_info)
     
