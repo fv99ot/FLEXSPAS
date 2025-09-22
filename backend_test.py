@@ -8519,18 +8519,25 @@ class BathhouseAPITester:
         print(f"   API URL: {self.api_url}")
         print("=" * 80)
         
-        # URGENT: Test customer search functionality FIRST (production issue)
-        print("\n" + "=" * 60)
-        print("🚨 URGENT PRODUCTION ISSUE: CUSTOMER SEARCH TESTING")
-        print("=" * 60)
-        self.test_urgent_customer_search_issue()
-        
-        # Core authentication and basic functionality
+        # Core authentication first
         if not self.test_login():
             print("❌ Authentication failed - cannot continue with other tests")
             return False
         
         self.test_invalid_login()
+        
+        # PRIORITY: CUSTOMER SEARCH FUNCTIONALITY TESTING (as requested in review)
+        print("\n" + "=" * 60)
+        print("🔍 PRIORITY: CUSTOMER SEARCH FUNCTIONALITY TESTING")
+        print("   Testing customer search endpoint to identify 'error searching customer' issues")
+        print("=" * 60)
+        self.test_customer_search_comprehensive()
+        
+        # URGENT: Test customer search functionality FIRST (production issue)
+        print("\n" + "=" * 60)
+        print("🚨 URGENT PRODUCTION ISSUE: CUSTOMER SEARCH TESTING")
+        print("=" * 60)
+        self.test_urgent_customer_search_issue()
         
         # RENEWAL SYSTEM FIX TESTING (PRIORITY)
         print("\n" + "=" * 60)
