@@ -1158,7 +1158,7 @@ async def update_pricing(pricing_update: PricingUpdate, current_user: User = Dep
 
 @api_router.put("/checkin/{checkin_id}/renew")
 async def renew_session(checkin_id: str, current_user: User = Depends(get_current_user)):
-    """Renew a customer's session - restarts 8-hour timer from current time"""
+    """Renew a customer's session - adds 8 hours to their existing checkout time"""
     # Find the active check-in
     checkin = await db.check_ins.find_one({"id": checkin_id, "check_out_time": None})
     if not checkin:
@@ -1191,15 +1191,28 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
     is_weekend = is_weekend_time()
     room_fee = await get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
     
-    # Update check-in time to current time (restarts the 8-hour timer)
+    # Calculate new checkout time by ADDING 8 hours to existing checkout time
+    original_checkin_time = checkin["check_in_time"]
+    if isinstance(original_checkin_time, str):
+        original_checkin_time = datetime.fromisoformat(original_checkin_time.replace('Z', '+00:00'))
+    elif isinstance(original_checkin_time, datetime) and original_checkin_time.tzinfo is None:
+        original_checkin_time = original_checkin_time.replace(tzinfo=timezone.utc)
+    
+    # Calculate current checkout time (original check-in + 8 hours per renewal + 8 hours base)
+    hours_already_allocated = 8 + (current_renewal_count * 8)  # Base 8 hours + previous renewals
+    current_checkout_time = original_checkin_time + timedelta(hours=hours_already_allocated)
+    
+    # Add 8 more hours for this renewal
+    new_checkout_time = current_checkout_time + timedelta(hours=8)
+    
     renewal_time = datetime.now(timezone.utc)
     new_renewal_count = current_renewal_count + 1
     
+    # Update the renewal count and track renewal time, but DON'T change check_in_time
     await db.check_ins.update_one(
         {"id": checkin_id},
         {
             "$set": {
-                "check_in_time": renewal_time,
                 "renewed_at": renewal_time,
                 "renewal_count": new_renewal_count
             }
@@ -1208,12 +1221,13 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
     
     return {
         "message": "Session renewed successfully",
-        "new_check_in_time": renewal_time,
-        "new_checkout_time": renewal_time + timedelta(hours=8),
+        "new_check_in_time": original_checkin_time,  # Keep original check-in time
+        "new_checkout_time": new_checkout_time,  # Extended checkout time
         "room_fee": room_fee,
         "renewal_count": new_renewal_count,
         "total_shifts_today": shift_check["current_shifts"] + 1,
-        "remaining_shifts": 3 - (shift_check["current_shifts"] + 1)
+        "remaining_shifts": 3 - (shift_check["current_shifts"] + 1),
+        "total_hours_allocated": 8 + (new_renewal_count * 8)  # Show total hours they now have
     }
 
 @api_router.post("/transactions", response_model=Transaction)
