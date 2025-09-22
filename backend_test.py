@@ -7878,14 +7878,22 @@ class BathhouseAPITester:
             return False
 
 def main():
-    """Main function with option to run focused waitlist tests"""
+    """Main function with options for different test modes"""
     import sys
     
     tester = BathhouseAPITester()
     
-    # Check if user wants to run focused waitlist tests
-    if len(sys.argv) > 1 and sys.argv[1] == "--waitlist":
-        success = tester.run_waitlist_focused_tests()
+    # Check command line arguments
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--waitlist":
+            success = tester.run_waitlist_focused_tests()
+        elif sys.argv[1] == "--delete-preset-data":
+            success = tester.run_preset_data_deletion_only()
+        else:
+            print("Usage: python backend_test.py [--waitlist|--delete-preset-data]")
+            print("  --waitlist: Run focused waitlist tests only")
+            print("  --delete-preset-data: Delete all preset discounts and additional items")
+            return 1
     else:
         success = tester.run_all_tests()
     
