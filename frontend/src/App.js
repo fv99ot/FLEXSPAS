@@ -874,6 +874,7 @@ function App() {
         type: checkin.room_type,
         customer: `${checkin.customer?.first_name} ${checkin.customer?.last_name}`,
         remaining_hours: checkin.remaining_hours,
+        checkout_time: checkin.checkout_time,
         is_overtime: checkin.is_overtime,
         checkin_id: checkin.id
       }));
