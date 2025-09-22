@@ -1662,18 +1662,32 @@ async def create_additional_item(item_create: AdditionalItemCreate, current_user
     await db.additional_items.insert_one(item_doc)
     return AdditionalItem(**item_doc)
 
-@api_router.put("/additional-items/{item_id}")
+@api_router.put("/additional-items/{item_id}", response_model=AdditionalItem)
 async def update_additional_item(item_id: str, item_update: AdditionalItemCreate, current_user: User = Depends(get_current_user)):
+    """Edit/update an existing additional item"""
     if current_user.role != UserRole.MANAGER:
         raise HTTPException(status_code=403, detail="Only managers can update items")
     
+    # Check if item exists
+    existing_item = await db.additional_items.find_one({"id": item_id})
+    if not existing_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    
+    # Update the item
+    update_data = item_update.dict()
+    update_data["updated_at"] = datetime.now(timezone.utc)
+    
     result = await db.additional_items.update_one(
         {"id": item_id},
-        {"$set": item_update.dict()}
+        {"$set": update_data}
     )
+    
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Item not found")
-    return {"message": "Item updated successfully"}
+    
+    # Return updated item
+    updated_item = await db.additional_items.find_one({"id": item_id})
+    return AdditionalItem(**updated_item)
 
 @api_router.put("/additional-items/{item_id}/toggle")
 async def toggle_additional_item(item_id: str, current_user: User = Depends(get_current_user)):
