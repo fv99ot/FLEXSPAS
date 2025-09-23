@@ -9815,6 +9815,12 @@ class BathhouseAPITester:
         self.test_active_checkins()
         self.test_checkout()
         
+        # CRITICAL FIXES TESTING (as requested in review)
+        self.test_sales_report_critical_fixes()
+        self.test_room_upgrade_two_step_process()
+        self.test_room_upgrade_security()
+        self.test_database_structure_verification()
+        
         # CRITICAL FIX TESTING - Valid Membership Check-in
         self.test_valid_membership_checkin_fix()
         
