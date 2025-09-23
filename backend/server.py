@@ -531,8 +531,9 @@ async def get_available_rooms_for_type(room_type: RoomType, current_user: User =
     
     return {"available_rooms": available_rooms, "room_details": room_details}
 
-@api_router.post("/checkin", response_model=CheckIn)
-async def check_in_customer(checkin_data: dict, current_user: User = Depends(get_current_user)):
+# Check-in System - Two-Step Process to prevent check-ins without payment
+@api_router.post("/checkin/prepare")
+async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depends(get_current_user)):
     customer_id = checkin_data["customer_id"]
     membership_type = checkin_data.get("membership_type")
     room_type = checkin_data["room_type"]
