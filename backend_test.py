@@ -9818,6 +9818,9 @@ class BathhouseAPITester:
         # CRITICAL FIX TESTING - Valid Membership Check-in
         self.test_valid_membership_checkin_fix()
         
+        # CRITICAL INVESTIGATION - Membership Without Payment Issue
+        self.test_membership_without_payment_issue()
+        
         # Token expiration handling tests (NEW)
         self.test_token_expiration_handling()
         
