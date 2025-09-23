@@ -744,7 +744,13 @@ function App() {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
       await axios.post(`${API}/api/additional-items`, {
         ...newItem,
         price: parseFloat(newItem.price)
@@ -756,7 +762,25 @@ function App() {
       alert('Additional item created successfully!');
     } catch (error) {
       console.error('Error creating additional item:', error);
-      alert(error.response?.data?.detail || 'Error creating additional item');
+      
+      if (error.response) {
+        const status = error.response.status;
+        const detail = error.response.data?.detail || error.response.data?.message || 'Unknown error';
+        
+        if (status === 401 && (detail === 'Token expired' || detail.includes('expired'))) {
+          alert('Your session has expired. Please log in again.');
+          logout();
+        } else if (status === 401 || status === 403) {
+          alert('Authentication failed. Please log in again.');
+          logout();
+        } else {
+          alert(`Error creating additional item: ${detail}`);
+        }
+      } else if (error.request) {
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        alert('An unexpected error occurred while creating additional item.');
+      }
     }
   };
 
