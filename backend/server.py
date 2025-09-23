@@ -534,25 +534,48 @@ async def get_available_rooms_for_type(room_type: RoomType, current_user: User =
 # Check-in System - Two-Step Process to prevent check-ins without payment
 @api_router.post("/checkin/prepare")
 async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depends(get_current_user)):
-    customer_id = checkin_data["customer_id"]
-    membership_type = checkin_data.get("membership_type")
-    room_type = checkin_data["room_type"]
-    room_number = checkin_data["room_number"]
+    """Prepare check-in: validate customer, check availability, calculate costs - but don't actually check in yet"""
+    customer_id = checkin_data.customer_id
+    membership_type = checkin_data.membership_type
+    room_type = checkin_data.room_type
+    room_number = checkin_data.room_number
     
-    # Check if customer exists and is not banned
+    # Validate customer exists
     customer = await db.customers.find_one({"id": customer_id})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
-    if customer.get("is_banned", False):
-        raise HTTPException(status_code=403, detail="Customer is banned")
     
-    # Check if customer has unpaid overtime fees
-    unpaid_overtime = customer.get("unpaid_overtime_amount", 0.0)
-    if unpaid_overtime > 0:
-        raise HTTPException(
-            status_code=402, 
-            detail=f"Customer has unpaid overtime fees of ${unpaid_overtime:.2f}. Must pay before checking in again."
-        )
+    # Check if room/locker is available
+    if room_type == "locker":
+        existing_checkin = await db.check_ins.find_one({
+            "room_number": room_number,
+            "room_type": "locker",
+            "check_out_time": None
+        })
+        if existing_checkin:
+            raise HTTPException(status_code=400, detail="Locker is already occupied")
+        
+        # Check if locker is assigned to an employee
+        employee_assignment = await db.employee_lockers.find_one({
+            "locker_number": room_number,
+            "active": True
+        })
+        if employee_assignment:
+            raise HTTPException(status_code=400, detail="Locker is assigned to an employee and not available for customers")
+    else:
+        # For rooms, check availability
+        existing_checkin = await db.check_ins.find_one({
+            "room_number": room_number,
+            "room_type": room_type,
+            "check_out_time": None
+        })
+        if existing_checkin:
+            raise HTTPException(status_code=400, detail="Room is already occupied")
+    
+    # Check daily shift limit
+    shift_check = await check_daily_shift_limit(customer_id)
+    if not shift_check["can_continue"]:
+        raise HTTPException(status_code=400, detail=shift_check["message"])
     
     # Check for valid existing membership
     membership_status = None
@@ -598,70 +621,54 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
         raise HTTPException(status_code=400, detail="Customer has no valid membership. Must purchase membership to check in.")
     # For 1_day membership, proceed normally
     
-    # Check for active check-in
-    existing_checkin = await db.check_ins.find_one({"customer_id": customer_id, "check_out_time": None})
-    if existing_checkin:
-        raise HTTPException(status_code=400, detail="Customer is already checked in")
-    
-    # Check if room is available
-    room_checkin = await db.check_ins.find_one({
-        "room_number": room_number,
-        "room_type": room_type,
-        "check_out_time": None
-    })
-    if room_checkin:
-        raise HTTPException(status_code=400, detail="Room is already occupied")
-    
-    # Check if locker is assigned to an employee (only for lockers)
-    if room_type == "locker":
-        assigned_locker = await db.users.find_one({
-            "assigned_locker_number": str(room_number)
-        })
-        if assigned_locker:
-            raise HTTPException(status_code=400, detail=f"Locker {room_number} is assigned to employee {assigned_locker['username']}")
-    
-    # Check daily shift limit (3 shifts max per day, 24-hour waiting period after completing 3 shifts)
-    shift_check = await check_daily_shift_limit(customer_id)
-    if not shift_check["can_continue"]:
-        raise HTTPException(status_code=400, detail=shift_check["message"])
-    
-    # Verify this check-in won't exceed the daily limit
-    if shift_check["current_shifts"] >= 3:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Customer has already used {shift_check['current_shifts']}/3 shifts today. Cannot check in again until 24 hours after last checkout."
-        )
-    
-    # Calculate costs
+    # Calculate pricing
     is_weekend = is_weekend_time()
-    membership_fee = 0 if membership_status and membership_status.get("using_existing") else get_membership_fee(MembershipType(membership_type))
-    room_fee = await get_room_pricing(RoomType(room_type), is_weekend)
-    total_amount = membership_fee + room_fee
     
-    # Create check-in record
-    checkin_doc = {
+    if membership_type == "1_day":
+        # 1-day membership: Includes room/locker fee
+        room_fee = await get_room_pricing(RoomType(room_type), is_weekend)
+        total_amount = room_fee
+    elif membership_type == "6_month":
+        if existing_membership_valid:
+            # Using existing 6-month membership: Only room fee
+            room_fee = await get_room_pricing(RoomType(room_type), is_weekend)
+            total_amount = room_fee
+        else:
+            # New 6-month membership: $25 membership + room fee
+            room_fee = await get_room_pricing(RoomType(room_type), is_weekend)
+            total_amount = 25.0 + room_fee
+    else:
+        raise HTTPException(status_code=400, detail="Invalid membership type")
+    
+    # Create pending check-in record (not applied yet)
+    pending_checkin_doc = {
         "id": str(uuid.uuid4()),
         "customer_id": customer_id,
-        "employee_id": current_user.id,
         "membership_type": membership_type,
         "room_type": room_type,
         "room_number": room_number,
-        "check_in_time": datetime.now(timezone.utc),
         "total_amount": total_amount,
-        "membership_fee": membership_fee,
-        "room_fee": room_fee,
-        "is_weekend": is_weekend,
-        "session_count": shift_check["current_shifts"] + 1,
-        "payment_method": "cash"
+        "room_fee": room_fee if membership_type != "6_month" or existing_membership_valid else room_fee,
+        "membership_fee": 0 if (membership_type == "1_day" or existing_membership_valid) else 25.0,
+        "status": "pending",  # pending, completed, cancelled, expired
+        "membership_status": membership_status,
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10)  # Auto-expire after 10 minutes
     }
     
-    await db.check_ins.insert_one(checkin_doc)
+    await db.pending_check_ins.insert_one(pending_checkin_doc)
     
-    response_data = CheckIn(**checkin_doc).dict()
-    if membership_status:
-        response_data["membership_status"] = membership_status
-    
-    return response_data
+    return {
+        "pending_checkin_id": pending_checkin_doc["id"],
+        "customer": customer,
+        "room_type": room_type,
+        "room_number": room_number,
+        "membership_type": membership_type,
+        "total_amount": total_amount,
+        "membership_status": membership_status,
+        "expires_at": pending_checkin_doc["expires_at"],
+        "message": "Check-in prepared. Complete payment to finalize."
+    }
 
 @api_router.put("/checkin/{checkin_id}/checkout")
 async def check_out_customer(checkin_id: str, current_user: User = Depends(get_current_user)):
