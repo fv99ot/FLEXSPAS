@@ -104,6 +104,12 @@ class CheckIn(BaseModel):
     session_count: int = 1  # Track session number for the day
     payment_method: str = "cash"  # "cash" or "card"
 
+class CheckInCreate(BaseModel):
+    customer_id: str
+    membership_type: Optional[MembershipType] = None
+    room_type: RoomType
+    room_number: int
+
 class Room(BaseModel):
     number: int
     type: RoomType
