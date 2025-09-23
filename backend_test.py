@@ -837,45 +837,49 @@ class BathhouseAPITester:
             available_rooms = rooms_response.json()['available_rooms']
             if not available_rooms:
                 self.log_test("Check-in with Existing 6-Month Membership", False, "No available rooms")
-                return False
-            
-            checkin_data = {
-                "customer_id": created_customer_id,
-                "membership_type": "6_month",  # Should use existing membership
-                "room_type": "locker",
-                "room_number": available_rooms[0]
-            }
-            
-            response = requests.post(
-                f"{self.api_url}/checkin",
-                json=checkin_data,
-                headers=self.headers,
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                checkin_response = response.json()
-                membership_fee = checkin_response.get('membership_fee', 0)
-                membership_status = checkin_response.get('membership_status', {})
-                using_existing = membership_status.get('using_existing', False)
-                
-                # Should NOT charge membership fee and should use existing membership
-                no_membership_fee = membership_fee == 0
-                using_existing_membership = using_existing
-                
-                success = no_membership_fee and using_existing_membership
-                
-                self.log_test("Check-in with Existing 6-Month Membership", success, 
-                            f"Membership fee: ${membership_fee} (should be $0), Using existing: {using_existing}")
-                
-                if success:
-                    # Check out immediately for next test
-                    requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
-                else:
-                    all_success = False
-            else:
-                self.log_test("Check-in with Existing 6-Month Membership", False, f"Status: {response.status_code}, Response: {response.text}")
                 all_success = False
+            else:
+                checkin_data = {
+                    "customer_id": created_customer_id,
+                    "membership_type": "6_month",  # Should use existing membership
+                    "room_type": "locker",
+                    "room_number": available_rooms[0]
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/checkin",
+                    json=checkin_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    checkin_response = response.json()
+                    membership_fee = checkin_response.get('membership_fee', 0)
+                    membership_status = checkin_response.get('membership_status', {})
+                    using_existing = membership_status.get('using_existing', False)
+                    
+                    # Should NOT charge membership fee and should use existing membership
+                    no_membership_fee = membership_fee == 0
+                    using_existing_membership = using_existing
+                    
+                    success = no_membership_fee and using_existing_membership
+                    
+                    self.log_test("Check-in with Existing 6-Month Membership", success, 
+                                f"Membership fee: ${membership_fee} (should be $0), Using existing: {using_existing}")
+                    
+                    if success:
+                        # Check out immediately for next test
+                        checkout_response = requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
+                        if checkout_response.status_code != 200:
+                            print(f"   Warning: Could not check out customer: {checkout_response.status_code}")
+                    else:
+                        all_success = False
+                        # Try to check out anyway to clean up
+                        requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
+                else:
+                    self.log_test("Check-in with Existing 6-Month Membership", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
                 
         except Exception as e:
             self.log_test("Check-in with Existing 6-Month Membership", False, f"Exception: {str(e)}")
@@ -893,44 +897,48 @@ class BathhouseAPITester:
             available_rooms = rooms_response.json()['available_rooms']
             if not available_rooms:
                 self.log_test("Check-in with No Membership Type Specified", False, "No available rooms")
-                return False
-            
-            checkin_data = {
-                "customer_id": created_customer_id,
-                # No membership_type specified - should use existing valid membership
-                "room_type": "locker",
-                "room_number": available_rooms[0]
-            }
-            
-            response = requests.post(
-                f"{self.api_url}/checkin",
-                json=checkin_data,
-                headers=self.headers,
-                timeout=10
-            )
-            
-            if response.status_code == 200:
-                checkin_response = response.json()
-                membership_fee = checkin_response.get('membership_fee', 0)
-                membership_type = checkin_response.get('membership_type')
-                
-                # Should use existing 6-month membership with no additional fee
-                no_membership_fee = membership_fee == 0
-                using_6_month = membership_type == '6_month'
-                
-                success = no_membership_fee and using_6_month
-                
-                self.log_test("Check-in with No Membership Type Specified", success, 
-                            f"Membership fee: ${membership_fee} (should be $0), Type used: {membership_type}")
-                
-                if success:
-                    # Check out immediately for next test
-                    requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
-                else:
-                    all_success = False
-            else:
-                self.log_test("Check-in with No Membership Type Specified", False, f"Status: {response.status_code}, Response: {response.text}")
                 all_success = False
+            else:
+                checkin_data = {
+                    "customer_id": created_customer_id,
+                    # No membership_type specified - should use existing valid membership
+                    "room_type": "locker",
+                    "room_number": available_rooms[0]
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/checkin",
+                    json=checkin_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    checkin_response = response.json()
+                    membership_fee = checkin_response.get('membership_fee', 0)
+                    membership_type = checkin_response.get('membership_type')
+                    
+                    # Should use existing 6-month membership with no additional fee
+                    no_membership_fee = membership_fee == 0
+                    using_6_month = membership_type == '6_month'
+                    
+                    success = no_membership_fee and using_6_month
+                    
+                    self.log_test("Check-in with No Membership Type Specified", success, 
+                                f"Membership fee: ${membership_fee} (should be $0), Type used: {membership_type}")
+                    
+                    if success:
+                        # Check out immediately for next test
+                        checkout_response = requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
+                        if checkout_response.status_code != 200:
+                            print(f"   Warning: Could not check out customer: {checkout_response.status_code}")
+                    else:
+                        all_success = False
+                        # Try to check out anyway to clean up
+                        requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
+                else:
+                    self.log_test("Check-in with No Membership Type Specified", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
                 
         except Exception as e:
             self.log_test("Check-in with No Membership Type Specified", False, f"Exception: {str(e)}")
