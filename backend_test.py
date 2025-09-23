@@ -8514,7 +8514,362 @@ class BathhouseAPITester:
         
         return success
 
-    def run_all_tests(self):
+    def test_token_expiration_handling(self):
+        """Test token expiration scenarios for admin settings operations"""
+        print("\n🔐 TESTING TOKEN EXPIRATION HANDLING...")
+        print("   Testing token expiration scenarios for admin settings operations")
+        
+        all_success = True
+        
+        # TEST 1: Valid Token Operations
+        print("   TEST 1: Valid Token Operations...")
+        
+        # First ensure we have a valid token
+        if not self.token:
+            login_success = self.test_login()
+            if not login_success:
+                self.log_test("Token Expiration Testing", False, "Could not obtain valid token")
+                return False
+        
+        # Test POST /api/discounts with valid token
+        try:
+            discount_data = {
+                "name": f"Test Discount {datetime.now().strftime('%H%M%S')}",
+                "amount": 15.0,
+                "description": "Test discount for token validation"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json=discount_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'id' in data and data['name'] == discount_data['name']
+                self.log_test("Valid Token - Create Discount", success, f"Created discount: {data.get('name', 'N/A')}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Valid Token - Create Discount", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Valid Token - Create Discount", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test POST /api/additional-items with valid token
+        try:
+            item_data = {
+                "name": f"Test Item {datetime.now().strftime('%H%M%S')}",
+                "price": 12.50,
+                "category": "test"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/additional-items",
+                json=item_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                success = 'id' in data and data['name'] == item_data['name']
+                self.log_test("Valid Token - Create Additional Item", success, f"Created item: {data.get('name', 'N/A')}")
+                if not success:
+                    all_success = False
+            else:
+                self.log_test("Valid Token - Create Additional Item", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Valid Token - Create Additional Item", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 2: Token Expiration Scenarios
+        print("   TEST 2: Token Expiration Scenarios...")
+        
+        # Create an expired token (simulate by creating token with past expiration)
+        try:
+            # Create a token that expired 1 hour ago
+            expired_payload = {
+                'user_id': 'test_user_id',
+                'role': 'manager',
+                'exp': datetime.utcnow() - timedelta(hours=1)  # Expired 1 hour ago
+            }
+            
+            # Use a dummy secret for testing (in real scenario, we'd need the actual secret)
+            # Since we can't access the actual JWT_SECRET, we'll create an obviously invalid token
+            expired_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoidGVzdF91c2VyX2lkIiwicm9sZSI6Im1hbmFnZXIiLCJleHAiOjE2MDAwMDAwMDB9.invalid_signature"
+            
+            expired_headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {expired_token}'
+            }
+            
+            # Test expired token with discount creation
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json={"name": "Test Expired", "amount": 10.0},
+                headers=expired_headers,
+                timeout=10
+            )
+            
+            # Should return 401 with "Token expired" or "Invalid token" message
+            token_rejected = response.status_code == 401
+            if token_rejected:
+                response_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+                error_detail = response_data.get('detail', '')
+                has_proper_error = 'token' in error_detail.lower() or 'expired' in error_detail.lower() or 'invalid' in error_detail.lower()
+                self.log_test("Expired Token - Discount Creation", has_proper_error, f"Status: {response.status_code}, Detail: '{error_detail}'")
+                if not has_proper_error:
+                    all_success = False
+            else:
+                self.log_test("Expired Token - Discount Creation", False, f"Expected 401, got {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Expired Token - Discount Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test expired token with additional item creation
+        try:
+            response = requests.post(
+                f"{self.api_url}/additional-items",
+                json={"name": "Test Expired Item", "price": 5.0},
+                headers=expired_headers,
+                timeout=10
+            )
+            
+            token_rejected = response.status_code == 401
+            if token_rejected:
+                response_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+                error_detail = response_data.get('detail', '')
+                has_proper_error = 'token' in error_detail.lower() or 'expired' in error_detail.lower() or 'invalid' in error_detail.lower()
+                self.log_test("Expired Token - Additional Item Creation", has_proper_error, f"Status: {response.status_code}, Detail: '{error_detail}'")
+                if not has_proper_error:
+                    all_success = False
+            else:
+                self.log_test("Expired Token - Additional Item Creation", False, f"Expected 401, got {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Expired Token - Additional Item Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 3: Authentication Requirements
+        print("   TEST 3: Authentication Requirements...")
+        
+        # Test admin operations without token
+        try:
+            no_auth_headers = {'Content-Type': 'application/json'}
+            
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json={"name": "No Auth Test", "amount": 10.0},
+                headers=no_auth_headers,
+                timeout=10
+            )
+            
+            auth_required = response.status_code in [401, 403]
+            if auth_required:
+                response_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+                error_detail = response_data.get('detail', '')
+                self.log_test("No Token - Discount Creation", True, f"Status: {response.status_code}, Detail: '{error_detail}'")
+            else:
+                self.log_test("No Token - Discount Creation", False, f"Expected 401/403, got {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("No Token - Discount Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test admin operations with malformed token
+        try:
+            malformed_headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer malformed_token_12345'
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/additional-items",
+                json={"name": "Malformed Auth Test", "price": 5.0},
+                headers=malformed_headers,
+                timeout=10
+            )
+            
+            malformed_rejected = response.status_code == 401
+            if malformed_rejected:
+                response_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+                error_detail = response_data.get('detail', '')
+                has_proper_error = 'token' in error_detail.lower() or 'invalid' in error_detail.lower()
+                self.log_test("Malformed Token - Additional Item Creation", has_proper_error, f"Status: {response.status_code}, Detail: '{error_detail}'")
+                if not has_proper_error:
+                    all_success = False
+            else:
+                self.log_test("Malformed Token - Additional Item Creation", False, f"Expected 401, got {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Malformed Token - Additional Item Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 4: Test with Employee Role (if we can create one)
+        print("   TEST 4: Test Non-Manager Role Access...")
+        
+        # First create an employee user
+        employee_token = None
+        try:
+            employee_data = {
+                "username": f"testemployee_{datetime.now().strftime('%H%M%S')}",
+                "password": "testpass123",
+                "role": "employee"
+            }
+            
+            # Create employee with manager token
+            response = requests.post(
+                f"{self.api_url}/users",
+                json=employee_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                # Now login as employee to get employee token
+                login_response = requests.post(
+                    f"{self.api_url}/login",
+                    json={"username": employee_data["username"], "password": employee_data["password"]},
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10
+                )
+                
+                if login_response.status_code == 200:
+                    employee_token = login_response.json().get('access_token')
+                    
+                    # Test employee trying to create discount (should fail with 403)
+                    employee_headers = {
+                        'Content-Type': 'application/json',
+                        'Authorization': f'Bearer {employee_token}'
+                    }
+                    
+                    discount_response = requests.post(
+                        f"{self.api_url}/discounts",
+                        json={"name": "Employee Test", "amount": 10.0},
+                        headers=employee_headers,
+                        timeout=10
+                    )
+                    
+                    access_denied = discount_response.status_code == 403
+                    if access_denied:
+                        response_data = discount_response.json() if discount_response.headers.get('content-type', '').startswith('application/json') else {}
+                        error_detail = response_data.get('detail', '')
+                        has_proper_error = 'manager' in error_detail.lower() or 'permission' in error_detail.lower() or 'forbidden' in error_detail.lower()
+                        self.log_test("Employee Role - Discount Creation Denied", has_proper_error, f"Status: {discount_response.status_code}, Detail: '{error_detail}'")
+                        if not has_proper_error:
+                            all_success = False
+                    else:
+                        self.log_test("Employee Role - Discount Creation Denied", False, f"Expected 403, got {discount_response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test("Employee Role - Discount Creation Denied", False, "Could not login as employee")
+                    all_success = False
+            else:
+                self.log_test("Employee Role - Discount Creation Denied", False, "Could not create test employee")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Employee Role - Discount Creation Denied", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 5: Verify Error Response Format
+        print("   TEST 5: Verify Error Response Format...")
+        
+        # Test that error responses contain proper "detail" field
+        try:
+            invalid_headers = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer invalid_token_format'
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json={"name": "Format Test", "amount": 10.0},
+                headers=invalid_headers,
+                timeout=10
+            )
+            
+            if response.status_code == 401:
+                try:
+                    response_data = response.json()
+                    has_detail_field = 'detail' in response_data
+                    detail_message = response_data.get('detail', '')
+                    is_helpful_message = len(detail_message) > 0 and ('token' in detail_message.lower() or 'invalid' in detail_message.lower())
+                    
+                    format_valid = has_detail_field and is_helpful_message
+                    self.log_test("Error Response Format", format_valid, f"Has detail field: {has_detail_field}, Helpful message: '{detail_message}'")
+                    if not format_valid:
+                        all_success = False
+                except json.JSONDecodeError:
+                    self.log_test("Error Response Format", False, "Response is not valid JSON")
+                    all_success = False
+            else:
+                self.log_test("Error Response Format", False, f"Expected 401 for format test, got {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Error Response Format", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 6: Test Both 401 and 403 Status Codes
+        print("   TEST 6: Test Both 401 and 403 Status Codes...")
+        
+        # Test 401 (Unauthorized - invalid/expired token)
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers={'Content-Type': 'application/json', 'Authorization': 'Bearer invalid_token'},
+                timeout=10
+            )
+            
+            unauthorized_status = response.status_code == 401
+            self.log_test("401 Status Code Test", unauthorized_status, f"Invalid token returns 401: {unauthorized_status}")
+            if not unauthorized_status:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("401 Status Code Test", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 403 (Forbidden - valid token but insufficient permissions)
+        if employee_token:
+            try:
+                employee_headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {employee_token}'
+                }
+                
+                response = requests.get(
+                    f"{self.api_url}/admin/discounts",
+                    headers=employee_headers,
+                    timeout=10
+                )
+                
+                forbidden_status = response.status_code == 403
+                self.log_test("403 Status Code Test", forbidden_status, f"Employee token returns 403: {forbidden_status}")
+                if not forbidden_status:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("403 Status Code Test", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("403 Status Code Test", False, "No employee token available for testing")
+            all_success = False
+        
+        return all_success
         """Run all tests in sequence"""
         print("🚀 Starting Comprehensive Backend API Testing...")
         print(f"   Base URL: {self.base_url}")
