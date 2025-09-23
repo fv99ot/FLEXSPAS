@@ -1538,8 +1538,9 @@ async def add_current_customer_to_waitlist(checkin_id: str, waitlist_data: dict,
     return await add_to_waitlist(waitlist_create, current_user)
 
 # Room Upgrade System
-@api_router.post("/checkin/{checkin_id}/upgrade")
-async def upgrade_room(checkin_id: str, upgrade_data: dict, current_user: User = Depends(get_current_user)):
+@api_router.post("/checkin/{checkin_id}/upgrade/prepare")
+async def prepare_room_upgrade(checkin_id: str, upgrade_data: dict, current_user: User = Depends(get_current_user)):
+    """Prepare room upgrade and calculate costs without applying changes"""
     # Get current check-in
     checkin = await db.check_ins.find_one({"id": checkin_id, "check_out_time": None})
     if not checkin:
@@ -1570,8 +1571,8 @@ async def upgrade_room(checkin_id: str, upgrade_data: dict, current_user: User =
     
     total_additional_cost = upgrade_fee + cleaning_fee
     
-    # Create upgrade record
-    upgrade_doc = {
+    # Create pending upgrade record (not applied yet)
+    pending_upgrade_doc = {
         "id": str(uuid.uuid4()),
         "checkin_id": checkin_id,
         "old_room_type": checkin["room_type"],
@@ -1581,29 +1582,103 @@ async def upgrade_room(checkin_id: str, upgrade_data: dict, current_user: User =
         "upgrade_fee": upgrade_fee,
         "cleaning_fee": cleaning_fee,
         "total_additional_cost": total_additional_cost,
-        "created_at": datetime.now(timezone.utc)
+        "status": "pending",  # pending, completed, cancelled
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10)  # Auto-expire after 10 minutes
     }
     
-    await db.room_upgrades.insert_one(upgrade_doc)
+    await db.pending_room_upgrades.insert_one(pending_upgrade_doc)
     
-    # Update check-in record
+    return {
+        "pending_upgrade_id": pending_upgrade_doc["id"],
+        "additional_cost": total_additional_cost,
+        "upgrade_fee": upgrade_fee,
+        "cleaning_fee": cleaning_fee,
+        "old_room": f"{checkin['room_type'].replace('_', ' ').title()} #{checkin['room_number']}",
+        "new_room": f"{new_room_type.replace('_', ' ').title()} #{new_room_number}",
+        "expires_at": pending_upgrade_doc["expires_at"],
+        "message": "Upgrade prepared. Complete payment to apply changes."
+    }
+
+@api_router.post("/checkin/{checkin_id}/upgrade/complete")
+async def complete_room_upgrade(checkin_id: str, pending_upgrade_id: str, current_user: User = Depends(get_current_user)):
+    """Complete room upgrade after payment confirmation"""
+    # Get pending upgrade
+    pending_upgrade = await db.pending_room_upgrades.find_one({
+        "id": pending_upgrade_id,
+        "checkin_id": checkin_id,
+        "status": "pending"
+    })
+    
+    if not pending_upgrade:
+        raise HTTPException(status_code=404, detail="Pending upgrade not found or already processed")
+    
+    # Check if expired
+    if datetime.now(timezone.utc) > pending_upgrade["expires_at"]:
+        await db.pending_room_upgrades.update_one(
+            {"id": pending_upgrade_id},
+            {"$set": {"status": "expired"}}
+        )
+        raise HTTPException(status_code=400, detail="Upgrade request has expired. Please start again.")
+    
+    # Verify room is still available
+    existing_checkin = await db.check_ins.find_one({
+        "room_number": pending_upgrade["new_room_number"],
+        "room_type": pending_upgrade["new_room_type"],
+        "check_out_time": None
+    })
+    if existing_checkin:
+        await db.pending_room_upgrades.update_one(
+            {"id": pending_upgrade_id},
+            {"$set": {"status": "cancelled", "cancellation_reason": "room_no_longer_available"}}
+        )
+        raise HTTPException(status_code=400, detail="Room is no longer available")
+    
+    # Get current check-in
+    checkin = await db.check_ins.find_one({"id": checkin_id, "check_out_time": None})
+    if not checkin:
+        raise HTTPException(status_code=404, detail="Active check-in not found")
+    
+    # Apply the room upgrade
     await db.check_ins.update_one(
         {"id": checkin_id},
         {
             "$set": {
-                "room_type": new_room_type,
-                "room_number": new_room_number
+                "room_type": pending_upgrade["new_room_type"],
+                "room_number": pending_upgrade["new_room_number"]
             },
-            "$inc": {"total_amount": total_additional_cost}
+            "$inc": {"total_amount": pending_upgrade["total_additional_cost"]}
         }
+    )
+    
+    # Create completed upgrade record
+    upgrade_doc = {
+        "id": str(uuid.uuid4()),
+        "checkin_id": checkin_id,
+        "old_room_type": pending_upgrade["old_room_type"],
+        "old_room_number": pending_upgrade["old_room_number"],
+        "new_room_type": pending_upgrade["new_room_type"],
+        "new_room_number": pending_upgrade["new_room_number"],
+        "upgrade_fee": pending_upgrade["upgrade_fee"],
+        "cleaning_fee": pending_upgrade["cleaning_fee"],
+        "total_additional_cost": pending_upgrade["total_additional_cost"],
+        "completed_at": datetime.now(timezone.utc),
+        "completed_by": current_user.id
+    }
+    
+    await db.room_upgrades.insert_one(upgrade_doc)
+    
+    # Mark pending upgrade as completed
+    await db.pending_room_upgrades.update_one(
+        {"id": pending_upgrade_id},
+        {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc)}}
     )
     
     return {
         "upgrade_id": upgrade_doc["id"],
-        "additional_cost": total_additional_cost,
-        "upgrade_fee": upgrade_fee,
-        "cleaning_fee": cleaning_fee,
-        "message": "Room upgraded successfully"
+        "message": "Room upgrade completed successfully",
+        "old_room": f"{pending_upgrade['old_room_type'].replace('_', ' ').title()} #{pending_upgrade['old_room_number']}",
+        "new_room": f"{pending_upgrade['new_room_type'].replace('_', ' ').title()} #{pending_upgrade['new_room_number']}"
     }
 
 # Default items seeding removed - start fresh
