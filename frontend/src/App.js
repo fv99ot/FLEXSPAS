@@ -616,7 +616,9 @@ function App() {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const response = await axios.post(`${API}/api/checkin/${selectedCheckin.id}/upgrade`, {
+      
+      // Step 1: Prepare upgrade (calculate costs, check availability, but don't apply yet)
+      const response = await axios.post(`${API}/api/checkin/${selectedCheckin.id}/upgrade/prepare`, {
         new_room_type: upgradeData.new_room_type,
         new_room_number: parseInt(upgradeData.new_room_number)
       }, { headers });
@@ -633,21 +635,26 @@ function App() {
         additionalItems: [],
         selectedDiscount: null,
         discountAmount: 0,
-        transactionType: 'room_upgrade'
+        transactionType: 'room_upgrade',
+        pendingUpgradeId: response.data.pending_upgrade_id, // Store for completion
+        upgradeDetails: {
+          oldRoom: response.data.old_room,
+          newRoom: response.data.new_room,
+          upgradeFee: response.data.upgrade_fee,
+          cleaningFee: response.data.cleaning_fee
+        }
       });
       
       setShowUpgrade(false);
       setUpgradeData({ new_room_type: '', new_room_number: '' });
       setSelectedCheckin(null);
-      fetchActiveCheckins();
-      fetchAvailableRooms(upgradeData.new_room_type);
       
       // Open payment dialog to finalize transaction
       setShowPayment(true);
       
     } catch (error) {
-      console.error('Error upgrading room:', error);
-      alert(error.response?.data?.detail || 'Error upgrading room');
+      console.error('Error preparing room upgrade:', error);
+      alert(error.response?.data?.detail || 'Error preparing room upgrade');
     }
     
     setLoading(false);
