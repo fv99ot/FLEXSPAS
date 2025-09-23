@@ -670,6 +670,86 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
         "message": "Check-in prepared. Complete payment to finalize."
     }
 
+@api_router.post("/checkin/complete")
+async def complete_checkin(pending_checkin_id: str, current_user: User = Depends(get_current_user)):
+    """Complete check-in after payment confirmation"""
+    # Get pending check-in
+    pending_checkin = await db.pending_check_ins.find_one({
+        "id": pending_checkin_id,
+        "status": "pending"
+    })
+    
+    if not pending_checkin:
+        raise HTTPException(status_code=404, detail="Pending check-in not found or already processed")
+    
+    # Check if expired
+    expires_at = pending_checkin["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+    elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if datetime.now(timezone.utc) > expires_at:
+        await db.pending_check_ins.update_one(
+            {"id": pending_checkin_id},
+            {"$set": {"status": "expired"}}
+        )
+        raise HTTPException(status_code=400, detail="Check-in request has expired. Please start again.")
+    
+    # Verify room is still available
+    existing_checkin = await db.check_ins.find_one({
+        "room_number": pending_checkin["room_number"],
+        "room_type": pending_checkin["room_type"],
+        "check_out_time": None
+    })
+    if existing_checkin:
+        await db.pending_check_ins.update_one(
+            {"id": pending_checkin_id},
+            {"$set": {"status": "cancelled", "cancellation_reason": "room_no_longer_available"}}
+        )
+        raise HTTPException(status_code=400, detail="Room/locker is no longer available")
+    
+    # Verify customer still exists
+    customer = await db.customers.find_one({"id": pending_checkin["customer_id"]})
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # Create the actual check-in record
+    check_in_time = datetime.now(timezone.utc)
+    checkin_doc = {
+        "id": str(uuid.uuid4()),
+        "customer_id": pending_checkin["customer_id"],
+        "membership_type": pending_checkin["membership_type"],
+        "room_type": pending_checkin["room_type"],
+        "room_number": pending_checkin["room_number"],
+        "check_in_time": check_in_time,
+        "check_out_time": None,
+        "total_amount": pending_checkin["total_amount"],
+        "renewal_count": 0,
+        "created_by": current_user.id,
+        "completed_at": check_in_time
+    }
+    
+    await db.check_ins.insert_one(checkin_doc)
+    
+    # Mark pending check-in as completed
+    await db.pending_check_ins.update_one(
+        {"id": pending_checkin_id},
+        {"$set": {"status": "completed", "completed_at": check_in_time}}
+    )
+    
+    return {
+        "id": checkin_doc["id"],
+        "customer_id": pending_checkin["customer_id"],
+        "membership_type": pending_checkin["membership_type"],
+        "room_type": pending_checkin["room_type"],
+        "room_number": pending_checkin["room_number"],
+        "check_in_time": check_in_time,
+        "total_amount": pending_checkin["total_amount"],
+        "membership_status": pending_checkin.get("membership_status"),
+        "message": "Check-in completed successfully"
+    }
+
 @api_router.put("/checkin/{checkin_id}/checkout")
 async def check_out_customer(checkin_id: str, current_user: User = Depends(get_current_user)):
     checkin = await db.check_ins.find_one({"id": checkin_id})
