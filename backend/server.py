@@ -748,7 +748,7 @@ async def complete_checkin(pending_checkin_id: str, current_user: User = Depends
         "membership_type": pending_checkin["membership_type"],
         "room_type": pending_checkin["room_type"],
         "room_number": pending_checkin["room_number"],
-        "check_in_time": check_in_time,
+        "check_in_time": check_in_time.isoformat(),
         "total_amount": pending_checkin["total_amount"],
         "membership_status": pending_checkin.get("membership_status"),
         "message": "Check-in completed successfully"
