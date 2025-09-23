@@ -10433,6 +10433,622 @@ class BathhouseAPITester:
             print(f"⚠️  {failed_count} test(s) failed")
             return False
 
+    def test_two_step_checkin_process(self):
+        """Test the CRITICAL two-step check-in process to prevent check-ins without payment"""
+        print("\n🔐 TESTING CRITICAL TWO-STEP CHECK-IN PROCESS...")
+        print("   Testing the new two-step check-in process to ensure customers are not checked in without payment")
+        
+        if not self.token:
+            return self.log_test("Two-Step Check-in Process", False, "No authentication token")
+        
+        all_success = True
+        test_customer_id = None
+        pending_checkin_id = None
+        
+        # Step 1: Create test customer
+        print("   STEP 1: Create test customer...")
+        try:
+            unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            customer_data = {
+                "first_name": "Payment",
+                "last_name": "Test",
+                "id_number": f"PAYMENT_TEST_{unique_timestamp}",
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                test_customer_id = response.json()['id']
+                self.log_test("Create Test Customer for Payment Flow", True, f"Customer ID: {test_customer_id}")
+            else:
+                self.log_test("Create Test Customer for Payment Flow", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Test Customer for Payment Flow", False, f"Exception: {str(e)}")
+            return False
+        
+        # Step 2: Test POST /api/checkin/prepare endpoint
+        print("   STEP 2: Test check-in preparation (POST /api/checkin/prepare)...")
+        try:
+            # Get available locker
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    prepare_data = {
+                        "customer_id": test_customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin/prepare",
+                        json=prepare_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        prepare_result = response.json()
+                        
+                        # Verify it calculates costs and creates pending record without actual check-in
+                        required_fields = ['pending_checkin_id', 'total_amount', 'expires_at', 'message']
+                        has_required_fields = all(field in prepare_result for field in required_fields)
+                        
+                        pending_checkin_id = prepare_result.get('pending_checkin_id')
+                        total_amount = prepare_result.get('total_amount', 0)
+                        
+                        self.log_test("Check-in Prepare Endpoint", has_required_fields, 
+                                    f"Pending ID: {pending_checkin_id}, Amount: ${total_amount}")
+                        
+                        if not has_required_fields:
+                            all_success = False
+                    else:
+                        self.log_test("Check-in Prepare Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                        all_success = False
+                        return False
+                else:
+                    self.log_test("Check-in Prepare Endpoint", False, "No available rooms")
+                    return False
+            else:
+                self.log_test("Check-in Prepare Endpoint", False, "Could not get available rooms")
+                return False
+                
+        except Exception as e:
+            self.log_test("Check-in Prepare Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+            return False
+        
+        # Step 3: Verify room/locker is not assigned yet
+        print("   STEP 3: Verify room/locker is not assigned yet...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                active_checkins = response.json()
+                customer_checked_in = any(checkin.get('customer_id') == test_customer_id for checkin in active_checkins)
+                
+                # Customer should NOT be checked in yet
+                not_checked_in = not customer_checked_in
+                self.log_test("Room Not Assigned Yet", not_checked_in, 
+                            f"Customer not in active check-ins: {not_checked_in}")
+                
+                if not not_checked_in:
+                    all_success = False
+            else:
+                self.log_test("Room Not Assigned Yet", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Room Not Assigned Yet", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 4: Test POST /api/checkin/complete endpoint
+        print("   STEP 4: Test check-in completion (POST /api/checkin/complete)...")
+        if pending_checkin_id:
+            try:
+                response = requests.post(
+                    f"{self.api_url}/checkin/complete",
+                    json={"pending_checkin_id": pending_checkin_id},
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    complete_result = response.json()
+                    
+                    # Verify actual check-in happens after completion call
+                    required_fields = ['id', 'customer_id', 'room_type', 'room_number', 'check_in_time', 'message']
+                    has_required_fields = all(field in complete_result for field in required_fields)
+                    
+                    actual_checkin_id = complete_result.get('id')
+                    
+                    self.log_test("Check-in Complete Endpoint", has_required_fields, 
+                                f"Check-in ID: {actual_checkin_id}, Room: {complete_result.get('room_type')} #{complete_result.get('room_number')}")
+                    
+                    if has_required_fields:
+                        self.created_checkin_id = actual_checkin_id  # Store for cleanup
+                    else:
+                        all_success = False
+                else:
+                    self.log_test("Check-in Complete Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Check-in Complete Endpoint", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Step 5: Verify customer gets assigned to room/locker only after completion
+        print("   STEP 5: Verify customer is now assigned to room/locker...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                active_checkins = response.json()
+                customer_checkin = next((checkin for checkin in active_checkins if checkin.get('customer_id') == test_customer_id), None)
+                
+                # Customer should NOW be checked in
+                now_checked_in = customer_checkin is not None
+                self.log_test("Customer Assigned After Completion", now_checked_in, 
+                            f"Customer now in active check-ins: {now_checked_in}")
+                
+                if not now_checked_in:
+                    all_success = False
+            else:
+                self.log_test("Customer Assigned After Completion", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Customer Assigned After Completion", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_checkin_security_features(self):
+        """Test security features of the two-step check-in process"""
+        print("\n🔒 TESTING CHECK-IN SECURITY FEATURES...")
+        print("   Testing pending check-in expiration and double-booking prevention")
+        
+        if not self.token:
+            return self.log_test("Check-in Security Features", False, "No authentication token")
+        
+        all_success = True
+        test_customer_id = None
+        
+        # Step 1: Create test customer
+        print("   STEP 1: Create test customer for security testing...")
+        try:
+            unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            customer_data = {
+                "first_name": "Security",
+                "last_name": "Test",
+                "id_number": f"SECURITY_TEST_{unique_timestamp}",
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                test_customer_id = response.json()['id']
+                self.log_test("Create Security Test Customer", True, f"Customer ID: {test_customer_id}")
+            else:
+                self.log_test("Create Security Test Customer", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Security Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # Step 2: Test that pending check-ins have expiration (10 minutes)
+        print("   STEP 2: Test pending check-in expiration mechanism...")
+        try:
+            # Get available room
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    prepare_data = {
+                        "customer_id": test_customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin/prepare",
+                        json=prepare_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        prepare_result = response.json()
+                        expires_at = prepare_result.get('expires_at')
+                        
+                        # Verify expiration is set (should be ~10 minutes from now)
+                        has_expiration = expires_at is not None
+                        
+                        if has_expiration:
+                            # Parse expiration time and check it's approximately 10 minutes from now
+                            try:
+                                if isinstance(expires_at, str):
+                                    expire_time = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+                                else:
+                                    expire_time = expires_at
+                                
+                                now = datetime.now(timezone.utc)
+                                time_diff = (expire_time - now).total_seconds() / 60  # minutes
+                                
+                                # Should be approximately 10 minutes (allow 9-11 minutes range)
+                                reasonable_expiration = 9 <= time_diff <= 11
+                                
+                                self.log_test("Pending Check-in Expiration", reasonable_expiration, 
+                                            f"Expires in {time_diff:.1f} minutes (should be ~10)")
+                                
+                                if not reasonable_expiration:
+                                    all_success = False
+                            except Exception as parse_error:
+                                self.log_test("Pending Check-in Expiration", False, f"Could not parse expiration time: {parse_error}")
+                                all_success = False
+                        else:
+                            self.log_test("Pending Check-in Expiration", False, "No expiration time set")
+                            all_success = False
+                    else:
+                        self.log_test("Pending Check-in Expiration", False, f"Status: {response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test("Pending Check-in Expiration", False, "No available rooms")
+                    all_success = False
+            else:
+                self.log_test("Pending Check-in Expiration", False, "Could not get available rooms")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Pending Check-in Expiration", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 3: Test double-booking prevention during pending process
+        print("   STEP 3: Test double-booking prevention...")
+        try:
+            # Get available room
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    target_room = available_rooms[0]
+                    
+                    # Create first pending check-in
+                    prepare_data1 = {
+                        "customer_id": test_customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": target_room
+                    }
+                    
+                    response1 = requests.post(
+                        f"{self.api_url}/checkin/prepare",
+                        json=prepare_data1,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response1.status_code == 200:
+                        # Now try to create another pending check-in for the same room
+                        # (This should be prevented or handled appropriately)
+                        
+                        # Create another customer for the test
+                        customer_data2 = {
+                            "first_name": "Double",
+                            "last_name": "Book",
+                            "id_number": f"DOUBLE_BOOK_{unique_timestamp}",
+                            "date_of_birth": "1990-01-01",
+                            "id_expiration_date": "2025-12-31",
+                            "state_of_id": "CA"
+                        }
+                        
+                        customer_response = requests.post(
+                            f"{self.api_url}/customers",
+                            json=customer_data2,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if customer_response.status_code == 200:
+                            customer2_id = customer_response.json()['id']
+                            
+                            prepare_data2 = {
+                                "customer_id": customer2_id,
+                                "membership_type": "1_day",
+                                "room_type": "locker",
+                                "room_number": target_room  # Same room
+                            }
+                            
+                            response2 = requests.post(
+                                f"{self.api_url}/checkin/prepare",
+                                json=prepare_data2,
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            # This should either fail or be handled appropriately
+                            # The system should prevent double-booking
+                            prevents_double_booking = response2.status_code != 200 or "occupied" in response2.text.lower() or "available" in response2.text.lower()
+                            
+                            self.log_test("Double-booking Prevention", prevents_double_booking, 
+                                        f"Second prepare status: {response2.status_code} (should prevent double-booking)")
+                            
+                            if not prevents_double_booking:
+                                all_success = False
+                        else:
+                            self.log_test("Double-booking Prevention", False, "Could not create second customer")
+                            all_success = False
+                    else:
+                        self.log_test("Double-booking Prevention", False, "First prepare failed")
+                        all_success = False
+                else:
+                    self.log_test("Double-booking Prevention", False, "No available rooms")
+                    all_success = False
+            else:
+                self.log_test("Double-booking Prevention", False, "Could not get available rooms")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Double-booking Prevention", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
+    def test_payment_flow_protection(self):
+        """Test that the payment flow protection works correctly"""
+        print("\n💳 TESTING PAYMENT FLOW PROTECTION...")
+        print("   Testing that no check-in happens if payment is never completed")
+        
+        if not self.token:
+            return self.log_test("Payment Flow Protection", False, "No authentication token")
+        
+        all_success = True
+        test_customer_id = None
+        
+        # Step 1: Create test customer
+        print("   STEP 1: Create test customer for payment flow testing...")
+        try:
+            unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            customer_data = {
+                "first_name": "Payment",
+                "last_name": "Flow",
+                "id_number": f"PAYMENT_FLOW_{unique_timestamp}",
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                test_customer_id = response.json()['id']
+                self.log_test("Create Payment Flow Test Customer", True, f"Customer ID: {test_customer_id}")
+            else:
+                self.log_test("Create Payment Flow Test Customer", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Payment Flow Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # Step 2: Test that prepare step doesn't change room assignments
+        print("   STEP 2: Test prepare step doesn't change room assignments...")
+        try:
+            # Get available room
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    target_room = available_rooms[0]
+                    
+                    # Get current active check-ins count
+                    active_response = requests.get(
+                        f"{self.api_url}/checkins/active",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    initial_checkins_count = len(active_response.json()) if active_response.status_code == 200 else 0
+                    
+                    # Prepare check-in
+                    prepare_data = {
+                        "customer_id": test_customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": target_room
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin/prepare",
+                        json=prepare_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        # Check that active check-ins count hasn't changed
+                        active_response2 = requests.get(
+                            f"{self.api_url}/checkins/active",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        final_checkins_count = len(active_response2.json()) if active_response2.status_code == 200 else 0
+                        
+                        no_room_assignment = initial_checkins_count == final_checkins_count
+                        
+                        self.log_test("Prepare Doesn't Change Room Assignments", no_room_assignment, 
+                                    f"Initial: {initial_checkins_count}, After prepare: {final_checkins_count}")
+                        
+                        if not no_room_assignment:
+                            all_success = False
+                    else:
+                        self.log_test("Prepare Doesn't Change Room Assignments", False, f"Prepare failed: {response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test("Prepare Doesn't Change Room Assignments", False, "No available rooms")
+                    all_success = False
+            else:
+                self.log_test("Prepare Doesn't Change Room Assignments", False, "Could not get available rooms")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Prepare Doesn't Change Room Assignments", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 3: Test that completion step requires valid pending check-in ID
+        print("   STEP 3: Test completion requires valid pending check-in ID...")
+        try:
+            # Try to complete with invalid ID
+            invalid_id = "invalid_pending_id_12345"
+            
+            response = requests.post(
+                f"{self.api_url}/checkin/complete",
+                json={"pending_checkin_id": invalid_id},
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should fail with 404 or 400
+            requires_valid_id = response.status_code in [400, 404]
+            
+            self.log_test("Completion Requires Valid Pending ID", requires_valid_id, 
+                        f"Status: {response.status_code} (should be 400 or 404)")
+            
+            if not requires_valid_id:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Completion Requires Valid Pending ID", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 4: Test that uncompleted check-ins don't create actual check-in records
+        print("   STEP 4: Test uncompleted check-ins don't create actual records...")
+        try:
+            # Create a pending check-in but don't complete it
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    # Get initial active check-ins count
+                    active_response = requests.get(
+                        f"{self.api_url}/checkins/active",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    initial_count = len(active_response.json()) if active_response.status_code == 200 else 0
+                    
+                    # Prepare but don't complete
+                    prepare_data = {
+                        "customer_id": test_customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin/prepare",
+                        json=prepare_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        # Wait a moment then check active check-ins again
+                        time.sleep(1)
+                        
+                        active_response2 = requests.get(
+                            f"{self.api_url}/checkins/active",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        final_count = len(active_response2.json()) if active_response2.status_code == 200 else 0
+                        
+                        # Should still be the same count (no actual check-in created)
+                        no_actual_checkin = initial_count == final_count
+                        
+                        self.log_test("Uncompleted Check-ins Don't Create Records", no_actual_checkin, 
+                                    f"Initial: {initial_count}, After uncompleted prepare: {final_count}")
+                        
+                        if not no_actual_checkin:
+                            all_success = False
+                    else:
+                        self.log_test("Uncompleted Check-ins Don't Create Records", False, f"Prepare failed: {response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test("Uncompleted Check-ins Don't Create Records", False, "No available rooms")
+                    all_success = False
+            else:
+                self.log_test("Uncompleted Check-ins Don't Create Records", False, "Could not get available rooms")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Uncompleted Check-ins Don't Create Records", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all comprehensive API tests"""
         print("🚀 Starting Comprehensive API Testing...")
