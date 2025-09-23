@@ -3,6 +3,8 @@ import sys
 import json
 from datetime import datetime, timedelta
 import uuid
+import jwt
+import time
 
 class BathhouseAPITester:
     def __init__(self, base_url="https://spa-admin-hub-1.preview.emergentagent.com"):
