@@ -259,6 +259,30 @@ function App() {
     setLoading(false);
   };
 
+  // Utility function for handling token errors
+  const handleTokenError = (error, defaultMessage = 'An error occurred') => {
+    if (error.response) {
+      const status = error.response.status;
+      const detail = error.response.data?.detail || error.response.data?.message || 'Unknown error';
+      
+      if (status === 401 && (detail === 'Token expired' || detail.includes('expired'))) {
+        alert('Your session has expired. Please log in again.');
+        logout();
+        return;
+      } else if (status === 401 || status === 403) {
+        alert('Authentication failed. Please log in again.');
+        logout();
+        return;
+      } else {
+        alert(`${defaultMessage}: ${detail}`);
+      }
+    } else if (error.request) {
+      alert('Network error. Please check your connection and try again.');
+    } else {
+      alert(`${defaultMessage}: An unexpected error occurred.`);
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
