@@ -9022,6 +9022,44 @@ class BathhouseAPITester:
             print(f"⚠️  {failed_count} test(s) failed")
             return False
 
+    def run_all_tests(self):
+        """Run all comprehensive API tests"""
+        print("🚀 Starting Comprehensive API Testing...")
+        print("=" * 80)
+        
+        # Authentication
+        if not self.test_login():
+            print("❌ Authentication failed - stopping tests")
+            return False
+        
+        # Core functionality tests
+        self.test_create_customer()
+        self.test_search_customers()
+        self.test_get_customer()
+        self.test_available_rooms()
+        self.test_checkin()
+        self.test_active_checkins()
+        self.test_checkout()
+        
+        # Token expiration handling tests (NEW)
+        self.test_token_expiration_handling()
+        
+        # Business rules
+        self.test_business_rules()
+        
+        # Print final results
+        print("\n" + "=" * 80)
+        print("🏁 COMPREHENSIVE TESTING COMPLETE")
+        print(f"📊 Results: {self.tests_passed}/{self.tests_run} tests passed")
+        
+        if self.tests_passed == self.tests_run:
+            print("🎉 ALL TESTS PASSED! 🎉")
+            return True
+        else:
+            failed_count = self.tests_run - self.tests_passed
+            print(f"⚠️  {failed_count} test(s) failed")
+            return False
+
 def main():
     """Main function with options for different test modes"""
     import sys
