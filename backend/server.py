@@ -1614,7 +1614,13 @@ async def complete_room_upgrade(checkin_id: str, pending_upgrade_id: str, curren
         raise HTTPException(status_code=404, detail="Pending upgrade not found or already processed")
     
     # Check if expired
-    if datetime.now(timezone.utc) > pending_upgrade["expires_at"]:
+    expires_at = pending_upgrade["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+    elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if datetime.now(timezone.utc) > expires_at:
         await db.pending_room_upgrades.update_one(
             {"id": pending_upgrade_id},
             {"$set": {"status": "expired"}}
