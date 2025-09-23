@@ -284,7 +284,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Renewal System Fix - Cumulative Time Allocation"
+    - "Token Expiration Handling for Admin Settings Operations"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
