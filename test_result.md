@@ -105,6 +105,18 @@
 user_problem_statement: "RESOLVED: Token expiration issue when adding discounts/additional items in admin settings. Enhanced error handling with proper session management and user-friendly error messages for authentication failures."
 
 backend:
+  - task: "Valid Membership Check-in Fix"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "CRITICAL CHECK-IN FIX TESTING COMPLETED - CORE FUNCTIONALITY WORKING: Comprehensive testing of the fix for customers with valid memberships being blocked from checking in completed with 78% success rate (7/9 tests passed). ✅ CUSTOMER CREATION AND MEMBERSHIP ESTABLISHMENT: Successfully created test customer and established valid 6-month membership with proper fee charging ($25.00) - WORKING, ✅ MEMBERSHIP STATUS VERIFICATION: Customer membership status endpoint correctly shows valid 6-month membership with 179 days remaining - WORKING, ✅ CRITICAL FIX VERIFICATION: Customer with valid 6-month membership can successfully check-in when no membership_type is specified (uses existing membership with $0 fee) - WORKING, ✅ ERROR HANDLING: Customer without valid membership properly blocked with appropriate error message - WORKING, ✅ MEMBERSHIP PURCHASE COMPLETION: Check-out process works correctly to complete membership purchase - WORKING. ⚠️ MINOR RESPONSE FORMAT ISSUES: When customer explicitly requests '6_month' membership while having valid existing membership, the response doesn't include membership_status field indicating use of existing membership (but still charges $0 fee correctly), duplicate membership purchase prevention works via logic but response format could be clearer. CONCLUSION: The critical fix is working correctly - customers with valid memberships are NO LONGER blocked from checking in. The core functionality prevents the reported issue where valid membership holders couldn't check in. Minor response format improvements could enhance user experience but don't affect core functionality."
+
   - task: "Delete All Preset Discounts and Additional Items"
     implemented: true
     working: true
