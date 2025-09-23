@@ -1053,6 +1053,8 @@ class BathhouseAPITester:
                         requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
                     else:
                         all_success = False
+                        # Try to check out anyway to clean up
+                        requests.put(f"{self.api_url}/checkin/{checkin_response['id']}/checkout", headers=self.headers, timeout=10)
                 else:
                     # If it fails, that's also acceptable as long as it's preventing duplicate purchase
                     error_message = response.text
