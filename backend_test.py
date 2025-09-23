@@ -9041,6 +9041,9 @@ class BathhouseAPITester:
         self.test_active_checkins()
         self.test_checkout()
         
+        # CRITICAL FIX TESTING - Valid Membership Check-in
+        self.test_valid_membership_checkin_fix()
+        
         # Token expiration handling tests (NEW)
         self.test_token_expiration_handling()
         
