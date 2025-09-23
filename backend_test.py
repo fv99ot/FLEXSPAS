@@ -1727,6 +1727,377 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_membership_without_payment_issue(self):
+        """Test MEMBERSHIP WITHOUT PAYMENT ISSUE - investigate if memberships are granted without payment completion"""
+        print("\n🔍 TESTING MEMBERSHIP WITHOUT PAYMENT ISSUE")
+        print("   Investigating if memberships are being granted to customers without payment completion")
+        
+        if not self.token:
+            return self.log_test("Membership Without Payment Investigation", False, "No authentication token")
+        
+        all_success = True
+        
+        # Generate unique customer data for testing
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        test_customer_data = {
+            "first_name": "Payment",
+            "last_name": "TestCustomer",
+            "id_number": f"PAYMENT_TEST_{unique_timestamp}",
+            "date_of_birth": "1988-07-20",
+            "id_expiration_date": "2026-12-31",
+            "state_of_id": "CA"
+        }
+        
+        created_customer_id = None
+        
+        # STEP 1: Create Test Customer
+        print("   STEP 1: Create Test Customer...")
+        try:
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=test_customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                customer_data = response.json()
+                created_customer_id = customer_data['id']
+                self.log_test("Create Test Customer for Payment Investigation", True, f"Created: {customer_data['first_name']} {customer_data['last_name']} (ID: {created_customer_id})")
+            else:
+                self.log_test("Create Test Customer for Payment Investigation", False, f"Status: {response.status_code}, Response: {response.text}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Test Customer for Payment Investigation", False, f"Exception: {str(e)}")
+            return False
+        
+        # STEP 2: Check Initial Membership Status (should have no valid membership)
+        print("   STEP 2: Check Initial Membership Status (should have no valid membership)...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers/{created_customer_id}/membership-status",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                membership_status = response.json()
+                has_valid_membership = membership_status.get('has_valid_membership', True)  # Should be False
+                membership_type = membership_status.get('membership_type')
+                days_remaining = membership_status.get('days_remaining', 1)  # Should be 0
+                
+                no_initial_membership = not has_valid_membership and membership_type is None and days_remaining == 0
+                
+                self.log_test("Initial Membership Status Check", no_initial_membership, 
+                            f"Has valid membership: {has_valid_membership} (should be False), Type: {membership_type} (should be None), Days remaining: {days_remaining} (should be 0)")
+                
+                if not no_initial_membership:
+                    all_success = False
+            else:
+                self.log_test("Initial Membership Status Check", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Initial Membership Status Check", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 3: Create Transaction with 6-month membership via POST /api/transactions
+        print("   STEP 3: Create Transaction with 6-month membership via POST /api/transactions...")
+        transaction_id = None
+        try:
+            transaction_data = {
+                "customer_id": created_customer_id,
+                "customer_name": f"{test_customer_data['first_name']} {test_customer_data['last_name']}",
+                "transaction_type": "membership",
+                "items": [{"name": "6-Month Membership", "price": 25.0, "quantity": 1}],
+                "subtotal": 25.0,
+                "discount_name": None,
+                "discount_amount": 0.0,
+                "total_amount": 25.0,
+                "payment_method": "cash",
+                "checkin_id": None,
+                "membership_type": "6_month",
+                "is_refund": False,
+                "original_transaction_id": None,
+                "notes": "Testing membership transaction creation without payment completion"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/transactions",
+                json=transaction_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                transaction_response = response.json()
+                transaction_id = transaction_response.get('id')
+                self.log_test("Create Membership Transaction Record", True, f"Transaction ID: {transaction_id}, Type: {transaction_response.get('transaction_type')}, Amount: ${transaction_response.get('total_amount')}")
+            else:
+                self.log_test("Create Membership Transaction Record", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Membership Transaction Record", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 4: Immediately Check Customer Membership Status After Transaction Creation
+        print("   STEP 4: Check Customer Membership Status IMMEDIATELY After Transaction Creation...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/customers/{created_customer_id}/membership-status",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                membership_status = response.json()
+                has_valid_membership = membership_status.get('has_valid_membership', False)
+                membership_type = membership_status.get('membership_type')
+                days_remaining = membership_status.get('days_remaining', 0)
+                
+                # CRITICAL TEST: If membership was applied just from transaction creation, this is the bug
+                membership_applied_without_payment = has_valid_membership and membership_type == '6_month' and days_remaining > 0
+                
+                self.log_test("Membership Status After Transaction Creation", not membership_applied_without_payment, 
+                            f"Has valid membership: {has_valid_membership}, Type: {membership_type}, Days remaining: {days_remaining} - MEMBERSHIP APPLIED WITHOUT PAYMENT: {membership_applied_without_payment}")
+                
+                if membership_applied_without_payment:
+                    print("   ⚠️  CRITICAL ISSUE FOUND: Membership was applied immediately after transaction creation without payment confirmation!")
+                    all_success = False
+                else:
+                    print("   ✅ GOOD: Membership was NOT applied just from transaction creation")
+                    
+            else:
+                self.log_test("Membership Status After Transaction Creation", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Membership Status After Transaction Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 5: Test Transaction Lifecycle - Check if customer gains membership just from transaction creation
+        print("   STEP 5: Test Transaction Lifecycle - Verify No Automatic Membership Processing...")
+        try:
+            # Get transaction history to verify transaction was created
+            response = requests.get(
+                f"{self.api_url}/transactions?customer_id={created_customer_id}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                transactions = response.json()
+                membership_transactions = [t for t in transactions if t.get('transaction_type') == 'membership' and t.get('membership_type') == '6_month']
+                
+                has_membership_transaction = len(membership_transactions) > 0
+                
+                self.log_test("Membership Transaction in History", has_membership_transaction, 
+                            f"Found {len(membership_transactions)} membership transactions for customer")
+                
+                if not has_membership_transaction:
+                    all_success = False
+                    
+            else:
+                self.log_test("Membership Transaction in History", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Membership Transaction in History", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 6: Test Membership Status Tracking - Verify how system determines membership validity
+        print("   STEP 6: Test Membership Status Tracking - Verify System Logic...")
+        try:
+            # Check if membership status is based on check-in history vs separate membership records
+            # Based on the backend code, membership validation looks at check-in history with 6_month membership_type
+            
+            # Try to check-in the customer to see if they can use the "membership" from the transaction
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    # Try to check-in without specifying membership_type (should fail if no valid membership)
+                    checkin_data = {
+                        "customer_id": created_customer_id,
+                        # No membership_type - should fail if customer has no valid membership
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin",
+                        json=checkin_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    # Should fail with 400 status if customer has no valid membership
+                    checkin_blocked = response.status_code == 400
+                    error_message = response.text if response.status_code != 200 else ""
+                    
+                    self.log_test("Check-in Blocked Without Valid Membership", checkin_blocked, 
+                                f"Status: {response.status_code} (should be 400), Error: {error_message}")
+                    
+                    if not checkin_blocked:
+                        print("   ⚠️  CRITICAL ISSUE: Customer can check-in without valid membership - transaction may have granted membership!")
+                        all_success = False
+                    else:
+                        print("   ✅ GOOD: Customer properly blocked from check-in without valid membership")
+                        
+                else:
+                    self.log_test("Check-in Blocked Without Valid Membership", False, "No available rooms for test")
+                    all_success = False
+            else:
+                self.log_test("Check-in Blocked Without Valid Membership", False, "Could not get available rooms")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Check-in Blocked Without Valid Membership", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 7: Investigate Transaction-to-Membership Flow
+        print("   STEP 7: Investigate Transaction-to-Membership Flow...")
+        try:
+            # Test if there's any automatic membership application process
+            # Create another transaction and monitor for any background processing
+            
+            time.sleep(2)  # Wait 2 seconds to see if any background processing occurs
+            
+            # Check membership status again after waiting
+            response = requests.get(
+                f"{self.api_url}/customers/{created_customer_id}/membership-status",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                membership_status = response.json()
+                has_valid_membership = membership_status.get('has_valid_membership', False)
+                membership_type = membership_status.get('membership_type')
+                days_remaining = membership_status.get('days_remaining', 0)
+                
+                # Check if membership was applied after waiting (background processing)
+                delayed_membership_application = has_valid_membership and membership_type == '6_month' and days_remaining > 0
+                
+                self.log_test("No Delayed Membership Application", not delayed_membership_application, 
+                            f"After 2 seconds - Has valid membership: {has_valid_membership}, Type: {membership_type}, Days remaining: {days_remaining}")
+                
+                if delayed_membership_application:
+                    print("   ⚠️  CRITICAL ISSUE: Membership was applied after a delay - there may be background processing!")
+                    all_success = False
+                else:
+                    print("   ✅ GOOD: No delayed membership application detected")
+                    
+            else:
+                self.log_test("No Delayed Membership Application", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("No Delayed Membership Application", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 8: Test Proper Membership Application via Check-in
+        print("   STEP 8: Test Proper Membership Application via Check-in Process...")
+        try:
+            # Now test the proper way to apply membership - through check-in process
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    # Check-in with 6_month membership_type (this should properly apply membership)
+                    checkin_data = {
+                        "customer_id": created_customer_id,
+                        "membership_type": "6_month",  # Explicitly request 6-month membership
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin",
+                        json=checkin_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        checkin_response = response.json()
+                        membership_fee = checkin_response.get('membership_fee', 0)
+                        checkin_id = checkin_response.get('id')
+                        
+                        # Should charge membership fee for new membership
+                        proper_membership_fee = membership_fee == 25.0
+                        
+                        self.log_test("Proper Membership Application via Check-in", proper_membership_fee, 
+                                    f"Check-in successful, Membership fee: ${membership_fee} (should be $25.00)")
+                        
+                        if proper_membership_fee:
+                            # Check out immediately to complete the membership application
+                            checkout_response = requests.put(
+                                f"{self.api_url}/checkin/{checkin_id}/checkout",
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            if checkout_response.status_code == 200:
+                                print("   ✅ GOOD: Membership properly applied through check-in process")
+                                
+                                # Now verify customer has valid membership
+                                membership_response = requests.get(
+                                    f"{self.api_url}/customers/{created_customer_id}/membership-status",
+                                    headers=self.headers,
+                                    timeout=10
+                                )
+                                
+                                if membership_response.status_code == 200:
+                                    final_status = membership_response.json()
+                                    has_valid_membership = final_status.get('has_valid_membership', False)
+                                    membership_type = final_status.get('membership_type')
+                                    days_remaining = final_status.get('days_remaining', 0)
+                                    
+                                    proper_membership_applied = has_valid_membership and membership_type == '6_month' and days_remaining > 0
+                                    
+                                    self.log_test("Membership Applied After Check-in Process", proper_membership_applied, 
+                                                f"Has valid membership: {has_valid_membership}, Type: {membership_type}, Days remaining: {days_remaining}")
+                                    
+                                    if not proper_membership_applied:
+                                        all_success = False
+                                else:
+                                    self.log_test("Membership Applied After Check-in Process", False, "Could not verify final membership status")
+                                    all_success = False
+                            else:
+                                self.log_test("Proper Membership Application via Check-in", False, "Could not check out customer")
+                                all_success = False
+                        else:
+                            all_success = False
+                    else:
+                        self.log_test("Proper Membership Application via Check-in", False, f"Status: {response.status_code}, Response: {response.text}")
+                        all_success = False
+                        
+                else:
+                    self.log_test("Proper Membership Application via Check-in", False, "No available rooms for test")
+                    all_success = False
+            else:
+                self.log_test("Proper Membership Application via Check-in", False, "Could not get available rooms")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Proper Membership Application via Check-in", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def test_user_reported_approval_issue(self):
         """Test the specific user-reported issue: 'won't let me approve a customer after they submit their QR code form'"""
         print("\n🚨 Testing User-Reported Approval Issue...")
