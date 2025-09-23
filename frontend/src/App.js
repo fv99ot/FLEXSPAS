@@ -814,6 +814,34 @@ function App() {
     }
   };
 
+  const updateAdditionalItem = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
+      await axios.put(`${API}/api/additional-items/${editingItem.id}`, {
+        name: editingItem.name,
+        price: parseFloat(editingItem.price),
+        category: editingItem.category
+      }, { headers });
+      
+      setEditingItem(null);
+      setShowEditItem(false);
+      fetchAdditionalItems();
+      fetchAdminItems();
+      alert('Additional item updated successfully!');
+    } catch (error) {
+      console.error('Error updating additional item:', error);
+      handleTokenError(error, 'Error updating additional item');
+    }
+  };
+
   const deleteAdditionalItem = async (itemId) => {
     if (!window.confirm('Are you sure you want to delete this item?')) {
       return;
