@@ -659,13 +659,18 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
     
     return {
         "pending_checkin_id": pending_checkin_doc["id"],
-        "customer": customer,
+        "customer": {
+            "id": customer["id"],
+            "first_name": customer["first_name"],
+            "last_name": customer["last_name"],
+            "id_number": customer["id_number"]
+        },
         "room_type": room_type,
         "room_number": room_number,
         "membership_type": membership_type,
         "total_amount": total_amount,
         "membership_status": membership_status,
-        "expires_at": pending_checkin_doc["expires_at"],
+        "expires_at": pending_checkin_doc["expires_at"].isoformat(),
         "message": "Check-in prepared. Complete payment to finalize."
     }
 
