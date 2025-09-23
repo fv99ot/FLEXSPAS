@@ -10448,6 +10448,13 @@ class BathhouseAPITester:
         self.test_search_customers()
         self.test_get_customer()
         self.test_available_rooms()
+        
+        # CRITICAL: Two-step check-in process tests (HIGHEST PRIORITY)
+        self.test_two_step_checkin_process()
+        self.test_checkin_security_features()
+        self.test_payment_flow_protection()
+        
+        # Legacy check-in tests (for comparison)
         self.test_checkin()
         self.test_active_checkins()
         self.test_checkout()
