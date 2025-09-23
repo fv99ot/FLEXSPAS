@@ -1193,7 +1193,7 @@ function App() {
       // Prepare check-in data with proper room_type for backend
       const checkInData = {
         customer_id: selectedCustomer.id,
-        membership_type: checkinForm.membership_type,
+        membership_type: checkinForm.membership_type || null, // Use null if no membership_type (backend will use existing membership)
         room_type: finalRoomType,
         room_number: parseInt(checkinForm.room_number)
       };
