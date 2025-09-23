@@ -1206,13 +1206,15 @@ function App() {
       };
 
       console.log('📤 Sending check-in data:', JSON.stringify(checkInData, null, 2));
-      console.log('🌐 API endpoint:', `${API}/api/checkin`);
+      console.log('🌐 API endpoint:', `${API}/api/checkin/prepare`);
 
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      const response = await axios.post(`${API}/api/checkin`, checkInData, { headers });
       
-      console.log('✅ Check-in response received:', JSON.stringify(response.data, null, 2));
+      // Step 1: Prepare check-in (validate, check availability, calculate costs, but don't check in yet)
+      const response = await axios.post(`${API}/api/checkin/prepare`, checkInData, { headers });
+      
+      console.log('✅ Check-in prepare response received:', JSON.stringify(response.data, null, 2));
       
       // Handle membership validation message
       if (response.data.membership_status) {
@@ -1221,16 +1223,24 @@ function App() {
         }
       }
       
-      // Set up payment data
+      // Set up payment data with pending check-in ID for completion
       const paymentInfo = {
-        checkInId: response.data.id,
+        checkInId: null, // Will be set after completion
         customerName: `${selectedCustomer.first_name} ${selectedCustomer.last_name}`,
+        customerId: selectedCustomer.id,
         totalAmount: response.data.total_amount,
         paymentMethod: '',
         additionalItems: [],
         selectedDiscount: null,
         discountAmount: 0,
-        transactionType: 'checkin'
+        transactionType: 'checkin',
+        pendingCheckinId: response.data.pending_checkin_id, // Store for completion
+        checkinDetails: {
+          roomType: response.data.room_type,
+          roomNumber: response.data.room_number,
+          membershipType: response.data.membership_type,
+          membershipStatus: response.data.membership_status
+        }
       };
 
       console.log('💰 Setting payment data:', JSON.stringify(paymentInfo, null, 2));
