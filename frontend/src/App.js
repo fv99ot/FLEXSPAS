@@ -3308,6 +3308,17 @@ function App() {
                                 size="sm"
                                 variant="outline"
                                 className="border-white/20 text-white hover:bg-white/10"
+                                onClick={() => {
+                                  setEditingItem(item);
+                                  setShowEditItem(true);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/20 text-white hover:bg-white/10"
                                 onClick={() => toggleAdditionalItem(item.id, item.active)}
                               >
                                 {item.active ? 'Disable' : 'Enable'}
