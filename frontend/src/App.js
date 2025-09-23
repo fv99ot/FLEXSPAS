@@ -728,6 +728,34 @@ function App() {
     }
   };
 
+  const updateDiscount = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
+      await axios.put(`${API}/api/discounts/${editingDiscount.id}`, {
+        name: editingDiscount.name,
+        amount: parseFloat(editingDiscount.amount),
+        description: editingDiscount.description
+      }, { headers });
+      
+      setEditingDiscount(null);
+      setShowEditDiscount(false);
+      fetchDiscounts();
+      fetchAdminDiscounts();
+      alert('Discount updated successfully!');
+    } catch (error) {
+      console.error('Error updating discount:', error);
+      handleTokenError(error, 'Error updating discount');
+    }
+  };
+
   const deleteDiscount = async (discountId) => {
     if (!window.confirm('Are you sure you want to delete this discount?')) {
       return;
