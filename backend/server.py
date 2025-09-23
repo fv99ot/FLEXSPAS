@@ -549,64 +549,47 @@ async def check_in_customer(checkin_data: dict, current_user: User = Depends(get
     
     # Check for valid existing membership
     membership_status = None
-    if membership_type == "6_month":
-        # Check if customer already has valid 6-month membership
-        recent_checkin = await db.check_ins.find_one(
-            {
-                "customer_id": customer_id,
-                "membership_type": "6_month",
-                "check_in_time": {"$ne": None}
-            },
-            sort=[("check_in_time", -1)]
-        )
-        
-        if recent_checkin:
-            check_in_time = recent_checkin["check_in_time"]
-            if isinstance(check_in_time, str):
-                check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
-            elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
-                check_in_time = check_in_time.replace(tzinfo=timezone.utc)
-            
-            expiration_date = check_in_time + timedelta(days=180)
-            current_time = datetime.now(timezone.utc)
-            
-            if current_time < expiration_date:
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Customer already has valid 6-month membership until {expiration_date.strftime('%Y-%m-%d')}. No need to purchase another membership."
-                )
     
-    # If no membership_type provided, check if customer has valid membership
-    if not membership_type:
-        recent_checkin = await db.check_ins.find_one(
-            {
-                "customer_id": customer_id,
-                "membership_type": "6_month",
-                "check_in_time": {"$ne": None}
-            },
-            sort=[("check_in_time", -1)]
-        )
+    # First, check if customer has valid existing membership regardless of what was requested
+    recent_checkin = await db.check_ins.find_one(
+        {
+            "customer_id": customer_id,
+            "membership_type": "6_month",
+            "check_in_time": {"$ne": None}
+        },
+        sort=[("check_in_time", -1)]
+    )
+    
+    existing_membership_valid = False
+    if recent_checkin:
+        check_in_time = recent_checkin["check_in_time"]
+        if isinstance(check_in_time, str):
+            check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
+        elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
+            check_in_time = check_in_time.replace(tzinfo=timezone.utc)
         
-        if recent_checkin:
-            check_in_time = recent_checkin["check_in_time"]
-            if isinstance(check_in_time, str):
-                check_in_time = datetime.fromisoformat(check_in_time.replace('Z', '+00:00'))
-            elif isinstance(check_in_time, datetime) and check_in_time.tzinfo is None:
-                check_in_time = check_in_time.replace(tzinfo=timezone.utc)
-            
-            expiration_date = check_in_time + timedelta(days=180)
-            current_time = datetime.now(timezone.utc)
-            
-            if current_time < expiration_date:
-                # Customer has valid membership, use it
-                membership_type = "6_month"
-                membership_status = {
-                    "using_existing": True,
-                    "expiration_date": expiration_date
-                }
+        expiration_date = check_in_time + timedelta(days=180)
+        current_time = datetime.now(timezone.utc)
         
-        if not membership_type:
-            raise HTTPException(status_code=400, detail="Customer has no valid membership. Must purchase membership to check in.")
+        if current_time < expiration_date:
+            existing_membership_valid = True
+            membership_type = "6_month"  # Use existing membership
+            membership_status = {
+                "using_existing": True,
+                "expiration_date": expiration_date
+            }
+    
+    # If customer has valid membership, use it regardless of what was requested
+    if existing_membership_valid:
+        # Customer has valid membership, allow check-in with existing membership
+        pass
+    elif membership_type == "6_month":
+        # Customer is purchasing new 6-month membership (and doesn't have existing valid one)
+        pass
+    elif not membership_type:
+        # No membership provided and no valid existing membership
+        raise HTTPException(status_code=400, detail="Customer has no valid membership. Must purchase membership to check in.")
+    # For 1_day membership, proceed normally
     
     # Check for active check-in
     existing_checkin = await db.check_ins.find_one({"customer_id": customer_id, "check_out_time": None})
