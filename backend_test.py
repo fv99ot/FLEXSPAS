@@ -1380,8 +1380,7 @@ class BathhouseAPITester:
         if pending_upgrade_id:
             try:
                 response = requests.post(
-                    f"{self.api_url}/checkin/{test_checkin_id}/upgrade/complete",
-                    json={"pending_upgrade_id": pending_upgrade_id},
+                    f"{self.api_url}/checkin/{test_checkin_id}/upgrade/complete?pending_upgrade_id={pending_upgrade_id}",
                     headers=self.headers,
                     timeout=10
                 )
