@@ -1324,11 +1324,21 @@ function App() {
         alert(`✅ Overtime payment completed successfully!\n\nAmount paid: $${response.data.amount_paid.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
         
       } else if (paymentData.transactionType === 'room_upgrade') {
-        // Handle room upgrade transaction - create transaction record
+        // Handle room upgrade transaction - complete the upgrade AFTER payment
+        
+        // Step 1: Complete the room upgrade (apply the room change)
+        const upgradeResponse = await axios.post(`${API}/api/checkin/${paymentData.checkInId}/upgrade/complete`, {
+          pending_upgrade_id: paymentData.pendingUpgradeId
+        }, { headers });
+        
+        // Step 2: Create transaction record for accounting
         await axios.post(`${API}/api/transactions`, transactionData, { headers });
         
-        alert(`✅ Room upgrade payment completed successfully!\n\nUpgrade fee: $${paymentData.totalAmount.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
+        alert(`✅ Room upgrade completed successfully!\n\nUpgraded from: ${paymentData.upgradeDetails?.oldRoom}\nUpgraded to: ${paymentData.upgradeDetails?.newRoom}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
         
+        // Refresh data to show updated room assignments
+        fetchActiveCheckins();
+        fetchRoomMap();
       } else if (paymentData.transactionType === 'renewal') {
         // Call renewal API endpoint after payment is complete
         const response = await axios.put(`${API}/api/checkin/${paymentData.checkInId}/renew`, {}, { headers });
