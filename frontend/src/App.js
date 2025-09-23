@@ -1380,8 +1380,38 @@ function App() {
         // Clear current transaction
         clearCurrentTransaction();
         
+      } else if (paymentData.transactionType === 'checkin') {
+        // Handle check-in transaction - complete the check-in AFTER payment
+        
+        // Step 1: Complete the check-in (actually check customer in)
+        const checkinResponse = await axios.post(`${API}/api/checkin/complete?pending_checkin_id=${paymentData.pendingCheckinId}`, {}, { headers });
+        
+        // Step 2: Create transaction record for accounting
+        const checkinTransactionData = {
+          ...transactionData,
+          checkin_id: checkinResponse.data.id // Use the actual check-in ID
+        };
+        await axios.post(`${API}/api/transactions`, checkinTransactionData, { headers });
+        
+        // Print receipt with actual check-in details
+        if (paymentData.checkinDetails) {
+          const checkInData = {
+            room_type: paymentData.checkinDetails.roomType,
+            room_number: paymentData.checkinDetails.roomNumber,
+            membership_type: paymentData.checkinDetails.membershipType,
+            check_in_time: new Date(checkinResponse.data.check_in_time)
+          };
+          printReceipt(paymentData.customerName, paymentData.totalAmount, paymentData.paymentMethod, checkInData);
+        }
+        
+        alert(`✅ Check-in completed successfully for ${paymentData.customerName}!\n\nRoom: ${paymentData.checkinDetails?.roomType?.replace('_', ' ')?.toUpperCase()} #${paymentData.checkinDetails?.roomNumber}\nMembership: ${paymentData.checkinDetails?.membershipType?.replace('_', ' ')}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
+        
+        // Refresh data to show updated check-ins and room map
+        fetchActiveCheckins();
+        fetchRoomMap();
+        
       } else {
-        // Handle regular check-in transactions
+        // Handle other transaction types (legacy check-in format)
         // Create transaction record
         await axios.post(`${API}/api/transactions`, transactionData, { headers });
         
