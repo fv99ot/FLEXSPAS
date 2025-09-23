@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "RESOLVED: 1) Sales report numbers corrected - now shows accurate revenue, refunds, and net revenue, 2) Refund reports added - comprehensive refund summary with rates and breakdowns included, 3) Room upgrade payment bug FIXED - customers no longer moved to new rooms without payment completion."
+user_problem_statement: "CRITICAL BUG: Check-in process allows customers to be checked into rooms/lockers without payment when page is refreshed before transaction finalization. This is causing revenue loss and needs immediate fix with two-step check-in process."
 
 backend:
   - task: "Valid Membership Check-in Fix"
