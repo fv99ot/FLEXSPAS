@@ -556,9 +556,8 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
             raise HTTPException(status_code=400, detail="Locker is already occupied")
         
         # Check if locker is assigned to an employee
-        employee_assignment = await db.employee_lockers.find_one({
-            "locker_number": room_number,
-            "active": True
+        employee_assignment = await db.users.find_one({
+            "assigned_locker_number": str(room_number)
         })
         if employee_assignment:
             raise HTTPException(status_code=400, detail="Locker is assigned to an employee and not available for customers")
