@@ -3194,11 +3194,40 @@ function App() {
                                 <div key={method} className="flex justify-between items-center p-2 bg-white/5 rounded">
                                   <span className="text-white capitalize">{method}</span>
                                   <div className="text-right">
-                                    <span className="text-white font-semibold">${data.amount?.toFixed(2) || '0.00'}</span>
+                                    <span className="text-green-400 font-semibold">${data.revenue?.toFixed(2) || '0.00'}</span>
                                     <span className="text-gray-300 text-sm ml-2">({data.count || 0} transactions)</span>
+                                    {data.refunds > 0 && (
+                                      <span className="text-red-400 text-sm block">-${data.refunds?.toFixed(2)} refunds</span>
+                                    )}
+                                    <span className="text-white text-sm block">Net: ${data.net?.toFixed(2) || '0.00'}</span>
                                   </div>
                                 </div>
                               ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Add Refund Summary Card */}
+                      {salesData.refund_summary && (
+                        <Card className="bg-white/10 border-white/20">
+                          <CardHeader>
+                            <CardTitle className="text-white">Refund Summary</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="text-center">
+                                <p className="text-sm text-gray-300">Total Refunds</p>
+                                <p className="text-xl font-bold text-red-400">${salesData.refund_summary.total_refunds?.toFixed(2) || '0.00'}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-gray-300">Refund Count</p>
+                                <p className="text-xl font-bold text-red-400">{salesData.refund_summary.refund_count || 0}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm text-gray-300">Refund Rate</p>
+                                <p className="text-xl font-bold text-red-400">{salesData.refund_summary.refund_rate?.toFixed(1) || '0.0'}%</p>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
