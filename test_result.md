@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "RESOLVED: 1) Check-in blocking issue for customers with valid memberships - FIXED, customers can now check-in with existing memberships without errors, 2) Membership payment issue investigated - NO ISSUE EXISTS, system correctly requires payment before granting memberships, 3) Edit functionality for discounts/additional items - IMPLEMENTED with proper backend endpoints and frontend edit buttons added."
+user_problem_statement: "CRITICAL ISSUES: 1) Sales report generating incorrect numbers, 2) Sales report missing refund data, 3) Room upgrade bug - customers moved to new room without payment when process cancelled/refreshed before completion."
 
 backend:
   - task: "Valid Membership Check-in Fix"
