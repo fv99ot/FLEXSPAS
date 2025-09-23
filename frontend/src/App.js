@@ -3156,7 +3156,7 @@ function App() {
 
                   {salesData && (
                     <div className="mt-6 space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <Card className="bg-white/10 border-white/20">
                           <CardContent className="p-4 text-center">
                             <h3 className="text-lg font-semibold text-white">Total Revenue</h3>
@@ -3165,14 +3165,20 @@ function App() {
                         </Card>
                         <Card className="bg-white/10 border-white/20">
                           <CardContent className="p-4 text-center">
-                            <h3 className="text-lg font-semibold text-white">Total Transactions</h3>
-                            <p className="text-2xl font-bold text-blue-400">{salesData.summary?.total_transactions || 0}</p>
+                            <h3 className="text-lg font-semibold text-white">Total Refunds</h3>
+                            <p className="text-2xl font-bold text-red-400">${salesData.summary?.total_refunds?.toFixed(2) || '0.00'}</p>
                           </CardContent>
                         </Card>
                         <Card className="bg-white/10 border-white/20">
                           <CardContent className="p-4 text-center">
-                            <h3 className="text-lg font-semibold text-white">Average Transaction</h3>
-                            <p className="text-2xl font-bold text-purple-400">${salesData.summary?.average_transaction?.toFixed(2) || '0.00'}</p>
+                            <h3 className="text-lg font-semibold text-white">Net Revenue</h3>
+                            <p className="text-2xl font-bold text-yellow-400">${salesData.summary?.net_revenue?.toFixed(2) || '0.00'}</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-white/10 border-white/20">
+                          <CardContent className="p-4 text-center">
+                            <h3 className="text-lg font-semibold text-white">Total Transactions</h3>
+                            <p className="text-2xl font-bold text-blue-400">{salesData.summary?.total_transactions || 0}</p>
                           </CardContent>
                         </Card>
                       </div>
