@@ -1159,7 +1159,8 @@ function App() {
       console.log('👤 Selected customer:', JSON.stringify(selectedCustomer, null, 2));
 
       // Validate required fields
-      if (!checkinForm.membership_type) {
+      // Only require membership_type if customer doesn't have valid membership
+      if (!checkinForm.membership_type && (!customerMembershipStatus || !customerMembershipStatus.has_valid_membership)) {
         const msg = 'Please select a membership type';
         console.log('❌ Validation failed:', msg);
         alert(msg);
