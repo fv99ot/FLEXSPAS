@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "CRITICAL ISSUES: 1) Sales report generating incorrect numbers, 2) Sales report missing refund data, 3) Room upgrade bug - customers moved to new room without payment when process cancelled/refreshed before completion."
+user_problem_statement: "RESOLVED: 1) Sales report numbers corrected - now shows accurate revenue, refunds, and net revenue, 2) Refund reports added - comprehensive refund summary with rates and breakdowns included, 3) Room upgrade payment bug FIXED - customers no longer moved to new rooms without payment completion."
 
 backend:
   - task: "Valid Membership Check-in Fix"
