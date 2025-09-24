@@ -11372,6 +11372,370 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_edit_delete_functionality(self):
+        """Test edit and delete functionality for discounts and additional items as requested in review"""
+        print("\n✏️ TESTING EDIT AND DELETE FUNCTIONALITY...")
+        print("   Testing both edit and delete buttons for discounts and additional items")
+        
+        if not self.token:
+            return self.log_test("Edit and Delete Functionality", False, "No authentication token")
+        
+        all_success = True
+        created_discount_ids = []
+        created_item_ids = []
+        
+        # STEP 1: Create Test Data - 2 discounts and 2 additional items
+        print("   STEP 1: Create Test Data...")
+        
+        # Create 2 test discounts
+        discount_test_data = [
+            {
+                "name": "Test Discount 1",
+                "amount": 10.0,
+                "description": "First test discount for edit/delete testing",
+                "code": "TEST1"
+            },
+            {
+                "name": "Test Discount 2", 
+                "amount": 15.0,
+                "description": "Second test discount for edit/delete testing",
+                "code": "TEST2"
+            }
+        ]
+        
+        for i, discount_data in enumerate(discount_test_data):
+            try:
+                response = requests.post(
+                    f"{self.api_url}/discounts",
+                    json=discount_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    discount_response = response.json()
+                    created_discount_ids.append(discount_response['id'])
+                    self.log_test(f"Create Test Discount {i+1}", True, 
+                                f"Created: {discount_response['name']} - ${discount_response['amount']} (ID: {discount_response['id']})")
+                else:
+                    self.log_test(f"Create Test Discount {i+1}", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Create Test Discount {i+1}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Create 2 test additional items
+        item_test_data = [
+            {
+                "name": "Test Item 1",
+                "price": 5.0,
+                "category": "test_category"
+            },
+            {
+                "name": "Test Item 2",
+                "price": 8.0, 
+                "category": "test_category"
+            }
+        ]
+        
+        for i, item_data in enumerate(item_test_data):
+            try:
+                response = requests.post(
+                    f"{self.api_url}/additional-items",
+                    json=item_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    item_response = response.json()
+                    created_item_ids.append(item_response['id'])
+                    self.log_test(f"Create Test Additional Item {i+1}", True, 
+                                f"Created: {item_response['name']} - ${item_response['price']} (ID: {item_response['id']})")
+                else:
+                    self.log_test(f"Create Test Additional Item {i+1}", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Create Test Additional Item {i+1}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # STEP 2: Test Edit Functionality for Discounts
+        print("   STEP 2: Test Edit Functionality for Discounts...")
+        
+        if len(created_discount_ids) >= 1:
+            discount_id = created_discount_ids[0]
+            updated_discount_data = {
+                "name": "Updated Test Discount 1",
+                "amount": 20.0,
+                "description": "Updated description for first test discount",
+                "code": "UPDATED1"
+            }
+            
+            try:
+                response = requests.put(
+                    f"{self.api_url}/discounts/{discount_id}",
+                    json=updated_discount_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    updated_discount = response.json()
+                    
+                    # Verify all fields were updated correctly
+                    edit_successful = (
+                        updated_discount.get('name') == "Updated Test Discount 1" and
+                        updated_discount.get('amount') == 20.0 and
+                        updated_discount.get('description') == "Updated description for first test discount" and
+                        updated_discount.get('code') == "UPDATED1"
+                    )
+                    
+                    self.log_test("Edit Discount", edit_successful, 
+                                f"Updated: {updated_discount.get('name')} - ${updated_discount.get('amount')}")
+                    
+                    if not edit_successful:
+                        all_success = False
+                else:
+                    self.log_test("Edit Discount", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Edit Discount", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Edit Discount", False, "No discount created for testing")
+            all_success = False
+        
+        # STEP 3: Test Edit Functionality for Additional Items
+        print("   STEP 3: Test Edit Functionality for Additional Items...")
+        
+        if len(created_item_ids) >= 1:
+            item_id = created_item_ids[0]
+            updated_item_data = {
+                "name": "Updated Test Item 1",
+                "price": 12.0,
+                "category": "updated_category"
+            }
+            
+            try:
+                response = requests.put(
+                    f"{self.api_url}/additional-items/{item_id}",
+                    json=updated_item_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    updated_item = response.json()
+                    
+                    # Verify all fields were updated correctly
+                    edit_successful = (
+                        updated_item.get('name') == "Updated Test Item 1" and
+                        updated_item.get('price') == 12.0 and
+                        updated_item.get('category') == "updated_category"
+                    )
+                    
+                    self.log_test("Edit Additional Item", edit_successful, 
+                                f"Updated: {updated_item.get('name')} - ${updated_item.get('price')}")
+                    
+                    if not edit_successful:
+                        all_success = False
+                else:
+                    self.log_test("Edit Additional Item", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Edit Additional Item", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Edit Additional Item", False, "No additional item created for testing")
+            all_success = False
+        
+        # STEP 4: Test Delete Functionality for Discounts
+        print("   STEP 4: Test Delete Functionality for Discounts...")
+        
+        if len(created_discount_ids) >= 2:
+            discount_id = created_discount_ids[1]  # Use second discount for deletion
+            
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/discounts/{discount_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    delete_response = response.json()
+                    
+                    self.log_test("Delete Discount", True, 
+                                f"Deleted discount ID: {discount_id}, Message: {delete_response.get('message', '')}")
+                else:
+                    self.log_test("Delete Discount", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Delete Discount", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Delete Discount", False, "No second discount created for testing")
+            all_success = False
+        
+        # STEP 5: Test Delete Functionality for Additional Items
+        print("   STEP 5: Test Delete Functionality for Additional Items...")
+        
+        if len(created_item_ids) >= 2:
+            item_id = created_item_ids[1]  # Use second item for deletion
+            
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/additional-items/{item_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    delete_response = response.json()
+                    
+                    self.log_test("Delete Additional Item", True, 
+                                f"Deleted item ID: {item_id}, Message: {delete_response.get('message', '')}")
+                else:
+                    self.log_test("Delete Additional Item", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Delete Additional Item", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Delete Additional Item", False, "No second additional item created for testing")
+            all_success = False
+        
+        # STEP 6: Verify Frontend Data Updates - Test GET endpoints after edits/deletes
+        print("   STEP 6: Verify Frontend Data Updates...")
+        
+        # Test GET /api/discounts (active discounts only)
+        try:
+            response = requests.get(
+                f"{self.api_url}/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                active_discounts = response.json()
+                
+                # Should contain the edited discount but not the deleted one
+                edited_discount_found = any(d.get('name') == "Updated Test Discount 1" for d in active_discounts)
+                deleted_discount_not_found = not any(d.get('id') == created_discount_ids[1] for d in active_discounts if len(created_discount_ids) >= 2)
+                
+                frontend_discounts_updated = edited_discount_found and (deleted_discount_not_found or len(created_discount_ids) < 2)
+                
+                self.log_test("GET /api/discounts After Updates", frontend_discounts_updated, 
+                            f"Edited discount found: {edited_discount_found}, Deleted discount not found: {deleted_discount_not_found}")
+                
+                if not frontend_discounts_updated:
+                    all_success = False
+            else:
+                self.log_test("GET /api/discounts After Updates", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("GET /api/discounts After Updates", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test GET /api/admin/discounts (all discounts including inactive)
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_discounts = response.json()
+                
+                # Should contain both edited and deleted discounts (deleted should be marked inactive)
+                edited_discount_found = any(d.get('name') == "Updated Test Discount 1" for d in all_discounts)
+                deleted_discount_found = any(d.get('id') == created_discount_ids[1] and d.get('active') == False for d in all_discounts if len(created_discount_ids) >= 2)
+                
+                admin_discounts_updated = edited_discount_found and (deleted_discount_found or len(created_discount_ids) < 2)
+                
+                self.log_test("GET /api/admin/discounts After Updates", admin_discounts_updated, 
+                            f"Edited discount found: {edited_discount_found}, Deleted discount found as inactive: {deleted_discount_found}")
+                
+                if not admin_discounts_updated:
+                    all_success = False
+            else:
+                self.log_test("GET /api/admin/discounts After Updates", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("GET /api/admin/discounts After Updates", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test GET /api/additional-items (active items only)
+        try:
+            response = requests.get(
+                f"{self.api_url}/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                active_items = response.json()
+                
+                # Should contain the edited item but not the deleted one
+                edited_item_found = any(i.get('name') == "Updated Test Item 1" for i in active_items)
+                deleted_item_not_found = not any(i.get('id') == created_item_ids[1] for i in active_items if len(created_item_ids) >= 2)
+                
+                frontend_items_updated = edited_item_found and (deleted_item_not_found or len(created_item_ids) < 2)
+                
+                self.log_test("GET /api/additional-items After Updates", frontend_items_updated, 
+                            f"Edited item found: {edited_item_found}, Deleted item not found: {deleted_item_not_found}")
+                
+                if not frontend_items_updated:
+                    all_success = False
+            else:
+                self.log_test("GET /api/additional-items After Updates", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("GET /api/additional-items After Updates", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test GET /api/admin/additional-items (all items including inactive)
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_items = response.json()
+                
+                # Should contain both edited and deleted items (deleted should be marked inactive)
+                edited_item_found = any(i.get('name') == "Updated Test Item 1" for i in all_items)
+                deleted_item_found = any(i.get('id') == created_item_ids[1] and i.get('active') == False for i in all_items if len(created_item_ids) >= 2)
+                
+                admin_items_updated = edited_item_found and (deleted_item_found or len(created_item_ids) < 2)
+                
+                self.log_test("GET /api/admin/additional-items After Updates", admin_items_updated, 
+                            f"Edited item found: {edited_item_found}, Deleted item found as inactive: {deleted_item_found}")
+                
+                if not admin_items_updated:
+                    all_success = False
+            else:
+                self.log_test("GET /api/admin/additional-items After Updates", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("GET /api/admin/additional-items After Updates", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all comprehensive API tests"""
         print("🚀 Starting Comprehensive API Testing...")
@@ -11381,6 +11745,9 @@ class BathhouseAPITester:
         if not self.test_login():
             print("❌ Authentication failed - stopping tests")
             return False
+        
+        # EDIT AND DELETE FUNCTIONALITY TESTING (as requested in review)
+        self.test_edit_delete_functionality()
         
         # Core functionality tests
         self.test_create_customer()
