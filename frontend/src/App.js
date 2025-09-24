@@ -862,14 +862,20 @@ function App() {
     
     try {
       const token = localStorage.getItem('token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
       await axios.delete(`${API}/api/additional-items/${itemId}`, { headers });
       fetchAdditionalItems();
       fetchAdminItems();
       alert('Additional item deleted successfully!');
     } catch (error) {
       console.error('Error deleting additional item:', error);
-      alert('Error deleting additional item');
+      handleTokenError(error, 'Error deleting additional item');
     }
   };
 
