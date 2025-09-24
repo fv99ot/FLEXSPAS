@@ -4189,7 +4189,7 @@ function App() {
                     <SelectTrigger className="w-40">
                       <SelectValue placeholder="Select Discount" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent style={{ zIndex: 10000 }}>
                       <SelectItem value="none">No Discount</SelectItem>
                       {discounts.filter(d => d.active).map((discount) => (
                         <SelectItem key={discount.id} value={discount.id}>
