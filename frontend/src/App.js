@@ -4617,7 +4617,7 @@ function App() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent style={{ zIndex: 10000 }}>
                   <SelectItem value="general">General</SelectItem>
                   <SelectItem value="safety">Safety</SelectItem>
                   <SelectItem value="cleaning">Cleaning</SelectItem>
