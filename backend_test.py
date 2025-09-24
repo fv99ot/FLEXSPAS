@@ -11049,6 +11049,329 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_hard_delete_discounts_and_additional_items(self):
+        """Test HARD DELETE of all discounts and additional items from database collections"""
+        print("\n🗑️ TESTING HARD DELETE OF ALL DISCOUNTS AND ADDITIONAL ITEMS...")
+        print("   User wants complete removal from database, not just soft delete (active=false)")
+        
+        if not self.token:
+            return self.log_test("Hard Delete All Preset Data", False, "No authentication token")
+        
+        all_success = True
+        
+        # STEP 1: Check current available delete endpoints
+        print("   STEP 1: Check available delete endpoints...")
+        
+        # Test if there are hard delete endpoints for discounts
+        try:
+            # First get all discounts to see what exists
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_discounts = response.json()
+                active_discounts = [d for d in all_discounts if d.get('active', True)]
+                inactive_discounts = [d for d in all_discounts if not d.get('active', True)]
+                
+                self.log_test("Get All Discounts", True, 
+                            f"Total: {len(all_discounts)}, Active: {len(active_discounts)}, Inactive: {len(inactive_discounts)}")
+                
+                # Store discount IDs for testing
+                discount_ids = [d['id'] for d in all_discounts]
+                
+            else:
+                self.log_test("Get All Discounts", False, f"Status: {response.status_code}")
+                all_success = False
+                discount_ids = []
+                
+        except Exception as e:
+            self.log_test("Get All Discounts", False, f"Exception: {str(e)}")
+            all_success = False
+            discount_ids = []
+        
+        # Test if there are hard delete endpoints for additional items
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_items = response.json()
+                active_items = [i for i in all_items if i.get('active', True)]
+                inactive_items = [i for i in all_items if not i.get('active', True)]
+                
+                self.log_test("Get All Additional Items", True, 
+                            f"Total: {len(all_items)}, Active: {len(active_items)}, Inactive: {len(inactive_items)}")
+                
+                # Store item IDs for testing
+                item_ids = [i['id'] for i in all_items]
+                
+            else:
+                self.log_test("Get All Additional Items", False, f"Status: {response.status_code}")
+                all_success = False
+                item_ids = []
+                
+        except Exception as e:
+            self.log_test("Get All Additional Items", False, f"Exception: {str(e)}")
+            all_success = False
+            item_ids = []
+        
+        # STEP 2: Test existing soft delete endpoints
+        print("   STEP 2: Test existing soft delete endpoints...")
+        
+        soft_deleted_discounts = 0
+        for discount_id in discount_ids:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/discounts/{discount_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    soft_deleted_discounts += 1
+                    
+            except Exception as e:
+                print(f"   Warning: Could not soft delete discount {discount_id}: {str(e)}")
+        
+        self.log_test("Soft Delete All Discounts", soft_deleted_discounts == len(discount_ids), 
+                    f"Soft deleted {soft_deleted_discounts}/{len(discount_ids)} discounts")
+        
+        if soft_deleted_discounts != len(discount_ids):
+            all_success = False
+        
+        soft_deleted_items = 0
+        for item_id in item_ids:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/additional-items/{item_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    soft_deleted_items += 1
+                    
+            except Exception as e:
+                print(f"   Warning: Could not soft delete item {item_id}: {str(e)}")
+        
+        self.log_test("Soft Delete All Additional Items", soft_deleted_items == len(item_ids), 
+                    f"Soft deleted {soft_deleted_items}/{len(item_ids)} items")
+        
+        if soft_deleted_items != len(item_ids):
+            all_success = False
+        
+        # STEP 3: Check for hard delete endpoints
+        print("   STEP 3: Check for hard delete endpoints...")
+        
+        # Test if there's a hard delete endpoint for discounts
+        hard_delete_discounts_available = False
+        if discount_ids:
+            try:
+                # Try different possible hard delete endpoints
+                test_endpoints = [
+                    f"/admin/discounts/{discount_ids[0]}/hard-delete",
+                    f"/discounts/{discount_ids[0]}/hard-delete",
+                    f"/admin/discounts/{discount_ids[0]}?hard=true"
+                ]
+                
+                for endpoint in test_endpoints:
+                    response = requests.delete(
+                        f"{self.api_url}{endpoint}",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code not in [404, 405]:  # Not "Not Found" or "Method Not Allowed"
+                        hard_delete_discounts_available = True
+                        self.log_test("Hard Delete Discounts Endpoint", True, f"Found at: {endpoint}")
+                        break
+                
+                if not hard_delete_discounts_available:
+                    self.log_test("Hard Delete Discounts Endpoint", False, "No hard delete endpoint found")
+                    
+            except Exception as e:
+                self.log_test("Hard Delete Discounts Endpoint", False, f"Exception: {str(e)}")
+        
+        # Test if there's a hard delete endpoint for additional items
+        hard_delete_items_available = False
+        if item_ids:
+            try:
+                # Try different possible hard delete endpoints
+                test_endpoints = [
+                    f"/admin/additional-items/{item_ids[0]}/hard-delete",
+                    f"/additional-items/{item_ids[0]}/hard-delete",
+                    f"/admin/additional-items/{item_ids[0]}?hard=true"
+                ]
+                
+                for endpoint in test_endpoints:
+                    response = requests.delete(
+                        f"{self.api_url}{endpoint}",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code not in [404, 405]:  # Not "Not Found" or "Method Not Allowed"
+                        hard_delete_items_available = True
+                        self.log_test("Hard Delete Additional Items Endpoint", True, f"Found at: {endpoint}")
+                        break
+                
+                if not hard_delete_items_available:
+                    self.log_test("Hard Delete Additional Items Endpoint", False, "No hard delete endpoint found")
+                    
+            except Exception as e:
+                self.log_test("Hard Delete Additional Items Endpoint", False, f"Exception: {str(e)}")
+        
+        # STEP 4: Try bulk delete endpoints
+        print("   STEP 4: Test bulk delete endpoints...")
+        
+        # Check if there are bulk delete endpoints
+        bulk_delete_available = False
+        try:
+            # Try bulk delete endpoints
+            test_endpoints = [
+                "/admin/discounts/clear-all",
+                "/admin/additional-items/clear-all",
+                "/admin/clear-preset-data"
+            ]
+            
+            for endpoint in test_endpoints:
+                response = requests.delete(
+                    f"{self.api_url}{endpoint}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code not in [404, 405]:
+                    bulk_delete_available = True
+                    self.log_test("Bulk Delete Endpoint", True, f"Found at: {endpoint}")
+                    break
+            
+            if not bulk_delete_available:
+                self.log_test("Bulk Delete Endpoint", False, "No bulk delete endpoint found")
+                
+        except Exception as e:
+            self.log_test("Bulk Delete Endpoint", False, f"Exception: {str(e)}")
+        
+        # STEP 5: Verify current state after soft deletes
+        print("   STEP 5: Verify current state after operations...")
+        
+        try:
+            # Check active discounts (should be empty if soft delete worked)
+            response = requests.get(
+                f"{self.api_url}/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                active_discounts = response.json()
+                self.log_test("Active Discounts After Soft Delete", len(active_discounts) == 0, 
+                            f"Active discounts remaining: {len(active_discounts)}")
+                
+                if len(active_discounts) > 0:
+                    all_success = False
+            else:
+                self.log_test("Active Discounts After Soft Delete", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Active Discounts After Soft Delete", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        try:
+            # Check active additional items (should be empty if soft delete worked)
+            response = requests.get(
+                f"{self.api_url}/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                active_items = response.json()
+                self.log_test("Active Additional Items After Soft Delete", len(active_items) == 0, 
+                            f"Active items remaining: {len(active_items)}")
+                
+                if len(active_items) > 0:
+                    all_success = False
+            else:
+                self.log_test("Active Additional Items After Soft Delete", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Active Additional Items After Soft Delete", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 6: Check if records still exist in admin endpoints (hard delete verification)
+        print("   STEP 6: Verify complete removal from database...")
+        
+        try:
+            # Check admin discounts (should be empty for hard delete)
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_discounts_after = response.json()
+                completely_removed = len(all_discounts_after) == 0
+                
+                if completely_removed:
+                    self.log_test("Complete Discount Removal", True, "All discounts completely removed from database")
+                else:
+                    # Still exist but inactive - this is soft delete, not hard delete
+                    inactive_count = len([d for d in all_discounts_after if not d.get('active', True)])
+                    active_count = len([d for d in all_discounts_after if d.get('active', True)])
+                    
+                    self.log_test("Complete Discount Removal", False, 
+                                f"Records still exist in database - Total: {len(all_discounts_after)}, Active: {active_count}, Inactive: {inactive_count}")
+                    all_success = False
+            else:
+                self.log_test("Complete Discount Removal", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Complete Discount Removal", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        try:
+            # Check admin additional items (should be empty for hard delete)
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_items_after = response.json()
+                completely_removed = len(all_items_after) == 0
+                
+                if completely_removed:
+                    self.log_test("Complete Additional Items Removal", True, "All additional items completely removed from database")
+                else:
+                    # Still exist but inactive - this is soft delete, not hard delete
+                    inactive_count = len([i for i in all_items_after if not i.get('active', True)])
+                    active_count = len([i for i in all_items_after if i.get('active', True)])
+                    
+                    self.log_test("Complete Additional Items Removal", False, 
+                                f"Records still exist in database - Total: {len(all_items_after)}, Active: {active_count}, Inactive: {inactive_count}")
+                    all_success = False
+            else:
+                self.log_test("Complete Additional Items Removal", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Complete Additional Items Removal", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all comprehensive API tests"""
         print("🚀 Starting Comprehensive API Testing...")
