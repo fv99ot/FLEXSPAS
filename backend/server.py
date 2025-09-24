@@ -1868,6 +1868,67 @@ async def delete_additional_item(item_id: str, current_user: User = Depends(get_
         raise HTTPException(status_code=404, detail="Item not found")
     return {"message": "Item deleted successfully"}
 
+@api_router.delete("/admin/discounts/{discount_id}/hard-delete")
+async def hard_delete_discount(discount_id: str, current_user: User = Depends(get_current_user)):
+    """HARD DELETE: Completely remove discount from database (not just soft delete)"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can hard delete discounts")
+    
+    result = await db.discounts.delete_one({"id": discount_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Discount not found")
+    return {"message": "Discount permanently deleted from database"}
+
+@api_router.delete("/admin/additional-items/{item_id}/hard-delete")
+async def hard_delete_additional_item(item_id: str, current_user: User = Depends(get_current_user)):
+    """HARD DELETE: Completely remove additional item from database (not just soft delete)"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can hard delete items")
+    
+    result = await db.additional_items.delete_one({"id": item_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"message": "Additional item permanently deleted from database"}
+
+@api_router.delete("/admin/discounts/clear-all")
+async def clear_all_discounts(current_user: User = Depends(get_current_user)):
+    """HARD DELETE: Clear all discounts from database completely"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can clear all discounts")
+    
+    result = await db.discounts.delete_many({})
+    return {"message": f"All discounts cleared from database ({result.deleted_count} records removed)"}
+
+@api_router.delete("/admin/additional-items/clear-all")
+async def clear_all_additional_items(current_user: User = Depends(get_current_user)):
+    """HARD DELETE: Clear all additional items from database completely"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can clear all additional items")
+    
+    result = await db.additional_items.delete_many({})
+    return {"message": f"All additional items cleared from database ({result.deleted_count} records removed)"}
+
+@api_router.delete("/admin/clear-preset-data")
+async def clear_all_preset_data(current_user: User = Depends(get_current_user)):
+    """HARD DELETE: Clear all preset data (discounts and additional items) from database completely"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can clear all preset data")
+    
+    # Clear all discounts
+    discounts_result = await db.discounts.delete_many({})
+    
+    # Clear all additional items
+    items_result = await db.additional_items.delete_many({})
+    
+    total_deleted = discounts_result.deleted_count + items_result.deleted_count
+    
+    return {
+        "message": f"All preset data cleared from database",
+        "discounts_deleted": discounts_result.deleted_count,
+        "additional_items_deleted": items_result.deleted_count,
+        "total_deleted": total_deleted
+    }
+
 @api_router.get("/qr/membership-form")
 async def get_membership_form_qr():
     """Generate QR code for membership form"""
