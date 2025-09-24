@@ -4027,7 +4027,7 @@ function App() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select membership type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent style={{ zIndex: 10000 }}>
                       <SelectItem value="1_day">1 Day ($10)</SelectItem>
                       <SelectItem value="6_month">6 Month ($25)</SelectItem>
                     </SelectContent>
