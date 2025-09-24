@@ -166,6 +166,18 @@ backend:
         agent: "testing"
         comment: "PRESET DATA DELETION COMPLETED SUCCESSFULLY - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of the preset data deletion request completed with 100% success rate (8/8 tests passed). ✅ DELETE ALL DISCOUNTS: Successfully deleted 37 existing discounts using DELETE /api/discounts/{discount_id} endpoint - all discounts properly soft-deleted (active=false) - WORKING, ✅ DELETE ALL ADDITIONAL ITEMS: Successfully deleted 41 existing additional items using DELETE /api/additional-items/{item_id} endpoint - all items properly soft-deleted (active=false) - WORKING, ✅ VERIFY DATABASE CLEANUP: GET /api/discounts returns empty array (0 active discounts), GET /api/additional-items returns empty array (0 active items) - WORKING, ✅ ADMIN ENDPOINTS VERIFICATION: GET /api/admin/discounts shows all 37 discounts as inactive (active=false), GET /api/admin/additional-items shows all 41 items as inactive (active=false) - WORKING, ✅ AUTHENTICATION: Admin credentials (admin/admin123) working perfectly for all operations - WORKING. TECHNICAL DETAILS: Backend uses soft delete approach (setting active=false) rather than hard delete, which preserves data integrity while making items unavailable for use. All preset items including condoms, dildos, cleaning fees, lost key fees have been successfully deactivated. Database is now clean and ready for fresh data setup."
 
+  - task: "HARD DELETE All Discounts and Additional Items"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "HARD DELETE IMPLEMENTATION AND TESTING COMPLETED SUCCESSFULLY - ALL SYSTEMS WORKING PERFECTLY: User requested complete removal of all discounts and additional items from database collections (not just soft delete). Implemented and tested comprehensive hard delete functionality with 100% success rate (10/10 tests passed). ✅ HARD DELETE ENDPOINTS IMPLEMENTED: Created DELETE /api/admin/discounts/{discount_id}/hard-delete and DELETE /api/admin/additional-items/{item_id}/hard-delete endpoints for individual record removal - WORKING, ✅ BULK DELETE ENDPOINTS IMPLEMENTED: Created DELETE /api/admin/discounts/clear-all, DELETE /api/admin/additional-items/clear-all, and DELETE /api/admin/clear-preset-data endpoints for mass deletion - WORKING, ✅ COMPLETE DATABASE REMOVAL VERIFIED: All discounts and additional items completely removed from database collections (Total: 0 discounts, 0 items) - records no longer exist in database, not just marked inactive - WORKING, ✅ AUTHENTICATION AND AUTHORIZATION: All hard delete operations require manager role authentication, proper error handling for unauthorized access - WORKING, ✅ COMBINED CLEAR ENDPOINT: DELETE /api/admin/clear-preset-data successfully removes both discounts and additional items in single operation with detailed response showing counts - WORKING. TECHNICAL IMPLEMENTATION: Used MongoDB delete_one() and delete_many() operations instead of update operations to permanently remove records from collections. User's requirement for complete database removal (not soft delete) has been fully satisfied."
+
   - task: "URGENT Customer Search Functionality Testing"
     implemented: true
     working: true
