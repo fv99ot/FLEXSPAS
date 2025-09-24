@@ -4060,7 +4060,7 @@ function App() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select room/locker number" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent style={{ zIndex: 10000 }}>
                       {roomDetails.map((room) => (
                         <SelectItem key={room.number} value={room.number.toString()}>
                           {room.label}
