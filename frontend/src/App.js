@@ -4287,7 +4287,7 @@ function App() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select new room type" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent style={{ zIndex: 10000 }}>
                       <SelectItem value="small_room">Small Room (No TV)</SelectItem>
                       <SelectItem value="regular_room">Regular Room (With TV)</SelectItem>
                       <SelectItem value="deluxe_room">Deluxe Room (With TV)</SelectItem>
