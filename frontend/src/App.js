@@ -4123,7 +4123,7 @@ function App() {
                     <SelectTrigger className="w-40">
                       <SelectValue placeholder="Add Item" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent style={{ zIndex: 10000 }}>
                       {additionalItems.filter(item => item.active).map((item) => (
                         <SelectItem key={item.id} value={item.id}>
                           {item.name} - ${item.price.toFixed(2)}
