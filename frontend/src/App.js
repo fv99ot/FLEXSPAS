@@ -4673,6 +4673,130 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Edit Discount Dialog */}
+      {showEditDiscount && editingDiscount && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '28rem',
+            width: '100%',
+            margin: '16px'
+          }}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Discount</h3>
+            <form onSubmit={updateDiscount} className="space-y-4">
+              <Input
+                placeholder="Discount Name"
+                value={editingDiscount.name}
+                onChange={(e) => setEditingDiscount({...editingDiscount, name: e.target.value})}
+                required
+              />
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Amount ($)"
+                value={editingDiscount.amount}
+                onChange={(e) => setEditingDiscount({...editingDiscount, amount: e.target.value})}
+                required
+              />
+              <Input
+                placeholder="Description (optional)"
+                value={editingDiscount.description || ''}
+                onChange={(e) => setEditingDiscount({...editingDiscount, description: e.target.value})}
+              />
+              <div className="flex space-x-3">
+                <Button type="submit" className="flex-1">
+                  Update Discount
+                </Button>
+                <Button type="button" variant="outline" onClick={() => {
+                  setShowEditDiscount(false);
+                  setEditingDiscount(null);
+                }} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Additional Item Dialog */}
+      {showEditItem && editingItem && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '24px',
+            borderRadius: '8px',
+            maxWidth: '28rem',
+            width: '100%',
+            margin: '16px'
+          }}>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit Additional Item</h3>
+            <form onSubmit={updateAdditionalItem} className="space-y-4">
+              <Input
+                placeholder="Item Name"
+                value={editingItem.name}
+                onChange={(e) => setEditingItem({...editingItem, name: e.target.value})}
+                required
+              />
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Price ($)"
+                value={editingItem.price}
+                onChange={(e) => setEditingItem({...editingItem, price: e.target.value})}
+                required
+              />
+              <Select value={editingItem.category} onValueChange={(value) => setEditingItem({...editingItem, category: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent style={{ zIndex: 10000 }}>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="safety">Safety</SelectItem>
+                  <SelectItem value="cleaning">Cleaning</SelectItem>
+                  <SelectItem value="fees">Fees</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex space-x-3">
+                <Button type="submit" className="flex-1">
+                  Update Item
+                </Button>
+                <Button type="button" variant="outline" onClick={() => {
+                  setShowEditItem(false);
+                  setEditingItem(null);
+                }} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       
     </div>
   );
