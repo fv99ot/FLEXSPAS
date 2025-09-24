@@ -770,14 +770,20 @@ function App() {
     
     try {
       const token = localStorage.getItem('token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
       await axios.delete(`${API}/api/discounts/${discountId}`, { headers });
       fetchDiscounts();
       fetchAdminDiscounts();
       alert('Discount deleted successfully!');
     } catch (error) {
       console.error('Error deleting discount:', error);
-      alert('Error deleting discount');
+      handleTokenError(error, 'Error deleting discount');
     }
   };
 
