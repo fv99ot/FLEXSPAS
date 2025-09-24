@@ -11372,6 +11372,409 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_delete_functionality_comprehensive(self):
+        """REAL DELETE BUTTON TESTING: Test the actual delete functionality that users would experience"""
+        print("\n🗑️  REAL DELETE BUTTON TESTING - COMPREHENSIVE DELETE FUNCTIONALITY TESTING...")
+        print("   Testing actual delete functionality that users would experience")
+        print("   User reports: Delete buttons don't work")
+        
+        if not self.token:
+            return self.log_test("Delete Functionality Comprehensive", False, "No authentication token")
+        
+        all_success = True
+        created_discount_id = None
+        created_item_id = None
+        
+        # STEP 1: Create Test Data First
+        print("   STEP 1: Create test discount via POST /api/discounts...")
+        try:
+            discount_data = {
+                "name": "DELETE_TEST_DISCOUNT",
+                "amount": 15.0,
+                "description": "Test discount for delete functionality testing",
+                "code": "DELETE_TEST_15"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json=discount_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                discount_response = response.json()
+                created_discount_id = discount_response.get('id')
+                self.log_test("Create Test Discount", True, f"Created discount ID: {created_discount_id}, Amount: ${discount_response.get('amount')}")
+            else:
+                self.log_test("Create Test Discount", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Test Discount", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        print("   STEP 1: Create test additional item via POST /api/additional-items...")
+        try:
+            item_data = {
+                "name": "DELETE_TEST_ITEM",
+                "price": 12.0,
+                "category": "test_category"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/additional-items",
+                json=item_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                item_response = response.json()
+                created_item_id = item_response.get('id')
+                self.log_test("Create Test Additional Item", True, f"Created item ID: {created_item_id}, Price: ${item_response.get('price')}")
+            else:
+                self.log_test("Create Test Additional Item", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Test Additional Item", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 2: Test Actual Delete Endpoints
+        print("   STEP 2: Test DELETE /api/discounts/{id} with actual discount ID...")
+        if created_discount_id:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/discounts/{created_discount_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                delete_success = response.status_code in [200, 204]
+                response_data = response.json() if response.status_code == 200 else {}
+                
+                self.log_test("Delete Discount Endpoint", delete_success, 
+                            f"Status: {response.status_code}, Message: {response_data.get('message', 'No message')}")
+                
+                if not delete_success:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Delete Discount Endpoint", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Delete Discount Endpoint", False, "No discount ID to test with")
+            all_success = False
+        
+        print("   STEP 2: Test DELETE /api/additional-items/{id} with actual item ID...")
+        if created_item_id:
+            try:
+                response = requests.delete(
+                    f"{self.api_url}/additional-items/{created_item_id}",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                delete_success = response.status_code in [200, 204]
+                response_data = response.json() if response.status_code == 200 else {}
+                
+                self.log_test("Delete Additional Item Endpoint", delete_success, 
+                            f"Status: {response.status_code}, Message: {response_data.get('message', 'No message')}")
+                
+                if not delete_success:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Delete Additional Item Endpoint", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Delete Additional Item Endpoint", False, "No item ID to test with")
+            all_success = False
+        
+        # STEP 3: Verify What Happens After Delete
+        print("   STEP 3: Check if GET /api/discounts still returns the 'deleted' discount...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                discounts = response.json()
+                deleted_discount_still_visible = any(d.get('id') == created_discount_id for d in discounts)
+                
+                # Should NOT be visible in regular GET /api/discounts (active only)
+                correct_behavior = not deleted_discount_still_visible
+                
+                self.log_test("Deleted Discount Not in Active List", correct_behavior, 
+                            f"Deleted discount visible in active list: {deleted_discount_still_visible} (should be False)")
+                
+                if not correct_behavior:
+                    all_success = False
+            else:
+                self.log_test("Deleted Discount Not in Active List", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Discount Not in Active List", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        print("   STEP 3: Check if GET /api/additional-items still returns the 'deleted' item...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                items = response.json()
+                deleted_item_still_visible = any(i.get('id') == created_item_id for i in items)
+                
+                # Should NOT be visible in regular GET /api/additional-items (active only)
+                correct_behavior = not deleted_item_still_visible
+                
+                self.log_test("Deleted Item Not in Active List", correct_behavior, 
+                            f"Deleted item visible in active list: {deleted_item_still_visible} (should be False)")
+                
+                if not correct_behavior:
+                    all_success = False
+            else:
+                self.log_test("Deleted Item Not in Active List", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Item Not in Active List", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        print("   STEP 3: Check if GET /api/admin/discounts shows it as inactive...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_discounts = response.json()
+                deleted_discount = next((d for d in all_discounts if d.get('id') == created_discount_id), None)
+                
+                if deleted_discount:
+                    is_inactive = deleted_discount.get('active') == False
+                    self.log_test("Deleted Discount Shows as Inactive in Admin", is_inactive, 
+                                f"Discount active status: {deleted_discount.get('active')} (should be False)")
+                    
+                    if not is_inactive:
+                        all_success = False
+                else:
+                    self.log_test("Deleted Discount Shows as Inactive in Admin", False, "Deleted discount not found in admin list")
+                    all_success = False
+            else:
+                self.log_test("Deleted Discount Shows as Inactive in Admin", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Discount Shows as Inactive in Admin", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        print("   STEP 3: Check if GET /api/admin/additional-items shows it as inactive...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_items = response.json()
+                deleted_item = next((i for i in all_items if i.get('id') == created_item_id), None)
+                
+                if deleted_item:
+                    is_inactive = deleted_item.get('active') == False
+                    self.log_test("Deleted Item Shows as Inactive in Admin", is_inactive, 
+                                f"Item active status: {deleted_item.get('active')} (should be False)")
+                    
+                    if not is_inactive:
+                        all_success = False
+                else:
+                    self.log_test("Deleted Item Shows as Inactive in Admin", False, "Deleted item not found in admin list")
+                    all_success = False
+            else:
+                self.log_test("Deleted Item Shows as Inactive in Admin", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Item Shows as Inactive in Admin", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 4: Test Different Delete Scenarios
+        print("   STEP 4: Test delete with invalid discount ID...")
+        try:
+            invalid_id = "invalid_discount_id_12345"
+            response = requests.delete(
+                f"{self.api_url}/discounts/{invalid_id}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should return 404 for invalid ID
+            handles_invalid_id = response.status_code == 404
+            self.log_test("Delete Invalid Discount ID", handles_invalid_id, 
+                        f"Status: {response.status_code} (should be 404)")
+            
+            if not handles_invalid_id:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Delete Invalid Discount ID", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        print("   STEP 4: Test delete with invalid item ID...")
+        try:
+            invalid_id = "invalid_item_id_12345"
+            response = requests.delete(
+                f"{self.api_url}/additional-items/{invalid_id}",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should return 404 for invalid ID
+            handles_invalid_id = response.status_code == 404
+            self.log_test("Delete Invalid Item ID", handles_invalid_id, 
+                        f"Status: {response.status_code} (should be 404)")
+            
+            if not handles_invalid_id:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Delete Invalid Item ID", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        print("   STEP 4: Test delete without authentication...")
+        try:
+            # Create another test discount first
+            discount_data = {
+                "name": "AUTH_TEST_DISCOUNT",
+                "amount": 10.0,
+                "description": "Test discount for auth testing"
+            }
+            
+            create_response = requests.post(
+                f"{self.api_url}/discounts",
+                json=discount_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if create_response.status_code == 200:
+                auth_test_discount_id = create_response.json().get('id')
+                
+                # Try to delete without auth
+                response = requests.delete(
+                    f"{self.api_url}/discounts/{auth_test_discount_id}",
+                    headers={'Content-Type': 'application/json'},  # No auth header
+                    timeout=10
+                )
+                
+                # Should return 401 or 403 for missing auth
+                requires_auth = response.status_code in [401, 403]
+                self.log_test("Delete Requires Authentication", requires_auth, 
+                            f"Status: {response.status_code} (should be 401 or 403)")
+                
+                if not requires_auth:
+                    all_success = False
+                    
+                # Clean up - delete with proper auth
+                requests.delete(f"{self.api_url}/discounts/{auth_test_discount_id}", headers=self.headers, timeout=10)
+            else:
+                self.log_test("Delete Requires Authentication", False, "Could not create test discount for auth test")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Delete Requires Authentication", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        print("   STEP 4: Test actual user experience workflow...")
+        try:
+            # Simulate the complete user workflow: Create -> View -> Delete -> Verify
+            workflow_data = {
+                "name": "USER_WORKFLOW_TEST",
+                "amount": 20.0,
+                "description": "Testing complete user workflow"
+            }
+            
+            # Create
+            create_response = requests.post(
+                f"{self.api_url}/discounts",
+                json=workflow_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if create_response.status_code == 200:
+                workflow_discount_id = create_response.json().get('id')
+                
+                # View (should be visible)
+                view_response = requests.get(
+                    f"{self.api_url}/discounts",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if view_response.status_code == 200:
+                    discounts = view_response.json()
+                    visible_before_delete = any(d.get('id') == workflow_discount_id for d in discounts)
+                    
+                    if visible_before_delete:
+                        # Delete
+                        delete_response = requests.delete(
+                            f"{self.api_url}/discounts/{workflow_discount_id}",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if delete_response.status_code in [200, 204]:
+                            # Verify not visible after delete
+                            verify_response = requests.get(
+                                f"{self.api_url}/discounts",
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            if verify_response.status_code == 200:
+                                discounts_after = verify_response.json()
+                                not_visible_after_delete = not any(d.get('id') == workflow_discount_id for d in discounts_after)
+                                
+                                workflow_success = not_visible_after_delete
+                                self.log_test("Complete User Workflow", workflow_success, 
+                                            f"Create->View->Delete->Verify: {workflow_success}")
+                                
+                                if not workflow_success:
+                                    all_success = False
+                            else:
+                                self.log_test("Complete User Workflow", False, "Could not verify after delete")
+                                all_success = False
+                        else:
+                            self.log_test("Complete User Workflow", False, f"Delete failed: {delete_response.status_code}")
+                            all_success = False
+                    else:
+                        self.log_test("Complete User Workflow", False, "Discount not visible after creation")
+                        all_success = False
+                else:
+                    self.log_test("Complete User Workflow", False, "Could not view discounts")
+                    all_success = False
+            else:
+                self.log_test("Complete User Workflow", False, "Could not create workflow test discount")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Complete User Workflow", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def test_edit_delete_functionality(self):
         """Test edit and delete functionality for discounts and additional items as requested in review"""
         print("\n✏️ TESTING EDIT AND DELETE FUNCTIONALITY...")
