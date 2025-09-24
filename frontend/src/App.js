@@ -4233,7 +4233,7 @@ function App() {
                   <SelectTrigger>
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent style={{ zIndex: 10000 }}>
                     <SelectItem value="cash">Cash</SelectItem>
                     <SelectItem value="card">Card</SelectItem>
                   </SelectContent>
