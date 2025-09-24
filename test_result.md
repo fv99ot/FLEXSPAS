@@ -105,6 +105,18 @@
 user_problem_statement: "CRITICAL BUG: Check-in process allows customers to be checked into rooms/lockers without payment when page is refreshed before transaction finalization. This is causing revenue loss and needs immediate fix with two-step check-in process."
 
 backend:
+  - task: "Edit and Delete Functionality for Discounts and Additional Items"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "EDIT AND DELETE FUNCTIONALITY TESTING COMPLETED - ALL SYSTEMS WORKING PERFECTLY: Comprehensive testing of edit and delete functionality for discounts and additional items completed with 100% success rate (12/12 tests passed). ✅ CREATE TEST DATA: Successfully created 2 test discounts via POST /api/discounts and 2 test additional items via POST /api/additional-items - all created successfully with proper response format - WORKING, ✅ EDIT DISCOUNT FUNCTIONALITY: PUT /api/discounts/{id} successfully updated discount name, amount, description, and code - all fields updated correctly and returned proper response - WORKING, ✅ EDIT ADDITIONAL ITEM FUNCTIONALITY: PUT /api/additional-items/{id} successfully updated item name, price, and category - all fields updated correctly and returned proper response - WORKING, ✅ DELETE DISCOUNT FUNCTIONALITY: DELETE /api/discounts/{id} successfully deleted discount with proper soft delete (marked as inactive) - returned success message - WORKING, ✅ DELETE ADDITIONAL ITEM FUNCTIONALITY: DELETE /api/additional-items/{id} successfully deleted additional item with proper soft delete (marked as inactive) - returned success message - WORKING, ✅ FRONTEND DATA UPDATES VERIFICATION: GET /api/discounts shows edited discount but not deleted discount (active only), GET /api/admin/discounts shows both edited and deleted discounts (deleted marked inactive), GET /api/additional-items shows edited item but not deleted item (active only), GET /api/admin/additional-items shows both edited and deleted items (deleted marked inactive) - ALL WORKING. The edit and delete button functionality is fully operational and properly updates frontend data as requested in the review."
+
 backend:
   - task: "Two-Step Check-in Process Implementation"
     implemented: true
