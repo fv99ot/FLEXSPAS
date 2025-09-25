@@ -12139,6 +12139,294 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_hard_delete_functionality(self):
+        """Test hard delete endpoints to ensure items are completely removed from database"""
+        print("\n🗑️ TESTING HARD DELETE FUNCTIONALITY...")
+        print("   Testing complete removal of items from database (not just marking inactive)")
+        
+        if not self.token:
+            return self.log_test("Hard Delete Functionality", False, "No authentication token")
+        
+        all_success = True
+        created_discount_id = None
+        created_item_id = None
+        
+        # STEP 1: Create test data - 1 discount and 1 additional item
+        print("   STEP 1: Create test data...")
+        
+        # Create test discount
+        try:
+            unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            discount_data = {
+                "name": f"HARD_DELETE_TEST_DISCOUNT_{unique_timestamp}",
+                "amount": 15.0,
+                "description": "Test discount for hard delete testing",
+                "code": f"HARDTEST{unique_timestamp}"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/discounts",
+                json=discount_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                discount_response = response.json()
+                created_discount_id = discount_response['id']
+                self.log_test("Create Test Discount", True, f"Created discount: {discount_response['name']} (${discount_response['amount']}) - ID: {created_discount_id}")
+            else:
+                self.log_test("Create Test Discount", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Test Discount", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Create test additional item
+        try:
+            item_data = {
+                "name": f"HARD_DELETE_TEST_ITEM_{unique_timestamp}",
+                "price": 12.0,
+                "category": "test_category"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/additional-items",
+                json=item_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                item_response = response.json()
+                created_item_id = item_response['id']
+                self.log_test("Create Test Additional Item", True, f"Created item: {item_response['name']} (${item_response['price']}) - ID: {created_item_id}")
+            else:
+                self.log_test("Create Test Additional Item", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Create Test Additional Item", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        if not created_discount_id or not created_item_id:
+            print("   ❌ Could not create test data - skipping hard delete tests")
+            return False
+        
+        # STEP 2: Test hard delete endpoints
+        print("   STEP 2: Test hard delete endpoints...")
+        
+        # Test hard delete discount endpoint
+        try:
+            response = requests.delete(
+                f"{self.api_url}/admin/discounts/{created_discount_id}/hard-delete",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                delete_response = response.json()
+                success_message = "permanently deleted" in delete_response.get('message', '').lower()
+                self.log_test("Hard Delete Discount Endpoint", success_message, f"Status: {response.status_code}, Message: {delete_response.get('message', '')}")
+                if not success_message:
+                    all_success = False
+            else:
+                self.log_test("Hard Delete Discount Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Hard Delete Discount Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test hard delete additional item endpoint
+        try:
+            response = requests.delete(
+                f"{self.api_url}/admin/additional-items/{created_item_id}/hard-delete",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                delete_response = response.json()
+                success_message = "permanently deleted" in delete_response.get('message', '').lower()
+                self.log_test("Hard Delete Additional Item Endpoint", success_message, f"Status: {response.status_code}, Message: {delete_response.get('message', '')}")
+                if not success_message:
+                    all_success = False
+            else:
+                self.log_test("Hard Delete Additional Item Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Hard Delete Additional Item Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 3: Verify complete removal from database
+        print("   STEP 3: Verify complete removal from database...")
+        
+        # Check that GET /api/discounts does NOT return the deleted discount
+        try:
+            response = requests.get(
+                f"{self.api_url}/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                discounts = response.json()
+                deleted_discount_found = any(discount.get('id') == created_discount_id for discount in discounts)
+                not_in_active_discounts = not deleted_discount_found
+                
+                self.log_test("Deleted Discount NOT in Active List", not_in_active_discounts, 
+                            f"Discount {created_discount_id} found in active list: {deleted_discount_found}")
+                
+                if not not_in_active_discounts:
+                    all_success = False
+            else:
+                self.log_test("Deleted Discount NOT in Active List", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Discount NOT in Active List", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Check that GET /api/additional-items does NOT return the deleted item
+        try:
+            response = requests.get(
+                f"{self.api_url}/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                items = response.json()
+                deleted_item_found = any(item.get('id') == created_item_id for item in items)
+                not_in_active_items = not deleted_item_found
+                
+                self.log_test("Deleted Item NOT in Active List", not_in_active_items, 
+                            f"Item {created_item_id} found in active list: {deleted_item_found}")
+                
+                if not not_in_active_items:
+                    all_success = False
+            else:
+                self.log_test("Deleted Item NOT in Active List", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Item NOT in Active List", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Check that GET /api/admin/discounts does NOT return the deleted discount
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                admin_discounts = response.json()
+                deleted_discount_found = any(discount.get('id') == created_discount_id for discount in admin_discounts)
+                not_in_admin_discounts = not deleted_discount_found
+                
+                self.log_test("Deleted Discount NOT in Admin List", not_in_admin_discounts, 
+                            f"Discount {created_discount_id} found in admin list: {deleted_discount_found}")
+                
+                if not not_in_admin_discounts:
+                    all_success = False
+            else:
+                self.log_test("Deleted Discount NOT in Admin List", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Discount NOT in Admin List", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Check that GET /api/admin/additional-items does NOT return the deleted item
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                admin_items = response.json()
+                deleted_item_found = any(item.get('id') == created_item_id for item in admin_items)
+                not_in_admin_items = not deleted_item_found
+                
+                self.log_test("Deleted Item NOT in Admin List", not_in_admin_items, 
+                            f"Item {created_item_id} found in admin list: {deleted_item_found}")
+                
+                if not not_in_admin_items:
+                    all_success = False
+            else:
+                self.log_test("Deleted Item NOT in Admin List", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Deleted Item NOT in Admin List", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 4: Verify items are completely gone from database (not just marked inactive)
+        print("   STEP 4: Verify complete database removal...")
+        
+        # Try to access deleted discount directly (should return 404)
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/discounts",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_discounts = response.json()
+                # Check if any discount has the deleted ID (even if marked inactive)
+                deleted_discount_exists = any(discount.get('id') == created_discount_id for discount in all_discounts)
+                completely_removed = not deleted_discount_exists
+                
+                self.log_test("Discount Completely Removed from Database", completely_removed, 
+                            f"Discount exists anywhere in database: {deleted_discount_exists}")
+                
+                if not completely_removed:
+                    all_success = False
+            else:
+                self.log_test("Discount Completely Removed from Database", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Discount Completely Removed from Database", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Try to access deleted item directly (should return 404)
+        try:
+            response = requests.get(
+                f"{self.api_url}/admin/additional-items",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                all_items = response.json()
+                # Check if any item has the deleted ID (even if marked inactive)
+                deleted_item_exists = any(item.get('id') == created_item_id for item in all_items)
+                completely_removed = not deleted_item_exists
+                
+                self.log_test("Item Completely Removed from Database", completely_removed, 
+                            f"Item exists anywhere in database: {deleted_item_exists}")
+                
+                if not completely_removed:
+                    all_success = False
+            else:
+                self.log_test("Item Completely Removed from Database", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Item Completely Removed from Database", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all comprehensive API tests"""
         print("🚀 Starting Comprehensive API Testing...")
