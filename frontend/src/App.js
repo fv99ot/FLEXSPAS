@@ -764,7 +764,7 @@ function App() {
   };
 
   const deleteDiscount = async (discountId) => {
-    if (!window.confirm('Are you sure you want to delete this discount?')) {
+    if (!window.confirm('Are you sure you want to permanently delete this discount? This action cannot be undone.')) {
       return;
     }
     
@@ -777,10 +777,11 @@ function App() {
       }
       
       const headers = { 'Authorization': `Bearer ${token}` };
-      await axios.delete(`${API}/api/discounts/${discountId}`, { headers });
+      // Use hard delete endpoint to permanently remove from database
+      await axios.delete(`${API}/api/admin/discounts/${discountId}/hard-delete`, { headers });
       fetchDiscounts();
       fetchAdminDiscounts();
-      alert('Discount deleted successfully!');
+      alert('Discount permanently deleted from database!');
     } catch (error) {
       console.error('Error deleting discount:', error);
       handleTokenError(error, 'Error deleting discount');
