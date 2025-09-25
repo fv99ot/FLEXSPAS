@@ -12440,6 +12440,9 @@ class BathhouseAPITester:
         # PRIORITY: Real Delete Button Testing (as requested in review)
         self.test_delete_functionality_comprehensive()
         
+        # HARD DELETE FUNCTIONALITY TESTING (as requested in review)
+        self.test_hard_delete_functionality()
+        
         # EDIT AND DELETE FUNCTIONALITY TESTING (as requested in review)
         self.test_edit_delete_functionality()
         
