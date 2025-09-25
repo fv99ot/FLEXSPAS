@@ -857,7 +857,7 @@ function App() {
   };
 
   const deleteAdditionalItem = async (itemId) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) {
+    if (!window.confirm('Are you sure you want to permanently delete this item? This action cannot be undone.')) {
       return;
     }
     
@@ -870,10 +870,11 @@ function App() {
       }
       
       const headers = { 'Authorization': `Bearer ${token}` };
-      await axios.delete(`${API}/api/additional-items/${itemId}`, { headers });
+      // Use hard delete endpoint to permanently remove from database
+      await axios.delete(`${API}/api/admin/additional-items/${itemId}/hard-delete`, { headers });
       fetchAdditionalItems();
       fetchAdminItems();
-      alert('Additional item deleted successfully!');
+      alert('Additional item permanently deleted from database!');
     } catch (error) {
       console.error('Error deleting additional item:', error);
       handleTokenError(error, 'Error deleting additional item');
