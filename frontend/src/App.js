@@ -1818,9 +1818,7 @@ function App() {
                   style={{ maxHeight: '40px', objectFit: 'contain' }}
                 />
               </div>
-              <Badge variant="secondary" className="ml-3 modern-button-accent text-white font-semibold px-3 py-1">
-                {user?.role === 'manager' ? 'Manager' : 'Employee'}
-              </Badge>
+              <Badge variant="secondary" className="ml-3 modern-button-accent text-white font-semibold px-3 py-1">{user?.role?.toUpperCase()}</Badge>
             </div>
             <div className="flex items-center space-x-4">
               <Avatar>
