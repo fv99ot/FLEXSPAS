@@ -132,6 +132,12 @@ function App() {
   const [newEmployee, setNewEmployee] = useState({ username: '', password: '', role: 'employee' });
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   
+  // Manager override for waitlist enforcement
+  const [showManagerOverride, setShowManagerOverride] = useState(false);
+  const [managerPassword, setManagerPassword] = useState('');
+  const [pendingCheckinData, setPendingCheckinData] = useState(null);
+  const [waitlistConflictMessage, setWaitlistConflictMessage] = useState('');
+  
   // Waitlist state
   const [waitlist, setWaitlist] = useState({
     waitlists: {
