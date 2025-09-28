@@ -12477,6 +12477,9 @@ class BathhouseAPITester:
         # Token expiration handling tests (NEW)
         self.test_token_expiration_handling()
         
+        # ENHANCED WAITLIST FUNCTIONALITY TESTING (as requested in review)
+        self.test_enhanced_waitlist_functionality()
+        
         # Business rules
         self.test_business_rules()
         
