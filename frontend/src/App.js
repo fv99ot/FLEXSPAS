@@ -1323,7 +1323,7 @@ function App() {
       room_number: '' 
     });
     setSelectedCustomer(null);
-    setShowCheckin(false);
+    setShowCheckIn(false);
     setShowPayment(true);
     
     console.log('🎉 Check-in prepare completed - payment dialog shown');
