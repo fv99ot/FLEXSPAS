@@ -1533,8 +1533,35 @@ async def update_discount(discount_id: str, discount_update: DiscountCreate, cur
 # Waitlist Management
 @api_router.get("/waitlist")
 async def get_waitlist(current_user: User = Depends(get_current_user)):
-    """Get waitlist organized by room types"""
+    """Get waitlist organized by room types with available upgrade options"""
     waitlist = await db.waitlist.find({"status": "waiting"}).sort("created_at", 1).to_list(1000)
+    
+    # Get all active check-ins to determine room availability
+    active_checkins = await db.check_ins.find({"check_out_time": None}).to_list(1000)
+    occupied_rooms = {}
+    for checkin in active_checkins:
+        room_key = f"{checkin['room_type']}_{checkin['room_number']}"
+        occupied_rooms[room_key] = True
+    
+    # Define all available rooms by type
+    all_rooms = {
+        "small_room": list(range(1, 7)),     # 1-6
+        "regular_room": list(range(7, 34)),   # 7-33
+        "deluxe_room": list(range(34, 40))    # 34-39
+    }
+    
+    # Calculate available rooms for each type
+    available_rooms = {}
+    for room_type, room_numbers in all_rooms.items():
+        available_rooms[room_type] = []
+        for room_num in room_numbers:
+            room_key = f"{room_type}_{room_num}"
+            if room_key not in occupied_rooms:
+                available_rooms[room_type].append({
+                    "number": room_num,
+                    "type": room_type,
+                    "label": f"{room_type.replace('_', ' ').title()} #{room_num}"
+                })
     
     # Organize waitlist by desired room type
     organized_waitlist = {
@@ -1546,6 +1573,12 @@ async def get_waitlist(current_user: User = Depends(get_current_user)):
     for entry in waitlist:
         # Get customer info
         customer = await db.customers.find_one({"id": entry["customer_id"]})
+        
+        # Get current check-in info if customer is checked in
+        current_checkin = await db.check_ins.find_one({
+            "customer_id": entry["customer_id"],
+            "check_out_time": None
+        })
         
         # Clean up the entry data for JSON serialization
         entry_data = {
@@ -1560,6 +1593,20 @@ async def get_waitlist(current_user: User = Depends(get_current_user)):
             "status": entry.get("status", "waiting")
         }
         
+        # Add current check-in info if available
+        if current_checkin:
+            entry_data["current_checkin"] = {
+                "room_number": current_checkin["room_number"],
+                "room_type": current_checkin["room_type"],
+                "check_in_time": current_checkin["check_in_time"]
+            }
+        else:
+            entry_data["current_checkin"] = None
+        
+        # Add available upgrade options (rooms of desired type that are available)
+        desired_type = entry.get("desired_room_type", "regular_room")
+        entry_data["available_upgrades"] = available_rooms.get(desired_type, [])
+        
         # Clean up customer data for JSON serialization
         if customer:
             customer_data = {k: v for k, v in customer.items() if k != "_id"}
@@ -1568,11 +1615,21 @@ async def get_waitlist(current_user: User = Depends(get_current_user)):
             entry_data["customer"] = None
         
         # Add to appropriate waitlist
-        desired_type = entry.get("desired_room_type", "regular_room")
         if desired_type in organized_waitlist:
             organized_waitlist[desired_type].append(entry_data)
     
-    return organized_waitlist
+    # Also include summary of available rooms for each type
+    waitlist_summary = {
+        "waitlists": organized_waitlist,
+        "available_rooms_summary": {
+            "small_room": len(available_rooms["small_room"]),
+            "regular_room": len(available_rooms["regular_room"]),
+            "deluxe_room": len(available_rooms["deluxe_room"])
+        },
+        "available_rooms": available_rooms
+    }
+    
+    return waitlist_summary
 
 @api_router.post("/waitlist", response_model=WaitlistEntry)
 async def add_to_waitlist(waitlist_create: WaitlistCreate, current_user: User = Depends(get_current_user)):
