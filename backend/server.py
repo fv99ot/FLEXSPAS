@@ -1762,9 +1762,9 @@ async def add_to_waitlist(waitlist_create: WaitlistCreate, current_user: User = 
     await db.waitlist.insert_one(waitlist_doc)
     return WaitlistEntry(**waitlist_doc)
 
-@api_router.post("/waitlist/{entry_id}/upgrade")
-async def upgrade_from_waitlist(entry_id: str, upgrade_data: dict, current_user: User = Depends(get_current_user)):
-    """Upgrade customer directly from waitlist to available room"""
+@api_router.post("/waitlist/{entry_id}/upgrade/prepare")
+async def prepare_waitlist_upgrade(entry_id: str, upgrade_data: dict, current_user: User = Depends(get_current_user)):
+    """Prepare waitlist upgrade: calculate costs and check availability, but don't apply upgrade yet"""
     
     # Get waitlist entry
     waitlist_entry = await db.waitlist.find_one({"id": entry_id, "status": "waiting"})
@@ -1793,71 +1793,148 @@ async def upgrade_from_waitlist(entry_id: str, upgrade_data: dict, current_user:
         "check_out_time": None
     })
     
-    if current_checkin:
-        # Customer is currently checked in - perform room upgrade
-        
-        # Calculate upgrade cost
-        is_weekend = is_weekend_time()
-        old_room_fee = await get_room_pricing(RoomType(current_checkin["room_type"]), is_weekend)
-        new_room_fee = await get_room_pricing(RoomType(new_room_type), is_weekend)
-        upgrade_fee = max(0, new_room_fee - old_room_fee)
-        
-        # Cleaning fee only applies if customer is upgrading from or to a room (not locker)
-        old_is_room = current_checkin["room_type"] != "locker"  
-        new_is_room = new_room_type != "locker"
-        cleaning_fee = 5.0 if (old_is_room or new_is_room) else 0
-        
-        total_additional_cost = upgrade_fee + cleaning_fee
-        
-        # Update check-in record
-        await db.check_ins.update_one(
-            {"id": current_checkin["id"]},
-            {
-                "$set": {
-                    "room_type": new_room_type,
-                    "room_number": new_room_number
-                },
-                "$inc": {"total_amount": total_additional_cost}
-            }
-        )
-        
-        # Create upgrade record
-        upgrade_doc = {
-            "id": str(uuid.uuid4()),
-            "checkin_id": current_checkin["id"],
-            "old_room_type": current_checkin["room_type"],
-            "old_room_number": current_checkin["room_number"],
-            "new_room_type": new_room_type,
-            "new_room_number": new_room_number,
-            "upgrade_fee": upgrade_fee,
-            "cleaning_fee": cleaning_fee,
-            "total_additional_cost": total_additional_cost,
-            "upgraded_from_waitlist": True,
-            "waitlist_entry_id": entry_id,
-            "created_at": datetime.now(timezone.utc)
-        }
-        
-        await db.room_upgrades.insert_one(upgrade_doc)
-        
-        upgrade_message = f"Upgraded from {current_checkin['room_type'].replace('_', ' ')} #{current_checkin['room_number']} to {new_room_type.replace('_', ' ')} #{new_room_number}"
-        if total_additional_cost > 0:
-            upgrade_message += f" (Additional cost: ${total_additional_cost:.2f})"
-    else:
-        # Customer is not currently checked in - cannot upgrade
+    if not current_checkin:
         raise HTTPException(status_code=400, detail="Customer must be checked in to upgrade from waitlist")
+    
+    # Calculate upgrade cost
+    is_weekend = is_weekend_time()
+    old_room_fee = await get_room_pricing(RoomType(current_checkin["room_type"]), is_weekend)
+    new_room_fee = await get_room_pricing(RoomType(new_room_type), is_weekend)
+    upgrade_fee = max(0, new_room_fee - old_room_fee)
+    
+    # Cleaning fee only applies if customer is upgrading from or to a room (not locker)
+    old_is_room = current_checkin["room_type"] != "locker"  
+    new_is_room = new_room_type != "locker"
+    cleaning_fee = 5.0 if (old_is_room or new_is_room) else 0
+    
+    total_additional_cost = upgrade_fee + cleaning_fee
+    
+    # Create pending waitlist upgrade record (not applied yet)
+    pending_upgrade_doc = {
+        "id": str(uuid.uuid4()),
+        "waitlist_entry_id": entry_id,
+        "checkin_id": current_checkin["id"],
+        "customer_id": customer_id,
+        "old_room_type": current_checkin["room_type"],
+        "old_room_number": current_checkin["room_number"],
+        "new_room_type": new_room_type,
+        "new_room_number": new_room_number,
+        "upgrade_fee": upgrade_fee,
+        "cleaning_fee": cleaning_fee,
+        "total_additional_cost": total_additional_cost,
+        "status": "pending",  # pending, completed, cancelled
+        "upgrade_source": "waitlist",
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10)  # Auto-expire after 10 minutes
+    }
+    
+    await db.pending_waitlist_upgrades.insert_one(pending_upgrade_doc)
+    
+    return {
+        "pending_upgrade_id": pending_upgrade_doc["id"],
+        "additional_cost": total_additional_cost,
+        "upgrade_fee": upgrade_fee,
+        "cleaning_fee": cleaning_fee,
+        "old_room": f"{current_checkin['room_type'].replace('_', ' ').title()} #{current_checkin['room_number']}",
+        "new_room": f"{new_room_type.replace('_', ' ').title()} #{new_room_number}",
+        "expires_at": pending_upgrade_doc["expires_at"].isoformat(),
+        "message": "Waitlist upgrade prepared. Complete payment to apply changes."
+    }
+
+@api_router.post("/waitlist/{entry_id}/upgrade/complete")
+async def complete_waitlist_upgrade(entry_id: str, completion_data: dict, current_user: User = Depends(get_current_user)):
+    """Complete waitlist upgrade after payment confirmation"""
+    
+    pending_upgrade_id = completion_data.get("pending_upgrade_id")
+    if not pending_upgrade_id:
+        raise HTTPException(status_code=400, detail="pending_upgrade_id is required")
+    
+    # Get pending upgrade
+    pending_upgrade = await db.pending_waitlist_upgrades.find_one({
+        "id": pending_upgrade_id,
+        "waitlist_entry_id": entry_id,
+        "status": "pending"
+    })
+    
+    if not pending_upgrade:
+        raise HTTPException(status_code=404, detail="Pending waitlist upgrade not found or already processed")
+    
+    # Check if expired
+    expires_at = pending_upgrade["expires_at"]
+    if isinstance(expires_at, str):
+        expires_at = datetime.fromisoformat(expires_at.replace('Z', '+00:00'))
+    elif isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if datetime.now(timezone.utc) > expires_at:
+        await db.pending_waitlist_upgrades.update_one(
+            {"id": pending_upgrade_id},
+            {"$set": {"status": "expired"}}
+        )
+        raise HTTPException(status_code=400, detail="Waitlist upgrade request has expired. Please start again.")
+    
+    # Verify room is still available
+    existing_checkin = await db.check_ins.find_one({
+        "room_number": pending_upgrade["new_room_number"],
+        "room_type": pending_upgrade["new_room_type"],
+        "check_out_time": None
+    })
+    if existing_checkin:
+        await db.pending_waitlist_upgrades.update_one(
+            {"id": pending_upgrade_id},
+            {"$set": {"status": "cancelled", "cancellation_reason": "room_no_longer_available"}}
+        )
+        raise HTTPException(status_code=400, detail="Room is no longer available")
+    
+    # Apply the room upgrade
+    await db.check_ins.update_one(
+        {"id": pending_upgrade["checkin_id"]},
+        {
+            "$set": {
+                "room_type": pending_upgrade["new_room_type"],
+                "room_number": pending_upgrade["new_room_number"]
+            },
+            "$inc": {"total_amount": pending_upgrade["total_additional_cost"]}
+        }
+    )
+    
+    # Create completed upgrade record
+    upgrade_doc = {
+        "id": str(uuid.uuid4()),
+        "checkin_id": pending_upgrade["checkin_id"],
+        "old_room_type": pending_upgrade["old_room_type"],
+        "old_room_number": pending_upgrade["old_room_number"],
+        "new_room_type": pending_upgrade["new_room_type"],
+        "new_room_number": pending_upgrade["new_room_number"],
+        "upgrade_fee": pending_upgrade["upgrade_fee"],
+        "cleaning_fee": pending_upgrade["cleaning_fee"],
+        "total_additional_cost": pending_upgrade["total_additional_cost"],
+        "upgraded_from_waitlist": True,
+        "waitlist_entry_id": entry_id,
+        "completed_at": datetime.now(timezone.utc),
+        "completed_by": current_user.id
+    }
+    
+    await db.room_upgrades.insert_one(upgrade_doc)
     
     # Remove customer from ALL waitlists after successful upgrade
     await db.waitlist.update_many(
-        {"customer_id": customer_id, "status": "waiting"},
+        {"customer_id": pending_upgrade["customer_id"], "status": "waiting"},
         {"$set": {"status": "upgraded", "upgraded_at": datetime.now(timezone.utc)}}
     )
     
+    # Mark pending upgrade as completed
+    await db.pending_waitlist_upgrades.update_one(
+        {"id": pending_upgrade_id},
+        {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc)}}
+    )
+    
     return {
-        "message": upgrade_message,
         "upgrade_id": upgrade_doc["id"],
-        "old_room": f"{current_checkin['room_type'].replace('_', ' ')} #{current_checkin['room_number']}",
-        "new_room": f"{new_room_type.replace('_', ' ')} #{new_room_number}",
-        "additional_cost": total_additional_cost,
+        "message": f"Waitlist upgrade completed: {pending_upgrade['old_room_type'].replace('_', ' ').title()} #{pending_upgrade['old_room_number']} → {pending_upgrade['new_room_type'].replace('_', ' ').title()} #{pending_upgrade['new_room_number']}",
+        "old_room": f"{pending_upgrade['old_room_type'].replace('_', ' ').title()} #{pending_upgrade['old_room_number']}",
+        "new_room": f"{pending_upgrade['new_room_type'].replace('_', ' ').title()} #{pending_upgrade['new_room_number']}",
+        "additional_cost": pending_upgrade["total_additional_cost"],
         "removed_from_waitlists": True
     }
 
