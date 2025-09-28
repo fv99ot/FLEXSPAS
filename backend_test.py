@@ -13621,6 +13621,323 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_payment_processing_fix(self):
+        """Test payment processing fix - verify database field name fix resolves payment processing error"""
+        print("\n💳 TESTING PAYMENT PROCESSING FIX...")
+        print("   Testing database field name fix for payment processing error")
+        print("   Focus: created_by field access instead of employee_id")
+        
+        if not self.token:
+            return self.log_test("Payment Processing Fix", False, "No authentication token")
+        
+        all_success = True
+        test_customer_id = None
+        pending_checkin_id = None
+        completed_checkin_id = None
+        
+        # STEP 1: Test Active Check-ins Endpoint (should work without errors)
+        print("   STEP 1: Test GET /api/checkins/active endpoint...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    # Check if response includes proper employee field access
+                    has_employee_info = True
+                    for checkin in data:
+                        if 'employee' not in checkin:
+                            has_employee_info = False
+                            break
+                    
+                    self.log_test("Active Check-ins Endpoint", True, 
+                                f"Found {len(data)} active check-ins, employee info included: {has_employee_info}")
+                else:
+                    self.log_test("Active Check-ins Endpoint", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Active Check-ins Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Active Check-ins Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 2: Create test customer for payment flow testing
+        print("   STEP 2: Create test customer...")
+        try:
+            unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            customer_data = {
+                "first_name": "Payment",
+                "last_name": "Test",
+                "id_number": f"PAYMENT_TEST_{unique_timestamp}",
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                test_customer_id = response.json()['id']
+                self.log_test("Create Test Customer", True, f"Customer ID: {test_customer_id}")
+            else:
+                self.log_test("Create Test Customer", False, f"Status: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Create Test Customer", False, f"Exception: {str(e)}")
+            return False
+        
+        # STEP 3: Test POST /api/checkin/prepare endpoint
+        print("   STEP 3: Test POST /api/checkin/prepare endpoint...")
+        try:
+            # Get available room
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_rooms = rooms_response.json()['available_rooms']
+                if available_rooms:
+                    prepare_data = {
+                        "customer_id": test_customer_id,
+                        "membership_type": "1_day",
+                        "room_type": "locker",
+                        "room_number": available_rooms[0]
+                    }
+                    
+                    response = requests.post(
+                        f"{self.api_url}/checkin/prepare",
+                        json=prepare_data,
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        prepare_response = response.json()
+                        
+                        # Verify response contains required fields
+                        required_fields = ['pending_checkin_id', 'customer', 'room_type', 'room_number', 'total_amount', 'expires_at']
+                        has_required_fields = all(field in prepare_response for field in required_fields)
+                        
+                        pending_checkin_id = prepare_response.get('pending_checkin_id')
+                        
+                        self.log_test("Prepare Check-in Endpoint", has_required_fields, 
+                                    f"Pending ID: {pending_checkin_id}, Amount: ${prepare_response.get('total_amount', 0)}")
+                        
+                        if not has_required_fields:
+                            all_success = False
+                    else:
+                        self.log_test("Prepare Check-in Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                        all_success = False
+                        return False
+                else:
+                    self.log_test("Prepare Check-in Endpoint", False, "No available rooms")
+                    return False
+            else:
+                self.log_test("Prepare Check-in Endpoint", False, "Could not get available rooms")
+                return False
+                
+        except Exception as e:
+            self.log_test("Prepare Check-in Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+            return False
+        
+        # STEP 4: Test POST /api/checkin/complete endpoint
+        print("   STEP 4: Test POST /api/checkin/complete endpoint...")
+        if pending_checkin_id:
+            try:
+                complete_data = {
+                    "pending_checkin_id": pending_checkin_id
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/checkin/complete",
+                    json=complete_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    complete_response = response.json()
+                    
+                    # Verify completion creates actual check-in record
+                    required_fields = ['id', 'customer_id', 'room_type', 'room_number', 'check_in_time', 'total_amount']
+                    has_required_fields = all(field in complete_response for field in required_fields)
+                    
+                    completed_checkin_id = complete_response.get('id')
+                    
+                    self.log_test("Complete Check-in Endpoint", has_required_fields, 
+                                f"Check-in ID: {completed_checkin_id}, Message: {complete_response.get('message', '')}")
+                    
+                    if not has_required_fields:
+                        all_success = False
+                else:
+                    self.log_test("Complete Check-in Endpoint", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Complete Check-in Endpoint", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Complete Check-in Endpoint", False, "No pending check-in ID")
+            all_success = False
+        
+        # STEP 5: Verify GET /api/checkins/active works after check-in completion
+        print("   STEP 5: Verify active check-ins after completion...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    # Find our completed check-in
+                    our_checkin = next((c for c in data if c.get('id') == completed_checkin_id), None)
+                    
+                    if our_checkin:
+                        # Verify employee field access (created_by field should be accessible)
+                        has_employee_field = 'employee' in our_checkin
+                        has_customer_field = 'customer' in our_checkin
+                        has_proper_structure = has_employee_field and has_customer_field
+                        
+                        self.log_test("Active Check-ins After Completion", has_proper_structure, 
+                                    f"Employee field: {has_employee_field}, Customer field: {has_customer_field}")
+                        
+                        if not has_proper_structure:
+                            all_success = False
+                    else:
+                        self.log_test("Active Check-ins After Completion", False, "Completed check-in not found in active list")
+                        all_success = False
+                else:
+                    self.log_test("Active Check-ins After Completion", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Active Check-ins After Completion", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Active Check-ins After Completion", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 6: Test Employee Field Access - verify created_by field is properly accessed
+        print("   STEP 6: Test employee field access (created_by vs employee_id)...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/checkins/active",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0:
+                    # Check that all check-ins have employee information properly populated
+                    field_access_working = True
+                    employee_info_count = 0
+                    
+                    for checkin in data:
+                        if 'employee' in checkin and checkin['employee'] is not None:
+                            employee_info_count += 1
+                        else:
+                            field_access_working = False
+                    
+                    self.log_test("Employee Field Access", field_access_working, 
+                                f"Employee info populated for {employee_info_count}/{len(data)} check-ins")
+                    
+                    if not field_access_working:
+                        all_success = False
+                else:
+                    self.log_test("Employee Field Access", True, "No active check-ins to test (acceptable)")
+            else:
+                self.log_test("Employee Field Access", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Employee Field Access", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 7: Test error handling - invalid pending_checkin_id
+        print("   STEP 7: Test error handling for invalid pending_checkin_id...")
+        try:
+            invalid_complete_data = {
+                "pending_checkin_id": "invalid_id_12345"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/checkin/complete",
+                json=invalid_complete_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should return 404 for invalid pending check-in ID
+            proper_error_handling = response.status_code == 404
+            
+            self.log_test("Invalid Pending ID Error Handling", proper_error_handling, 
+                        f"Status: {response.status_code} (should be 404)")
+            
+            if not proper_error_handling:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid Pending ID Error Handling", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # STEP 8: Test error handling - missing pending_checkin_id
+        print("   STEP 8: Test error handling for missing pending_checkin_id...")
+        try:
+            empty_complete_data = {}
+            
+            response = requests.post(
+                f"{self.api_url}/checkin/complete",
+                json=empty_complete_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should return 400 for missing pending check-in ID
+            proper_error_handling = response.status_code == 400
+            
+            self.log_test("Missing Pending ID Error Handling", proper_error_handling, 
+                        f"Status: {response.status_code} (should be 400)")
+            
+            if not proper_error_handling:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Missing Pending ID Error Handling", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Clean up - check out the customer if we successfully checked them in
+        if completed_checkin_id:
+            try:
+                requests.put(
+                    f"{self.api_url}/checkin/{completed_checkin_id}/checkout",
+                    headers=self.headers,
+                    timeout=10
+                )
+                print(f"   ✅ Cleaned up: Checked out customer (ID: {completed_checkin_id})")
+            except:
+                print(f"   ⚠️  Could not clean up check-in: {completed_checkin_id}")
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all comprehensive API tests"""
     def run_all_tests(self):
