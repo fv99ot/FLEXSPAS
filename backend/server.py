@@ -294,6 +294,54 @@ def get_available_rooms(room_type: RoomType) -> List[int]:
     }
     return room_ranges.get(room_type, [])
 
+async def check_waitlist_queue_enforcement(customer_id: str, room_type: str, manager_override: bool = False, manager_password: str = None, current_user = None) -> str:
+    """Check if customer should wait in line based on waitlist queue enforcement rules
+    Returns error message if customer should wait, None if they can proceed"""
+    
+    # If manager override is requested, validate manager password
+    if manager_override:
+        if not manager_password:
+            return "Manager override requires password"
+        
+        # Validate manager password (you may want to implement proper password validation)
+        if manager_password != "manager123":  # Replace with proper validation
+            return "Invalid manager password"
+        
+        # Check if current user is actually a manager
+        if current_user and current_user.role != UserRole.MANAGER:
+            return "Only managers can use override"
+        
+        # Manager override approved - allow check-in
+        return None
+    
+    # Get current waitlist for this room type
+    waitlist_entries = await db.waitlist.find({
+        "desired_room_type": room_type,
+        "status": "waiting"
+    }).sort("created_at", 1).to_list(1000)
+    
+    if not waitlist_entries:
+        # No waitlist - customer can proceed
+        return None
+    
+    # Check if this customer is first in line
+    first_in_line = waitlist_entries[0]
+    if first_in_line["customer_id"] == customer_id:
+        # Customer is first in line - they can proceed
+        return None
+    
+    # Customer is not first in line - they must wait
+    position = None
+    for i, entry in enumerate(waitlist_entries):
+        if entry["customer_id"] == customer_id:
+            position = i + 1
+            break
+    
+    if position:
+        return f"You are #{position} in the waitlist for {room_type.replace('_', ' ')}. Please wait for your turn."
+    else:
+        return f"There are {len(waitlist_entries)} people ahead of you in the waitlist for {room_type.replace('_', ' ')}. Please join the waitlist first."
+
 # Initialize default admin user
 async def create_default_admin():
     admin_exists = await db.users.find_one({"username": "admin"})
