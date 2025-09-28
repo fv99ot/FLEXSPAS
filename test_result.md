@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "CRITICAL BUG: Check-in process allows customers to be checked into rooms/lockers without payment when page is refreshed before transaction finalization. This is causing revenue loss and needs immediate fix with two-step check-in process."
+user_problem_statement: "WAITLIST ENHANCEMENT FEATURES: 1) Remove customer from all 3 waitlists when removed from one, 2) Allow direct upgrade from waitlist to available rooms, 3) Show current room/locker and available upgrade options in waitlist, 4) Remove from other waitlists when upgraded."
 
 backend:
   - task: "Edit and Delete Functionality for Discounts and Additional Items"
