@@ -568,12 +568,21 @@ function App() {
   const removeFromWaitlist = async (entryId) => {
     try {
       const token = localStorage.getItem('token');
-      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-      await axios.delete(`${API}/api/waitlist/${entryId}`, { headers });
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
+      const response = await axios.delete(`${API}/api/waitlist/${entryId}`, { headers });
+      
+      alert('Customer removed from all waitlists');
       fetchWaitlist();
+      
     } catch (error) {
       console.error('Error removing from waitlist:', error);
-      alert('Error removing from waitlist');
+      handleTokenError(error, 'Error removing from waitlist');
     }
   };
 
