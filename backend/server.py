@@ -581,19 +581,29 @@ async def get_available_rooms_for_type(room_type: RoomType, current_user: User =
     
     return {"available_rooms": available_rooms, "room_details": room_details}
 
-# Check-in System - Two-Step Process to prevent check-ins without payment
+# Check-in System - Two-Step Process with Waitlist Queue Enforcement
 @api_router.post("/checkin/prepare")
 async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depends(get_current_user)):
-    """Prepare check-in: validate customer, check availability, calculate costs - but don't actually check in yet"""
+    """Prepare check-in: validate customer, check availability, calculate costs, enforce waitlist queue - but don't actually check in yet"""
     customer_id = checkin_data.customer_id
     membership_type = checkin_data.membership_type
     room_type = checkin_data.room_type
     room_number = checkin_data.room_number
+    manager_override = getattr(checkin_data, 'manager_override', False)
+    manager_password = getattr(checkin_data, 'manager_password', None)
     
     # Validate customer exists
     customer = await db.customers.find_one({"id": customer_id})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
+    
+    # WAITLIST QUEUE ENFORCEMENT - Check if customer should wait in line
+    waitlist_conflict = await check_waitlist_queue_enforcement(customer_id, room_type, manager_override, manager_password, current_user)
+    if waitlist_conflict:
+        raise HTTPException(
+            status_code=409,  # Conflict status
+            detail=waitlist_conflict
+        )
     
     # Check if room/locker is available
     if room_type == "locker":
