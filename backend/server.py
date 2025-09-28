@@ -109,6 +109,8 @@ class CheckInCreate(BaseModel):
     membership_type: Optional[MembershipType] = None
     room_type: RoomType
     room_number: int
+    manager_override: Optional[bool] = False
+    manager_password: Optional[str] = None
 
 class Room(BaseModel):
     number: int
