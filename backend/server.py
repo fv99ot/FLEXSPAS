@@ -1116,7 +1116,44 @@ async def get_active_checkins(current_user: User = Depends(get_current_user)):
         customer = await db.customers.find_one({"id": checkin["customer_id"]})
         employee = await db.users.find_one({"id": checkin["created_by"]})
         
-        checkin_info = CheckIn(**checkin).dict()
+        # Handle field mapping for database records created by two-step check-in process
+        # Map created_by to employee_id and provide default values for missing fields
+        checkin_data = checkin.copy()
+        if "created_by" in checkin_data and "employee_id" not in checkin_data:
+            checkin_data["employee_id"] = checkin_data["created_by"]
+        
+        # Provide default values for fields that might be missing in new check-in records
+        checkin_data.setdefault("membership_fee", 0.0)
+        checkin_data.setdefault("room_fee", 0.0)
+        checkin_data.setdefault("is_weekend", False)
+        checkin_data.setdefault("session_count", 1)
+        checkin_data.setdefault("payment_method", "cash")
+        
+        # Remove MongoDB _id field if present
+        checkin_data.pop("_id", None)
+        
+        try:
+            checkin_info = CheckIn(**checkin_data).dict()
+        except Exception as e:
+            # If CheckIn model validation fails, create a basic dict structure
+            checkin_info = {
+                "id": checkin.get("id", ""),
+                "customer_id": checkin.get("customer_id", ""),
+                "employee_id": checkin.get("created_by", ""),
+                "membership_type": checkin.get("membership_type", "1_day"),
+                "room_type": checkin.get("room_type", "locker"),
+                "room_number": checkin.get("room_number", 0),
+                "check_in_time": checkin.get("check_in_time"),
+                "check_out_time": checkin.get("check_out_time"),
+                "total_amount": checkin.get("total_amount", 0.0),
+                "membership_fee": 0.0,
+                "room_fee": 0.0,
+                "is_weekend": False,
+                "session_count": 1,
+                "payment_method": "cash",
+                "renewal_count": checkin.get("renewal_count", 0)
+            }
+        
         checkin_info["customer"] = Customer(**customer).dict() if customer else None
         checkin_info["employee"] = employee["username"] if employee else "Unknown"
         
