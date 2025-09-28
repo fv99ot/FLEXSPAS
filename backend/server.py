@@ -1605,11 +1605,22 @@ async def add_to_waitlist(waitlist_create: WaitlistCreate, current_user: User = 
 
 @api_router.delete("/waitlist/{entry_id}")
 async def remove_from_waitlist(entry_id: str, current_user: User = Depends(get_current_user)):
-    """Remove customer from waitlist"""
-    result = await db.waitlist.update_one({"id": entry_id}, {"$set": {"status": "expired"}})
-    if result.matched_count == 0:
+    """Remove customer from ALL waitlists (when removed from one, remove from all)"""
+    
+    # First, find the waitlist entry to get customer_id
+    entry = await db.waitlist.find_one({"id": entry_id})
+    if not entry:
         raise HTTPException(status_code=404, detail="Waitlist entry not found")
-    return {"message": "Removed from waitlist"}
+    
+    customer_id = entry["customer_id"]
+    
+    # Remove customer from ALL waitlists (all room types)
+    result = await db.waitlist.update_many(
+        {"customer_id": customer_id, "status": "waiting"}, 
+        {"$set": {"status": "expired"}}
+    )
+    
+    return {"message": f"Customer removed from all waitlists ({result.modified_count} entries removed)"}
 
 @api_router.post("/waitlist/add-from-checkin/{checkin_id}")
 async def add_current_customer_to_waitlist(checkin_id: str, waitlist_data: dict, current_user: User = Depends(get_current_user)):
