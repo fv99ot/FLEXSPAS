@@ -2792,21 +2792,29 @@ function App() {
                     <div className="grid grid-cols-3 gap-6">
                       {/* Regular Room Waitlist */}
                       <div className="bg-purple-900/20 border border-purple-500/50 rounded-lg p-4">
-                        <h4 className="text-lg text-purple-400 mb-3 text-center">Regular Room Waitlist</h4>
-                        {waitlist.regular_room.length === 0 ? (
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="text-lg text-purple-400">Regular Room Waitlist</h4>
+                          <Badge variant="outline" className="text-purple-300 border-purple-400">
+                            {waitlist?.available_rooms_summary?.regular_room || 0} Available
+                          </Badge>
+                        </div>
+                        {!waitlist?.waitlists?.regular_room || waitlist.waitlists.regular_room.length === 0 ? (
                           <p className="text-gray-400 text-center text-sm">No one waiting</p>
                         ) : (
-                          <div className="space-y-2">
-                            {waitlist.regular_room.map((entry, index) => (
-                              <div key={entry.id} className="bg-purple-800/30 p-2 rounded text-sm">
-                                <div className="flex justify-between items-start">
-                                  <div>
+                          <div className="space-y-3">
+                            {waitlist.waitlists.regular_room.map((entry, index) => (
+                              <div key={entry.id} className="bg-purple-800/30 p-3 rounded border border-purple-700/50">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div className="flex-1">
                                     <p className="text-white font-medium">{index + 1}. {entry.customer?.first_name} {entry.customer?.last_name}</p>
-                                    {entry.current_room_number && (
+                                    {entry.current_checkin && (
                                       <p className="text-purple-300 text-xs">
-                                        Currently in: {entry.current_room_type?.replace('_', ' ')} #{entry.current_room_number}
+                                        📍 Currently in: {entry.current_checkin.room_type?.replace('_', ' ')} #{entry.current_checkin.room_number}
                                       </p>
                                     )}
+                                    <p className="text-gray-400 text-xs">
+                                      Added: {new Date(entry.created_at).toLocaleString()}
+                                    </p>
                                   </div>
                                   <Button
                                     size="sm"
@@ -2817,6 +2825,36 @@ function App() {
                                     <X className="h-3 w-3" />
                                   </Button>
                                 </div>
+                                
+                                {/* Upgrade Options */}
+                                {entry.available_upgrades && entry.available_upgrades.length > 0 && entry.current_checkin && (
+                                  <div className="mt-2 pt-2 border-t border-purple-700/50">
+                                    <p className="text-xs text-purple-300 mb-2">🔄 Available Upgrades:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {entry.available_upgrades.slice(0, 3).map((room) => (
+                                        <Button
+                                          key={room.number}
+                                          size="sm"
+                                          className="text-xs px-2 py-1 h-6 bg-purple-600 hover:bg-purple-500"
+                                          onClick={() => upgradeFromWaitlist(entry.id, room.number, room.type)}
+                                        >
+                                          #{room.number}
+                                        </Button>
+                                      ))}
+                                      {entry.available_upgrades.length > 3 && (
+                                        <Badge variant="secondary" className="text-xs px-2 py-0">
+                                          +{entry.available_upgrades.length - 3} more
+                                        </Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {!entry.current_checkin && (
+                                  <div className="mt-2 pt-2 border-t border-purple-700/50">
+                                    <p className="text-xs text-yellow-400">⚠️ Customer not currently checked in - cannot upgrade from waitlist</p>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
