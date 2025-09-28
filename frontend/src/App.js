@@ -471,6 +471,55 @@ function App() {
     }
   };
 
+  const upgradeFromWaitlist = async (entryId, roomNumber, roomType) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
+      const response = await axios.post(`${API}/api/waitlist/${entryId}/upgrade`, {
+        room_number: roomNumber,
+        room_type: roomType
+      }, { headers });
+      
+      alert(`✅ ${response.data.message}`);
+      
+      // Refresh data
+      fetchWaitlist();
+      fetchActiveCheckins();
+      fetchRoomMap();
+      
+    } catch (error) {
+      console.error('Error upgrading from waitlist:', error);
+      handleTokenError(error, 'Error upgrading from waitlist');
+    }
+  };
+
+  const removeFromWaitlist = async (entryId) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to continue.');
+        logout();
+        return;
+      }
+      
+      const headers = { 'Authorization': `Bearer ${token}` };
+      await axios.delete(`${API}/api/waitlist/${entryId}`, { headers });
+      
+      alert('Customer removed from all waitlists');
+      fetchWaitlist();
+      
+    } catch (error) {
+      console.error('Error removing from waitlist:', error);
+      handleTokenError(error, 'Error removing from waitlist');
+    }
+  };
+
   const addFromCheckinToWaitlist = async (checkinId, desiredRoomType) => {
     try {
       const token = localStorage.getItem('token');
