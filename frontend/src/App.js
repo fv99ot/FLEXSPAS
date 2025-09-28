@@ -1406,6 +1406,57 @@ function App() {
     setLoading(false);
   };
 
+  const handleManagerOverride = async () => {
+    if (!managerPassword.trim()) {
+      alert('Please enter manager password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      // Add manager override to the pending check-in data
+      const overrideData = {
+        ...pendingCheckinData,
+        manager_override: true,
+        manager_password: managerPassword
+      };
+      
+      // Retry check-in prepare with manager override
+      const response = await axios.post(`${API}/api/checkin/prepare`, overrideData, { headers });
+      
+      console.log('✅ Manager override successful:', JSON.stringify(response.data, null, 2));
+      
+      // Close override dialog and proceed with check-in
+      setShowManagerOverride(false);
+      setManagerPassword('');
+      setPendingCheckinData(null);
+      setWaitlistConflictMessage('');
+      
+      // Proceed with successful check-in
+      handleSuccessfulCheckinPrepare(response.data, selectedCustomer);
+      
+    } catch (error) {
+      console.error('Manager override error:', error);
+      if (error.response && error.response.data && error.response.data.detail) {
+        alert(`Manager override failed: ${error.response.data.detail}`);
+      } else {
+        alert('Manager override failed. Please check your password.');
+      }
+    }
+    setLoading(false);
+  };
+
+  const cancelManagerOverride = () => {
+    setShowManagerOverride(false);
+    setManagerPassword('');
+    setPendingCheckinData(null);
+    setWaitlistConflictMessage('');
+    setLoading(false);
+  };
+
   const handlePaymentComplete = async () => {
     try {
       const token = localStorage.getItem('token');
