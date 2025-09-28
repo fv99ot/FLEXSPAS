@@ -1589,7 +1589,7 @@ async def get_waitlist(current_user: User = Depends(get_current_user)):
             "desired_room_type": entry["desired_room_type"],
             "membership_type": entry["membership_type"],
             "priority": entry.get("priority", 1),
-            "created_at": entry["created_at"],
+            "created_at": entry["created_at"].isoformat() if isinstance(entry["created_at"], datetime) else entry["created_at"],
             "status": entry.get("status", "waiting")
         }
         
@@ -1598,7 +1598,7 @@ async def get_waitlist(current_user: User = Depends(get_current_user)):
             entry_data["current_checkin"] = {
                 "room_number": current_checkin["room_number"],
                 "room_type": current_checkin["room_type"],
-                "check_in_time": current_checkin["check_in_time"]
+                "check_in_time": current_checkin["check_in_time"].isoformat() if isinstance(current_checkin["check_in_time"], datetime) else current_checkin["check_in_time"]
             }
         else:
             entry_data["current_checkin"] = None
