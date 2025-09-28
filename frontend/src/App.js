@@ -1804,13 +1804,22 @@ function App() {
   };
 
   return (
-    <div className="app-container min-h-screen fade-in-up">
-      {/* Modern Header */}
-      <header className="modern-header shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+    <div className="min-h-screen" style={{
+      background: '#0f1419',
+      backgroundImage: `
+        radial-gradient(circle at 20% 50%, rgba(30, 58, 138, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(30, 64, 175, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(23, 37, 84, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 90% 90%, rgba(30, 58, 138, 0.15) 0%, transparent 50%)
+      `,
+      backgroundAttachment: 'fixed'
+    }}>
+      {/* Header */}
+      <header className="header-dark shadow-sm border-b" style={{ background: '#000000', backgroundColor: '#000000' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ background: '#000000', backgroundColor: '#000000' }}>
+          <div className="flex justify-between items-center h-16" style={{ background: '#000000', backgroundColor: '#000000' }}>
             <div className="flex items-center">
-              <div className="modern-card p-2 mr-3">
+              <div style={{ background: '#000000', padding: '8px', borderRadius: '4px', marginRight: '12px' }}>
                 <img 
                   src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
                   alt="Flex Spa Los Angeles"
@@ -1818,7 +1827,9 @@ function App() {
                   style={{ maxHeight: '40px', objectFit: 'contain' }}
                 />
               </div>
-              <Badge variant="secondary" className="ml-3 modern-button-accent text-white font-semibold px-3 py-1">{user?.role?.toUpperCase()}</Badge>
+              <Badge variant="secondary" className="ml-3 badge-manager">
+                {user?.role === 'manager' ? 'Manager' : 'Employee'}
+              </Badge>
             </div>
             <div className="flex items-center space-x-4">
               <Avatar>
