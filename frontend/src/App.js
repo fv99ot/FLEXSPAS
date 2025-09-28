@@ -487,21 +487,54 @@ function App() {
       }
       
       const headers = { 'Authorization': `Bearer ${token}` };
-      const response = await axios.post(`${API}/api/waitlist/${entryId}/upgrade`, {
+      
+      // Step 1: Prepare waitlist upgrade (calculate costs, check availability, but don't apply yet)
+      const response = await axios.post(`${API}/api/waitlist/${entryId}/upgrade/prepare`, {
         room_number: roomNumber,
         room_type: roomType
       }, { headers });
       
-      alert(`✅ ${response.data.message}`);
+      // Find the customer info for this waitlist entry
+      let customerName = "Customer";
+      let customerId = null;
       
-      // Refresh data
-      fetchWaitlist();
-      fetchActiveCheckins();
-      fetchRoomMap();
+      // Look for the customer in the waitlist data
+      for (const [listType, entries] of Object.entries(waitlist.waitlists || {})) {
+        const entry = entries.find(e => e.id === entryId);
+        if (entry && entry.customer) {
+          customerName = `${entry.customer.first_name} ${entry.customer.last_name}`;
+          customerId = entry.customer.id;
+          break;
+        }
+      }
+      
+      // Set up payment dialog for waitlist upgrade
+      setPaymentData({
+        checkInId: null, // Not applicable for waitlist upgrades
+        customerName: customerName,
+        customerId: customerId,
+        totalAmount: response.data.additional_cost,
+        paymentMethod: '',
+        additionalItems: [],
+        selectedDiscount: null,
+        discountAmount: 0,
+        transactionType: 'waitlist_upgrade',
+        pendingUpgradeId: response.data.pending_upgrade_id, // Store for completion
+        waitlistEntryId: entryId, // Store for completion
+        upgradeDetails: {
+          oldRoom: response.data.old_room,
+          newRoom: response.data.new_room,
+          upgradeFee: response.data.upgrade_fee,
+          cleaningFee: response.data.cleaning_fee
+        }
+      });
+      
+      // Open payment dialog to finalize transaction
+      setShowPayment(true);
       
     } catch (error) {
-      console.error('Error upgrading from waitlist:', error);
-      handleTokenError(error, 'Error upgrading from waitlist');
+      console.error('Error preparing waitlist upgrade:', error);
+      handleTokenError(error, 'Error preparing waitlist upgrade');
     }
   };
 
