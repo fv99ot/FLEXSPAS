@@ -4195,6 +4195,505 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_enhanced_waitlist_functionality(self):
+        """Test enhanced waitlist functionality as requested in review"""
+        print("\n📋 TESTING ENHANCED WAITLIST FUNCTIONALITY...")
+        print("   Testing new waitlist features: enhanced display, remove from all, direct upgrade, available room calculations")
+        
+        if not self.token:
+            return self.log_test("Enhanced Waitlist Functionality", False, "No authentication token")
+        
+        all_success = True
+        test_customer_ids = []
+        test_checkin_ids = []
+        waitlist_entry_ids = []
+        
+        # Step 1: Create multiple test customers
+        print("   STEP 1: Create test customers...")
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        customer_data_list = [
+            {
+                "first_name": "Alice",
+                "last_name": "Waitlist",
+                "id_number": f"WAITLIST_TEST_1_{unique_timestamp}",
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            },
+            {
+                "first_name": "Bob",
+                "last_name": "Waitlist",
+                "id_number": f"WAITLIST_TEST_2_{unique_timestamp}",
+                "date_of_birth": "1985-05-15",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "NY"
+            },
+            {
+                "first_name": "Charlie",
+                "last_name": "Waitlist",
+                "id_number": f"WAITLIST_TEST_3_{unique_timestamp}",
+                "date_of_birth": "1992-08-20",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "TX"
+            }
+        ]
+        
+        for i, customer_data in enumerate(customer_data_list):
+            try:
+                response = requests.post(
+                    f"{self.api_url}/customers",
+                    json=customer_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    customer_id = response.json()['id']
+                    test_customer_ids.append(customer_id)
+                    self.log_test(f"Create Test Customer {i+1}", True, f"Created: {customer_data['first_name']} (ID: {customer_id})")
+                else:
+                    self.log_test(f"Create Test Customer {i+1}", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Create Test Customer {i+1}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        if len(test_customer_ids) < 3:
+            print("   ❌ Could not create enough test customers - stopping waitlist tests")
+            return False
+        
+        # Step 2: Check in first two customers to lockers
+        print("   STEP 2: Check in customers to lockers...")
+        try:
+            rooms_response = requests.get(
+                f"{self.api_url}/rooms/available/locker",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if rooms_response.status_code == 200:
+                available_lockers = rooms_response.json()['available_rooms']
+                if len(available_lockers) >= 2:
+                    for i in range(2):  # Check in first 2 customers
+                        checkin_data = {
+                            "customer_id": test_customer_ids[i],
+                            "membership_type": "1_day",
+                            "room_type": "locker",
+                            "room_number": available_lockers[i]
+                        }
+                        
+                        response = requests.post(
+                            f"{self.api_url}/checkin",
+                            json=checkin_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            checkin_id = response.json()['id']
+                            test_checkin_ids.append(checkin_id)
+                            self.log_test(f"Check-in Customer {i+1}", True, f"Locker: {available_lockers[i]}")
+                        else:
+                            self.log_test(f"Check-in Customer {i+1}", False, f"Status: {response.status_code}")
+                            all_success = False
+                else:
+                    self.log_test("Check-in Customers", False, "Not enough available lockers")
+                    all_success = False
+            else:
+                self.log_test("Check-in Customers", False, "Could not get available lockers")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Check-in Customers", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Step 3: Add customers to multiple waitlists
+        print("   STEP 3: Add customers to multiple waitlists...")
+        waitlist_combinations = [
+            # Customer 1: Add to regular_room, small_room, and deluxe_room waitlists
+            (0, "regular_room"),
+            (0, "small_room"), 
+            (0, "deluxe_room"),
+            # Customer 2: Add to regular_room and deluxe_room waitlists
+            (1, "regular_room"),
+            (1, "deluxe_room"),
+            # Customer 3: Add to small_room waitlist (not checked in)
+            (2, "small_room")
+        ]
+        
+        for customer_idx, room_type in waitlist_combinations:
+            try:
+                waitlist_data = {
+                    "customer_id": test_customer_ids[customer_idx],
+                    "desired_room_type": room_type,
+                    "membership_type": "1_day"
+                }
+                
+                # Add current room info if customer is checked in
+                if customer_idx < len(test_checkin_ids):
+                    waitlist_data["current_room_type"] = "locker"
+                    waitlist_data["current_room_number"] = available_lockers[customer_idx] if 'available_lockers' in locals() else 40
+                
+                response = requests.post(
+                    f"{self.api_url}/waitlist",
+                    json=waitlist_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    entry_id = response.json()['id']
+                    waitlist_entry_ids.append(entry_id)
+                    customer_name = customer_data_list[customer_idx]['first_name']
+                    self.log_test(f"Add {customer_name} to {room_type} waitlist", True, f"Entry ID: {entry_id}")
+                else:
+                    self.log_test(f"Add to {room_type} waitlist", False, f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Add to {room_type} waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 1: Test Enhanced Waitlist Display - GET /api/waitlist
+        print("   TEST 1: Enhanced Waitlist Display...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Verify new response structure
+                required_fields = ['waitlists', 'available_rooms', 'available_rooms_summary']
+                has_required_fields = all(field in data for field in required_fields)
+                
+                # Verify waitlists structure
+                has_waitlist_structure = (
+                    'waitlists' in data and 
+                    isinstance(data['waitlists'], dict) and
+                    'regular_room' in data['waitlists'] and
+                    'small_room' in data['waitlists'] and
+                    'deluxe_room' in data['waitlists']
+                )
+                
+                # Verify available rooms structure
+                has_available_rooms = (
+                    'available_rooms' in data and
+                    isinstance(data['available_rooms'], dict)
+                )
+                
+                # Check for current check-in information in waitlist entries
+                has_checkin_info = False
+                for room_type, entries in data['waitlists'].items():
+                    for entry in entries:
+                        if entry.get('current_checkin') is not None:
+                            has_checkin_info = True
+                            break
+                    if has_checkin_info:
+                        break
+                
+                enhanced_display_working = has_required_fields and has_waitlist_structure and has_available_rooms and has_checkin_info
+                
+                details = f"Required fields: {has_required_fields}, Waitlist structure: {has_waitlist_structure}, Available rooms: {has_available_rooms}, Check-in info: {has_checkin_info}"
+                self.log_test("Enhanced Waitlist Display", enhanced_display_working, details)
+                
+                if not enhanced_display_working:
+                    all_success = False
+            else:
+                self.log_test("Enhanced Waitlist Display", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Enhanced Waitlist Display", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 2: Test Remove from All Waitlists - DELETE /api/waitlist/{entry_id}
+        print("   TEST 2: Remove from All Waitlists...")
+        if waitlist_entry_ids:
+            try:
+                # First verify customer is on multiple waitlists
+                response = requests.get(
+                    f"{self.api_url}/waitlist",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    customer_1_entries_before = 0
+                    
+                    # Count how many waitlists customer 1 is on
+                    for room_type, entries in data['waitlists'].items():
+                        for entry in entries:
+                            if entry['customer_id'] == test_customer_ids[0]:
+                                customer_1_entries_before += 1
+                    
+                    self.log_test("Customer on Multiple Waitlists", customer_1_entries_before >= 3, 
+                                f"Customer 1 on {customer_1_entries_before} waitlists (expected: 3)")
+                    
+                    # Now remove customer from one waitlist (should remove from ALL)
+                    first_entry_id = waitlist_entry_ids[0]  # This should be customer 1's first entry
+                    response = requests.delete(
+                        f"{self.api_url}/waitlist/{first_entry_id}",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        removal_data = response.json()
+                        removed_count = removal_data.get('message', '').split('(')[1].split(' ')[0] if '(' in removal_data.get('message', '') else '0'
+                        
+                        # Verify customer was removed from all waitlists
+                        response = requests.get(
+                            f"{self.api_url}/waitlist",
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            data = response.json()
+                            customer_1_entries_after = 0
+                            
+                            # Count how many waitlists customer 1 is on now
+                            for room_type, entries in data['waitlists'].items():
+                                for entry in entries:
+                                    if entry['customer_id'] == test_customer_ids[0]:
+                                        customer_1_entries_after += 1
+                            
+                            removed_from_all = customer_1_entries_after == 0
+                            self.log_test("Remove from All Waitlists", removed_from_all, 
+                                        f"Customer 1 entries after removal: {customer_1_entries_after} (should be 0), Removed: {removed_count}")
+                            
+                            if not removed_from_all:
+                                all_success = False
+                        else:
+                            self.log_test("Remove from All Waitlists", False, "Could not verify removal")
+                            all_success = False
+                    else:
+                        self.log_test("Remove from All Waitlists", False, f"Status: {response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test("Remove from All Waitlists", False, "Could not get initial waitlist state")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Remove from All Waitlists", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Remove from All Waitlists", False, "No waitlist entries to test with")
+            all_success = False
+        
+        # TEST 3: Test Direct Upgrade from Waitlist - POST /api/waitlist/{entry_id}/upgrade
+        print("   TEST 3: Direct Upgrade from Waitlist...")
+        if len(waitlist_entry_ids) > 3 and len(test_checkin_ids) >= 2:  # Customer 2 should still be on waitlists
+            try:
+                # Get available rooms for upgrade
+                response = requests.get(
+                    f"{self.api_url}/rooms/available/regular_room",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    available_rooms = response.json()['available_rooms']
+                    if available_rooms:
+                        # Try to upgrade customer 2 from waitlist to available regular room
+                        customer_2_entry_id = waitlist_entry_ids[3]  # Customer 2's regular_room waitlist entry
+                        upgrade_data = {
+                            "room_number": available_rooms[0],
+                            "room_type": "regular_room"
+                        }
+                        
+                        response = requests.post(
+                            f"{self.api_url}/waitlist/{customer_2_entry_id}/upgrade",
+                            json=upgrade_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        if response.status_code == 200:
+                            upgrade_result = response.json()
+                            
+                            # Verify upgrade happened
+                            has_upgrade_id = 'upgrade_id' in upgrade_result
+                            has_cost_info = 'additional_cost' in upgrade_result
+                            removed_from_waitlists = upgrade_result.get('removed_from_waitlists', False)
+                            
+                            # Verify customer was removed from all waitlists
+                            response = requests.get(
+                                f"{self.api_url}/waitlist",
+                                headers=self.headers,
+                                timeout=10
+                            )
+                            
+                            customer_2_still_on_waitlist = False
+                            if response.status_code == 200:
+                                data = response.json()
+                                for room_type, entries in data['waitlists'].items():
+                                    for entry in entries:
+                                        if entry['customer_id'] == test_customer_ids[1]:
+                                            customer_2_still_on_waitlist = True
+                                            break
+                            
+                            upgrade_success = has_upgrade_id and has_cost_info and removed_from_waitlists and not customer_2_still_on_waitlist
+                            
+                            details = f"Has upgrade ID: {has_upgrade_id}, Has cost: {has_cost_info}, Removed from waitlists: {removed_from_waitlists}, Still on waitlist: {customer_2_still_on_waitlist}"
+                            self.log_test("Direct Upgrade from Waitlist", upgrade_success, details)
+                            
+                            if not upgrade_success:
+                                all_success = False
+                        else:
+                            self.log_test("Direct Upgrade from Waitlist", False, f"Status: {response.status_code}, Response: {response.text}")
+                            all_success = False
+                    else:
+                        self.log_test("Direct Upgrade from Waitlist", False, "No available regular rooms for upgrade")
+                        all_success = False
+                else:
+                    self.log_test("Direct Upgrade from Waitlist", False, "Could not get available rooms")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Direct Upgrade from Waitlist", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Direct Upgrade from Waitlist", False, "Insufficient test data for upgrade test")
+            all_success = False
+        
+        # TEST 4: Test error case - customer not checked in
+        print("   TEST 4: Test upgrade error - customer not checked in...")
+        if len(waitlist_entry_ids) > 5:  # Customer 3 should be on waitlist but not checked in
+            try:
+                response = requests.get(
+                    f"{self.api_url}/rooms/available/small_room",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    available_rooms = response.json()['available_rooms']
+                    if available_rooms:
+                        customer_3_entry_id = waitlist_entry_ids[5]  # Customer 3's small_room waitlist entry
+                        upgrade_data = {
+                            "room_number": available_rooms[0],
+                            "room_type": "small_room"
+                        }
+                        
+                        response = requests.post(
+                            f"{self.api_url}/waitlist/{customer_3_entry_id}/upgrade",
+                            json=upgrade_data,
+                            headers=self.headers,
+                            timeout=10
+                        )
+                        
+                        # Should fail with 400 status
+                        should_fail = response.status_code == 400
+                        error_message = response.text if response.status_code != 200 else ""
+                        has_correct_error = "must be checked in" in error_message.lower()
+                        
+                        error_handling_correct = should_fail and has_correct_error
+                        
+                        self.log_test("Upgrade Error - Not Checked In", error_handling_correct, 
+                                    f"Status: {response.status_code} (should be 400), Correct error: {has_correct_error}")
+                        
+                        if not error_handling_correct:
+                            all_success = False
+                    else:
+                        self.log_test("Upgrade Error - Not Checked In", False, "No available small rooms")
+                        all_success = False
+                else:
+                    self.log_test("Upgrade Error - Not Checked In", False, "Could not get available rooms")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Upgrade Error - Not Checked In", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 5: Test Available Room Calculations
+        print("   TEST 5: Available Room Calculations...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/waitlist",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Verify available rooms are calculated correctly
+                has_available_rooms_summary = 'available_rooms_summary' in data
+                has_available_rooms_details = 'available_rooms' in data
+                
+                # Check that available rooms exclude occupied rooms
+                if has_available_rooms_details:
+                    available_rooms = data['available_rooms']
+                    
+                    # Get active check-ins to verify rooms are correctly excluded
+                    response = requests.get(
+                        f"{self.api_url}/checkins/active",
+                        headers=self.headers,
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        active_checkins = response.json()
+                        occupied_room_keys = set()
+                        
+                        for checkin in active_checkins:
+                            room_key = f"{checkin['room_type']}_{checkin['room_number']}"
+                            occupied_room_keys.add(room_key)
+                        
+                        # Verify no occupied rooms appear in available rooms
+                        no_occupied_in_available = True
+                        for room_type, rooms in available_rooms.items():
+                            for room in rooms:
+                                room_key = f"{room_type}_{room['number']}"
+                                if room_key in occupied_room_keys:
+                                    no_occupied_in_available = False
+                                    break
+                            if not no_occupied_in_available:
+                                break
+                        
+                        calculations_correct = has_available_rooms_summary and has_available_rooms_details and no_occupied_in_available
+                        
+                        details = f"Has summary: {has_available_rooms_summary}, Has details: {has_available_rooms_details}, No occupied in available: {no_occupied_in_available}"
+                        self.log_test("Available Room Calculations", calculations_correct, details)
+                        
+                        if not calculations_correct:
+                            all_success = False
+                    else:
+                        self.log_test("Available Room Calculations", False, "Could not get active check-ins for verification")
+                        all_success = False
+                else:
+                    self.log_test("Available Room Calculations", False, "Missing available rooms details")
+                    all_success = False
+            else:
+                self.log_test("Available Room Calculations", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Available Room Calculations", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Cleanup: Check out remaining customers
+        print("   CLEANUP: Checking out remaining customers...")
+        for checkin_id in test_checkin_ids:
+            try:
+                requests.put(
+                    f"{self.api_url}/checkin/{checkin_id}/checkout",
+                    headers=self.headers,
+                    timeout=10
+                )
+            except:
+                pass  # Ignore cleanup errors
+        
+        return all_success
+
     def test_business_rules(self):
         """Test business rules like duplicate ID prevention"""
         print("\n📋 Testing Business Rules...")
