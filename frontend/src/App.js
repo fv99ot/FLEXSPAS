@@ -4861,6 +4861,63 @@ function App() {
         </div>
       )}
 
+      {/* Manager Override Dialog for Waitlist Queue Enforcement */}
+      {showManagerOverride && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-red-600 mb-4">🚫 Waitlist Queue Enforcement</h3>
+            
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-gray-700 mb-2">
+                <strong>Waitlist Conflict Detected:</strong>
+              </p>
+              <p className="text-sm text-red-600 font-medium">
+                {waitlistConflictMessage}
+              </p>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-3">
+                Only managers can override the waitlist queue. Enter your manager password to proceed:
+              </p>
+              
+              <Input
+                type="password"
+                placeholder="Manager Password"
+                value={managerPassword}
+                onChange={(e) => setManagerPassword(e.target.value)}
+                className="w-full"
+                autoFocus
+                onKeyPress={(e) => e.key === 'Enter' && handleManagerOverride()}
+              />
+            </div>
+            
+            <div className="flex space-x-3">
+              <Button 
+                onClick={handleManagerOverride}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+                disabled={loading || !managerPassword.trim()}
+              >
+                {loading ? 'Verifying...' : 'Override Waitlist'}
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={cancelManagerOverride}
+                className="flex-1"
+                disabled={loading}
+              >
+                Follow Waitlist Queue
+              </Button>
+            </div>
+            
+            <div className="mt-3 text-xs text-gray-500 text-center">
+              Staff must follow the waitlist order unless overridden by a manager
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Password Management Dialog */}
       {showPasswordDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
