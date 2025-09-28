@@ -1280,10 +1280,28 @@ function App() {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       
-      // Step 1: Prepare check-in (validate, check availability, calculate costs, but don't check in yet)
-      const response = await axios.post(`${API}/api/checkin/prepare`, checkInData, { headers });
-      
-      console.log('✅ Check-in prepare response received:', JSON.stringify(response.data, null, 2));
+      try {
+        // Step 1: Prepare check-in (validate, check availability, calculate costs, enforce waitlist, but don't check in yet)
+        const response = await axios.post(`${API}/api/checkin/prepare`, checkInData, { headers });
+        
+        console.log('✅ Check-in prepare response received:', JSON.stringify(response.data, null, 2));
+        
+        // If successful, proceed with payment setup...
+        handleSuccessfulCheckinPrepare(response.data, selectedCustomer);
+        
+      } catch (error) {
+        if (error.response && error.response.status === 409) {
+          // Waitlist conflict - show manager override dialog
+          setWaitlistConflictMessage(error.response.data.detail);
+          setPendingCheckinData(checkInData);
+          setShowManagerOverride(true);
+          setLoading(false);
+          return;
+        } else {
+          // Other errors - handle normally
+          throw error;
+        }
+      }
       
       // Handle membership validation message
       if (response.data.membership_status) {
