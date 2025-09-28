@@ -1394,86 +1394,16 @@ function App() {
         }
       }
       
-      // Handle membership validation message
-      if (response.data.membership_status) {
-        if (response.data.membership_status.using_existing) {
-          alert(`✅ Using existing membership! Valid until ${new Date(response.data.membership_status.expiration_date).toLocaleDateString()}`);
-        }
-      }
-      
-      // Set up payment data with pending check-in ID for completion
-      const paymentInfo = {
-        checkInId: null, // Will be set after completion
-        customerName: `${selectedCustomer.first_name} ${selectedCustomer.last_name}`,
-        customerId: selectedCustomer.id,
-        totalAmount: response.data.total_amount,
-        paymentMethod: '',
-        additionalItems: [],
-        selectedDiscount: null,
-        discountAmount: 0,
-        transactionType: 'checkin',
-        pendingCheckinId: response.data.pending_checkin_id, // Store for completion
-        checkinDetails: {
-          roomType: response.data.room_type,
-          roomNumber: response.data.room_number,
-          membershipType: response.data.membership_type,
-          membershipStatus: response.data.membership_status
-        }
-      };
-
-      console.log('💰 Setting payment data:', JSON.stringify(paymentInfo, null, 2));
-      
-      setPaymentData(paymentInfo);
-      
-      // Close check-in dialog and open payment dialog
-      console.log('🔄 Closing check-in dialog...');
-      setShowCheckIn(false);
-      
-      // Use a longer delay to ensure state updates properly
-      setTimeout(() => {
-        console.log('💳 Opening payment dialog...');
-        setShowPayment(true);
-        console.log('✅ Payment dialog state should be true now');
-      }, 300);
-      
-      // Clear form and customer selection
-      setSelectedCustomer(null);
-      setCheckinForm({
-        membership_type: '',
-        accommodation_type: '',
-        room_type: '',
-        room_number: ''
-      });
-      
-      console.log('🎉 Check-in process completed successfully!');
-      
     } catch (error) {
-      console.error('💥 Error checking in customer:', error);
-      console.error('💥 Error response:', error.response);
-      console.error('💥 Error details:', error.response?.data);
-      
-      let errorMessage = 'Error checking in customer';
-      
-      // Handle membership validation errors
-      if (error.response?.status === 400 && error.response?.data?.detail) {
-        if (error.response.data.detail.includes('valid 6-month membership') || 
-            error.response.data.detail.includes('no valid membership')) {
-          // Show membership validation error
-          alert(`❌ Membership Required: ${error.response.data.detail}`);
-          setLoading(false);
-          return;
-        }
-        errorMessage += ': ' + error.response.data.detail;
-      } else if (error.message) {
-        errorMessage += ': ' + error.message;
+      console.error('Error checking in customer:', error);
+      if (error.response?.data?.detail) {
+        alert(`Check-in failed: ${error.response.data.detail}`);
+      } else {
+        alert('Error checking in customer');
       }
-      
-      alert(errorMessage);
     }
     
-    console.log('⏳ Setting loading to false');
     setLoading(false);
-    console.log('🏁 handleCheckIn function END');
   };
 
   const handlePaymentComplete = async () => {
