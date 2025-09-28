@@ -675,8 +675,13 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
     }
 
 @api_router.post("/checkin/complete")
-async def complete_checkin(pending_checkin_id: str, current_user: User = Depends(get_current_user)):
+async def complete_checkin(completion_data: dict, current_user: User = Depends(get_current_user)):
     """Complete check-in after payment confirmation"""
+    
+    pending_checkin_id = completion_data.get("pending_checkin_id")
+    if not pending_checkin_id:
+        raise HTTPException(status_code=400, detail="pending_checkin_id is required")
+    
     # Get pending check-in
     pending_checkin = await db.pending_check_ins.find_one({
         "id": pending_checkin_id,
