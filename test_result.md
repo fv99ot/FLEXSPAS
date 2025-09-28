@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "CRITICAL ISSUES: 1) Check-in payment error still occurring, 2) QR code sending to wrong environment (preview instead of deployed), 3) IMPLEMENT WAITLIST QUEUE ENFORCEMENT - customers cannot jump ahead of others on waitlist, staff must follow waitlist order, only manager password can override."
+user_problem_statement: "UPGRADE PAYMENT SECURITY: All upgrade processes (room upgrades and waitlist upgrades) must require payment processing and finalization to complete the upgrade - no more immediate upgrades without payment confirmation."
 
 backend:
   - task: "Edit and Delete Functionality for Discounts and Additional Items"
