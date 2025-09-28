@@ -13623,6 +13623,8 @@ class BathhouseAPITester:
 
     def run_all_tests(self):
         """Run all comprehensive API tests"""
+    def run_all_tests(self):
+        """Run all comprehensive API tests"""
         print("🚀 Starting Comprehensive API Testing...")
         print("=" * 80)
         
@@ -13630,6 +13632,12 @@ class BathhouseAPITester:
         if not self.test_login():
             print("❌ Authentication failed - stopping tests")
             return False
+        
+        # PRIORITY: Two-step check-in process tests (HIGHEST PRIORITY - as requested in review)
+        print("\n🔥 PRIORITY TESTING: Two-Step Check-in Process Fix")
+        self.test_two_step_checkin_process()
+        self.test_checkin_security_features()
+        self.test_payment_flow_protection()
         
         # PRIORITY: Real Delete Button Testing (as requested in review)
         self.test_delete_functionality_comprehensive()
@@ -13645,11 +13653,6 @@ class BathhouseAPITester:
         self.test_search_customers()
         self.test_get_customer()
         self.test_available_rooms()
-        
-        # CRITICAL: Two-step check-in process tests (HIGHEST PRIORITY)
-        self.test_two_step_checkin_process()
-        self.test_checkin_security_features()
-        self.test_payment_flow_protection()
         
         # Legacy check-in tests (for comparison)
         self.test_checkin()
