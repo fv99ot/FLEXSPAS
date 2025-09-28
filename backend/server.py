@@ -1114,7 +1114,7 @@ async def get_active_checkins(current_user: User = Depends(get_current_user)):
     result = []
     for checkin in active_checkins:
         customer = await db.customers.find_one({"id": checkin["customer_id"]})
-        employee = await db.users.find_one({"id": checkin["employee_id"]})
+        employee = await db.users.find_one({"id": checkin["created_by"]})
         
         checkin_info = CheckIn(**checkin).dict()
         checkin_info["customer"] = Customer(**customer).dict() if customer else None
