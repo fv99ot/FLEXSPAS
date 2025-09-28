@@ -13950,7 +13950,11 @@ class BathhouseAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
         
-        # PRIORITY: Two-step check-in process tests (HIGHEST PRIORITY - as requested in review)
+        # PRIORITY: Payment Processing Fix (HIGHEST PRIORITY - as requested in review)
+        print("\n🔥 PRIORITY TESTING: Payment Processing Fix")
+        self.test_payment_processing_fix()
+        
+        # PRIORITY: Two-step check-in process tests
         print("\n🔥 PRIORITY TESTING: Two-Step Check-in Process Fix")
         self.test_two_step_checkin_process()
         self.test_checkin_security_features()
