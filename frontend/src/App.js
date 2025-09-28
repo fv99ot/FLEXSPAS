@@ -1447,7 +1447,9 @@ function App() {
         // Handle check-in transaction - complete the check-in AFTER payment
         
         // Step 1: Complete the check-in (actually check customer in)
-        const checkinResponse = await axios.post(`${API}/api/checkin/complete?pending_checkin_id=${paymentData.pendingCheckinId}`, {}, { headers });
+        const checkinResponse = await axios.post(`${API}/api/checkin/complete`, {
+          pending_checkin_id: paymentData.pendingCheckinId
+        }, { headers });
         
         // Step 2: Create transaction record for accounting
         const checkinTransactionData = {
