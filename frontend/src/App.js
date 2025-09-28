@@ -1329,49 +1329,6 @@ function App() {
     console.log('🎉 Check-in prepare completed - payment dialog shown');
   };
 
-  const handleSuccessfulCheckinPrepare = (responseData, customer) => {
-    // Handle membership validation message
-    if (responseData.membership_status) {
-      if (responseData.membership_status.using_existing) {
-        alert(`✅ Using existing membership! Valid until ${new Date(responseData.membership_status.expiration_date).toLocaleDateString()}`);
-      }
-    }
-    
-    // Set up payment data with pending check-in ID for completion
-    const paymentInfo = {
-      checkInId: null, // Will be set after completion
-      customerName: `${customer.first_name} ${customer.last_name}`,
-      customerId: customer.id,
-      totalAmount: responseData.total_amount,
-      paymentMethod: '',
-      additionalItems: [],
-      selectedDiscount: null,
-      discountAmount: 0,
-      transactionType: 'checkin',
-      pendingCheckinId: responseData.pending_checkin_id, // Store for completion
-      checkinDetails: {
-        roomType: responseData.room_type,
-        roomNumber: responseData.room_number,
-        membershipType: responseData.membership_type,
-        membershipStatus: responseData.membership_status
-      }
-    };
-
-    console.log('💰 Setting payment data:', JSON.stringify(paymentInfo, null, 2));
-
-    setPaymentData(paymentInfo);
-    setCheckinForm({ 
-      membership_type: '', 
-      room_type: 'locker', 
-      room_number: '' 
-    });
-    setSelectedCustomer(null);
-    setShowCheckIn(false);
-    setShowPayment(true);
-    
-    console.log('🎉 Check-in prepare completed - payment dialog shown');
-  };
-
   const handleManagerOverride = async () => {
     if (!managerPassword.trim()) {
       alert('Please enter manager password');
