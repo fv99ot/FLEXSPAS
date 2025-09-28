@@ -134,9 +134,21 @@ function App() {
   
   // Waitlist state
   const [waitlist, setWaitlist] = useState({
-    regular_room: [],
-    small_room: [],
-    deluxe_room: []
+    waitlists: {
+      regular_room: [],
+      small_room: [],
+      deluxe_room: []
+    },
+    available_rooms: {
+      regular_room: [],
+      small_room: [],
+      deluxe_room: []
+    },
+    available_rooms_summary: {
+      regular_room: 0,
+      small_room: 0,
+      deluxe_room: 0
+    }
   });
   
   // Room upgrade state
