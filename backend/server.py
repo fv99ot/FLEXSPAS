@@ -384,17 +384,20 @@ async def check_waitlist_queue_enforcement(customer_id: str, room_type: str, man
 
 # Initialize default admin user
 async def create_default_admin():
-    admin_exists = await db.users.find_one({"username": "admin"})
-    if not admin_exists:
-        admin_user = {
-            "id": str(uuid.uuid4()),
-            "username": "admin",
-            "password": hash_password("admin123"),
-            "role": UserRole.MANAGER,
-            "created_at": datetime.now(timezone.utc)
-        }
-        await db.users.insert_one(admin_user)
-        print("Default admin user created - username: admin, password: admin123")
+    # Create admin user in all location databases
+    for location_id, db_name in LOCATION_DATABASES.items():
+        location_db = client[db_name]
+        admin_exists = await location_db.users.find_one({"username": "admin"})
+        if not admin_exists:
+            admin_user = {
+                "id": str(uuid.uuid4()),
+                "username": "admin",
+                "password": hash_password("admin123"),
+                "role": UserRole.MANAGER,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await location_db.users.insert_one(admin_user)
+            print(f"Default admin user created for {location_id} ({db_name}) - username: admin, password: admin123")
 
 # Routes
 @api_router.post("/login")
