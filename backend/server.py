@@ -609,8 +609,10 @@ async def create_customer(customer_create: CustomerCreate, current_user: User = 
     return Customer(**customer_doc)
 
 @api_router.get("/customers/{customer_id}", response_model=Customer)
-async def get_customer(customer_id: str, current_user: User = Depends(get_current_user)):
-    customer = await db.customers.find_one({"id": customer_id})
+async def get_customer(customer_id: str, current_user: User = Depends(get_current_user),
+                      location: str = Depends(get_location_from_header)):
+    location_db = get_location_db(location)
+    customer = await location_db.customers.find_one({"id": customer_id})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     return Customer(**customer)
