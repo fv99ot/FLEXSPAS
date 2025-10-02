@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 def test_rejection():
-    base_url = "https://spa-admin-hub-1.preview.emergentagent.com"
+    base_url = "https://spatracker-1.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Login

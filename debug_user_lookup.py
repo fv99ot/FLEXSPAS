@@ -5,7 +5,7 @@ import json
 import jwt as jwt_lib
 
 # Test user lookup issue
-base_url = "https://spa-admin-hub-1.preview.emergentagent.com"
+base_url = "https://spatracker-1.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # Step 1: Login and get token

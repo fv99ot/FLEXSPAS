@@ -4,7 +4,7 @@ import requests
 import json
 
 # Test the password endpoint step by step
-base_url = "https://spa-admin-hub-1.preview.emergentagent.com"
+base_url = "https://spatracker-1.preview.emergentagent.com"
 api_url = f"{base_url}/api"
 
 # Step 1: Login

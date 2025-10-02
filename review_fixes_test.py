@@ -8,7 +8,7 @@ from io import BytesIO
 import base64
 
 class ReviewFixesTester:
-    def __init__(self, base_url="https://spa-admin-hub-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://spatracker-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None

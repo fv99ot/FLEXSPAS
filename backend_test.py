@@ -7,7 +7,7 @@ import jwt
 import time
 
 class BathhouseAPITester:
-    def __init__(self, base_url="https://spa-admin-hub-1.preview.emergentagent.com"):
+    def __init__(self, base_url="https://spatracker-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
@@ -9454,7 +9454,7 @@ class BathhouseAPITester:
         print("   TEST 6: Frontend Membership Route Check...")
         try:
             # Try to access the membership form route
-            frontend_url = "https://spa-admin-hub-1.preview.emergentagent.com"
+            frontend_url = "https://spatracker-1.preview.emergentagent.com"
             membership_response = requests.get(
                 f"{frontend_url}/membership",
                 timeout=10

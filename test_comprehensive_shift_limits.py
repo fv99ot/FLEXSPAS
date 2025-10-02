@@ -6,7 +6,7 @@ from datetime import datetime
 
 class ComprehensiveShiftLimitTester:
     def __init__(self):
-        self.base_url = "https://spa-admin-hub-1.preview.emergentagent.com"
+        self.base_url = "https://spatracker-1.preview.emergentagent.com"
         self.api_url = f"{self.base_url}/api"
         self.token = None
         self.headers = {'Content-Type': 'application/json'}
