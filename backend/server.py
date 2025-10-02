@@ -520,8 +520,10 @@ class PendingCustomerCreate(BaseModel):
 
 # Pending Customers Management
 @api_router.get("/pending-customers", response_model=List[PendingCustomer])
-async def get_pending_customers(current_user: User = Depends(get_current_user)):
-    pending = await db.pending_customers.find({"status": "pending"}).to_list(1000)
+async def get_pending_customers(current_user: User = Depends(get_current_user),
+                               location: str = Depends(get_location_from_header)):
+    location_db = get_location_db(location)
+    pending = await location_db.pending_customers.find({"status": "pending"}).to_list(1000)
     return [PendingCustomer(**customer) for customer in pending]
 
 @api_router.post("/customers/public", response_model=PendingCustomer)
