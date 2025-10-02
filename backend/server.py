@@ -21,7 +21,25 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+
+# Location-specific databases
+LOCATION_DATABASES = {
+    'los-angeles': 'flexspa_losangeles',
+    'atlanta': 'flexspa_atlanta', 
+    'cleveland': 'flexspa_cleveland',
+    'phoenix': 'flexspa_phoenix'
+}
+
+# Default database (for backwards compatibility)
+db = client[os.environ.get('DB_NAME', 'flexspa_losangeles')]
+
+def get_location_db(location_id=None):
+    """Get database connection for specific location"""
+    if location_id and location_id in LOCATION_DATABASES:
+        db_name = LOCATION_DATABASES[location_id]
+        return client[db_name]
+    # Default to Los Angeles (current database) for backwards compatibility
+    return client[os.environ.get('DB_NAME', 'flexspa_losangeles')]
 
 # Create the main app without a prefix
 app = FastAPI()
