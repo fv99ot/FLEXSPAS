@@ -5263,10 +5263,10 @@ export default function AppRouter() {
         <Route path="/phoenix" element={<LocationApp />} />
         
         {/* Location-specific admin (existing app functionality) */}
-        <Route path="/los-angeles/admin" element={<ExistingAppWrapper locationId="los-angeles" />} />
-        <Route path="/atlanta/admin" element={<ExistingAppWrapper locationId="atlanta" />} />
-        <Route path="/cleveland/admin" element={<ExistingAppWrapper locationId="cleveland" />} />
-        <Route path="/phoenix/admin" element={<ExistingAppWrapper locationId="phoenix" />} />
+        <Route path="/los-angeles/admin" element={<LocationAdminApp locationId="los-angeles" />} />
+        <Route path="/atlanta/admin" element={<LocationAdminApp locationId="atlanta" />} />
+        <Route path="/cleveland/admin" element={<LocationAdminApp locationId="cleveland" />} />
+        <Route path="/phoenix/admin" element={<LocationAdminApp locationId="phoenix" />} />
         
         {/* QR code membership forms for each location */}
         <Route path="/los-angeles/membership" element={<MembershipForm />} />
