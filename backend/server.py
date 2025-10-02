@@ -401,8 +401,9 @@ async def create_default_admin():
 
 # Routes
 @api_router.post("/login")
-async def login(user_login: UserLogin):
-    user_doc = await db.users.find_one({"username": user_login.username})
+async def login(user_login: UserLogin, location: str = Depends(get_location_from_header)):
+    location_db = get_location_db(location)
+    user_doc = await location_db.users.find_one({"username": user_login.username})
     if not user_doc or not verify_password(user_login.password, user_doc["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
@@ -414,7 +415,8 @@ async def login(user_login: UserLogin):
             "id": user_doc["id"],
             "username": user_doc["username"],
             "role": user_doc["role"]
-        }
+        },
+        "location": location
     }
 
 @api_router.post("/users", response_model=User)
