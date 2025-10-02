@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import LandingPage from './LandingPage';
+import SuperAdminDashboard from './SuperAdminDashboard';
+import LocationApp from './LocationApp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './components/ui/card';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
