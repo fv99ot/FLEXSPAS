@@ -5230,15 +5230,8 @@ function LoginPage() {
   );
 }
 
-// Create a wrapper for the existing app functionality
-const ExistingAppWrapper = ({ locationId }) => {
-  // This will be the existing App component functionality but with location context
-  // For now, return the current LoginPage but we'll need to modify it to use location-specific data
-  return <App locationId={locationId} />;
-};
-
-// Rename the main App component to be location-aware
-const App = ({ locationId }) => {
+// Create a wrapper for the existing app functionality  
+const LocationAdminApp = ({ locationId }) => {
   // Add location context to the existing app functionality
   // This is where we'll modify the existing app to use location-specific databases
   useEffect(() => {
