@@ -400,6 +400,44 @@ async def create_default_admin():
             print(f"Default admin user created for {location_id} ({db_name}) - username: admin, password: admin123")
 
 # Routes
+@api_router.get("/locations")
+async def get_locations():
+    """Get all available locations"""
+    locations = []
+    for location_id, db_name in LOCATION_DATABASES.items():
+        location_info = {
+            'los-angeles': {
+                'name': 'Los Angeles',
+                'address': '123 Spa Street, Los Angeles, CA 90210',
+                'phone': '(555) 123-FLEX'
+            },
+            'atlanta': {
+                'name': 'Atlanta',
+                'address': '456 Wellness Ave, Atlanta, GA 30309',
+                'phone': '(555) 456-FLEX'
+            },
+            'cleveland': {
+                'name': 'Cleveland',
+                'address': '789 Relaxation Blvd, Cleveland, OH 44115',
+                'phone': '(555) 789-FLEX'
+            },
+            'phoenix': {
+                'name': 'Phoenix',
+                'address': '321 Desert Spa Dr, Phoenix, AZ 85001',
+                'phone': '(555) 321-FLEX'
+            }
+        }
+        
+        location_data = location_info.get(location_id, {})
+        location_data.update({
+            'id': location_id,
+            'db_name': db_name,
+            'status': 'active'
+        })
+        locations.append(location_data)
+    
+    return {"locations": locations}
+
 @api_router.post("/login")
 async def login(user_login: UserLogin, location: str = Depends(get_location_from_header)):
     location_db = get_location_db(location)
