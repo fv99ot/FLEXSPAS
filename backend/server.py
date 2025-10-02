@@ -620,11 +620,13 @@ async def get_customer(customer_id: str, current_user: User = Depends(get_curren
 # Duplicate endpoint removed - using the one at line 626 instead
 
 @api_router.put("/customers/{customer_id}/ban")
-async def ban_customer(customer_id: str, current_user: User = Depends(get_current_user)):
+async def ban_customer(customer_id: str, current_user: User = Depends(get_current_user),
+                      location: str = Depends(get_location_from_header)):
     if current_user.role != UserRole.MANAGER:
         raise HTTPException(status_code=403, detail="Only managers can ban customers")
     
-    result = await db.customers.update_one(
+    location_db = get_location_db(location)
+    result = await location_db.customers.update_one(
         {"id": customer_id},
         {"$set": {"is_banned": True}}
     )
