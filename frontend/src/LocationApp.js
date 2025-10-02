@@ -5,7 +5,8 @@ import axios from 'axios';
 // Import the existing App component functionality
 // For now, I'll create a wrapper that passes location context
 const LocationApp = () => {
-  const { locationId } = useParams();
+  // Extract location from the current path
+  const location = window.location.pathname.split('/')[1];
   const [locationInfo, setLocationInfo] = useState(null);
   
   const locations = {
