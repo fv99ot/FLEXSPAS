@@ -37,13 +37,13 @@ const LocationApp = () => {
   };
 
   useEffect(() => {
-    if (locationId && locations[locationId]) {
-      setLocationInfo(locations[locationId]);
+    if (location && locations[location]) {
+      setLocationInfo(locations[location]);
       // Store location context for API calls
-      localStorage.setItem('currentLocation', locationId);
-      localStorage.setItem('currentDbName', locations[locationId].dbName);
+      localStorage.setItem('currentLocation', location);
+      localStorage.setItem('currentDbName', locations[location].dbName);
     }
-  }, [locationId]);
+  }, [location]);
 
   if (!locationInfo) {
     return (
