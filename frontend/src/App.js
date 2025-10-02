@@ -5230,13 +5230,63 @@ function LoginPage() {
   );
 }
 
-// Main App Router
+// Create a wrapper for the existing app functionality
+const ExistingAppWrapper = ({ locationId }) => {
+  // This will be the existing App component functionality but with location context
+  // For now, return the current LoginPage but we'll need to modify it to use location-specific data
+  return <App locationId={locationId} />;
+};
+
+// Rename the main App component to be location-aware
+const App = ({ locationId }) => {
+  // Add location context to the existing app functionality
+  // This is where we'll modify the existing app to use location-specific databases
+  useEffect(() => {
+    if (locationId) {
+      // Set location context for API calls
+      localStorage.setItem('currentLocation', locationId);
+    }
+  }, [locationId]);
+
+  // Return the existing app functionality (LoginPage component)
+  return <LoginPage />;
+};
+
+// Main App Router with multi-location support
 export default function AppRouter() {
   return (
-    <Routes>
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/membership" element={<MembershipForm />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <Router>
+      <Routes>
+        {/* Landing page */}
+        <Route path="/" element={<LandingPage />} />
+        
+        {/* Super admin dashboard */}
+        <Route path="/super-admin" element={<SuperAdminDashboard />} />
+        
+        {/* Location-specific routes */}
+        <Route path="/los-angeles" element={<LocationApp />} />
+        <Route path="/atlanta" element={<LocationApp />} />
+        <Route path="/cleveland" element={<LocationApp />} />
+        <Route path="/phoenix" element={<LocationApp />} />
+        
+        {/* Location-specific admin (existing app functionality) */}
+        <Route path="/los-angeles/admin" element={<ExistingAppWrapper locationId="los-angeles" />} />
+        <Route path="/atlanta/admin" element={<ExistingAppWrapper locationId="atlanta" />} />
+        <Route path="/cleveland/admin" element={<ExistingAppWrapper locationId="cleveland" />} />
+        <Route path="/phoenix/admin" element={<ExistingAppWrapper locationId="phoenix" />} />
+        
+        {/* QR code membership forms for each location */}
+        <Route path="/los-angeles/membership" element={<MembershipForm />} />
+        <Route path="/atlanta/membership" element={<MembershipForm />} />
+        <Route path="/cleveland/membership" element={<MembershipForm />} />
+        <Route path="/phoenix/membership" element={<MembershipForm />} />
+        
+        {/* Legacy route redirect */}
+        <Route path="/membership" element={<MembershipForm />} />
+        
+        {/* Catch all - redirect to landing page */}
+        <Route path="*" element={<LandingPage />} />
+      </Routes>
+    </Router>
   );
 }
