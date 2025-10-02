@@ -590,9 +590,12 @@ async def reject_pending_customer(customer_id: str, current_user: User = Depends
     return {"message": "Customer application rejected"}
 
 @api_router.post("/customers", response_model=Customer)
-async def create_customer(customer_create: CustomerCreate, current_user: User = Depends(get_current_user)):
+async def create_customer(customer_create: CustomerCreate, current_user: User = Depends(get_current_user),
+                         location: str = Depends(get_location_from_header)):
+    location_db = get_location_db(location)
+    
     # Check if customer with same ID number already exists
-    existing_customer = await db.customers.find_one({"id_number": customer_create.id_number})
+    existing_customer = await location_db.customers.find_one({"id_number": customer_create.id_number})
     if existing_customer:
         raise HTTPException(status_code=400, detail="Customer with this ID number already exists")
     
@@ -602,7 +605,7 @@ async def create_customer(customer_create: CustomerCreate, current_user: User = 
     customer_doc["notes"] = ""
     customer_doc["is_banned"] = False
     
-    await db.customers.insert_one(customer_doc)
+    await location_db.customers.insert_one(customer_doc)
     return Customer(**customer_doc)
 
 @api_router.get("/customers/{customer_id}", response_model=Customer)
