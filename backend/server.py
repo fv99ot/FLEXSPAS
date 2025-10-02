@@ -480,7 +480,9 @@ async def create_user(user_create: UserCreate, current_user: User = Depends(get_
     return User(**{k: v for k, v in user_doc.items() if k != "password"})
 
 @api_router.get("/customers", response_model=List[Customer])
-async def search_customers(q: Optional[str] = None, current_user: User = Depends(get_current_user)):
+async def search_customers(q: Optional[str] = None, current_user: User = Depends(get_current_user), 
+                          location: str = Depends(get_location_from_header)):
+    location_db = get_location_db(location)
     if q:
         # Search by first name, last name, or ID number
         query = {
@@ -490,9 +492,9 @@ async def search_customers(q: Optional[str] = None, current_user: User = Depends
                 {"id_number": {"$regex": q, "$options": "i"}}
             ]
         }
-        customers = await db.customers.find(query).to_list(50)
+        customers = await location_db.customers.find(query).to_list(50)
     else:
-        customers = await db.customers.find().limit(50).to_list(50)
+        customers = await location_db.customers.find().limit(50).to_list(50)
     
     return [Customer(**customer) for customer in customers]
 
