@@ -162,14 +162,34 @@ def create_jwt_token(user_id: str, role: str) -> str:
     }
     return jwt.encode(payload, JWT_SECRET, algorithm='HS256')
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_location_from_header(request: Request = None):
+    """Extract location from request headers or path"""
+    if request:
+        # Try to get location from X-Location header
+        location = request.headers.get('X-Location')
+        if location and location in LOCATION_DATABASES:
+            return location
+        
+        # Try to extract from URL path
+        path = str(request.url.path)
+        for location_id in LOCATION_DATABASES.keys():
+            if f'/{location_id}' in path:
+                return location_id
+    
+    # Default to los-angeles for backwards compatibility
+    return 'los-angeles'
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), 
+                          location: str = Depends(get_location_from_header)):
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=['HS256'])
         user_id = payload.get('user_id')
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid token")
         
-        user = await db.users.find_one({"id": user_id})
+        # Get user from location-specific database
+        location_db = get_location_db(location)
+        user = await location_db.users.find_one({"id": user_id})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         
