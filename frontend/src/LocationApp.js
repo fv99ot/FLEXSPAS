@@ -150,7 +150,7 @@ const LocationApp = () => {
                     // This will be replaced with the actual app login
                     alert(`This will redirect to the full admin system for ${locationInfo.name}.\n\nDatabase: ${locationInfo.dbName}\nPhone: ${locationInfo.phone}`);
                   }}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-8 rounded-md text-lg"
+                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-8 rounded-md text-lg"
                 >
                   Access Admin System
                 </button>
