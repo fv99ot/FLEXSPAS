@@ -328,11 +328,15 @@ function App({ locationId }) {
         {/* Login Form */}
         <div className="flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-md mx-auto bg-gray-900 border border-red-500 rounded-lg p-6">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-black text-white mb-3 tracking-wider" style={{
+                fontFamily: 'Impact, "Franklin Gothic Bold", "Arial Black", sans-serif',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                letterSpacing: '0.1em'
+              }}>
                 {currentLocation.name.toUpperCase()} - STAFF PORTAL
               </h2>
-              <p className="text-gray-300">Sign in to access the spa management system</p>
+              <p className="text-gray-300 text-lg font-medium">Sign in to access the spa management system</p>
             </div>
             
             <div className="space-y-4">
