@@ -76,13 +76,12 @@ const LandingPage = () => {
 
             <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
               <div className="sm:text-center lg:text-left">
-                <h1 className="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl">
-                  <span className="block xl:inline">FLEX Spa</span>{' '}
-                  <span className="block text-red-500 xl:inline">Pure Indulgence</span>
+                <h1 className="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl leading-tight">
+                  <span className="block">FLEX Spa</span>
+                  <span className="block text-red-500">Pure Indulgence</span>
                 </h1>
-                <p className="mt-3 text-base text-gray-300 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                  The revolution in pure indulgence has begun at FLEXSpas. Premium gym, spa, & resort locations nationwide. 
-                  YOUR CLUB. YOUR WAY.
+                <p className="mt-6 text-base text-gray-300 sm:mt-8 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-8 md:text-xl lg:mx-0">
+                  Flex Spas is designed exclusively for men, with locations in Cleveland, Atlanta, Los Angeles, and Phoenix. It's where men escape routine, connect freely and embrace their desires.
                 </p>
                 <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                   <div className="rounded-md shadow">
