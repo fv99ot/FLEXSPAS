@@ -236,10 +236,10 @@ function App({ locationId }) {
 
   // Location information
   const locations = {
-    'los-angeles': { name: 'Los Angeles', address: '123 Spa Street, Los Angeles, CA 90210' },
-    'atlanta': { name: 'Atlanta', address: '456 Wellness Ave, Atlanta, GA 30309' },
-    'cleveland': { name: 'Cleveland', address: '789 Relaxation Blvd, Cleveland, OH 44115' },
-    'phoenix': { name: 'Phoenix', address: '321 Desert Spa Dr, Phoenix, AZ 85001' }
+    'los-angeles': { name: 'Los Angeles', address: '4424 Melrose Ave, Los Angeles, CA 90004' },
+    'atlanta': { name: 'Atlanta', address: '76 4th St NW, Atlanta, GA 30308' },
+    'cleveland': { name: 'Cleveland', address: '2600 Hamilton Ave, Cleveland, OH 44114' },
+    'phoenix': { name: 'Phoenix', address: '1517 S Black Canyon Hwy, Phoenix, AZ 85009' }
   };
 
   const currentLocation = locations[locationId] || null;
