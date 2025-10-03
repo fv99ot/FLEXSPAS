@@ -37,43 +37,22 @@ const LandingPage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-6">
-              {/* FLEXSPAS Logo */}
-              <div className="text-white">
-                <h1 className="text-4xl font-black tracking-tight" style={{
-                  textShadow: '2px 2px 0px rgba(255,255,255,0.1)',
-                  fontFamily: 'Arial Black, sans-serif'
-                }}>
-                  FLEXSPAS<span className="text-xs align-super">®</span>
-                </h1>
-              </div>
-              
-              {/* Website URL */}
-              <div className="text-red-500 font-bold text-lg tracking-wide">
-                FLEXSPAS.COM
-              </div>
-            </div>
-            
-            <div className="flex items-center">
-              <Link
-                to="/super-admin"
-                className="text-red-500 hover:text-red-400 px-4 py-2 font-bold text-sm tracking-wide"
-              >
-                ADMIN LOGIN
-              </Link>
-            </div>
-          </div>
-          
-          {/* Location Cities Row */}
-          <div className="border-t border-gray-800 py-2">
-            <div className="flex justify-center space-x-8 text-red-500 font-bold text-sm tracking-widest">
-              <span>ATLANTA</span>
-              <span>CLEVELAND</span>
-              <span>LOS ANGELES</span>
-              <span>PHOENIX</span>
-            </div>
+        <div className="w-full">
+          <img 
+            src="https://customer-assets.emergentagent.com/job_spatracker-1/artifacts/d6xck9vw_IMG_3413.jpeg"
+            alt="FLEXSPAS Header"
+            className="w-full h-auto max-h-32 object-contain"
+          />
+        </div>
+        {/* Navigation row */}
+        <div className="bg-black px-4 py-2">
+          <div className="max-w-7xl mx-auto flex justify-end">
+            <Link
+              to="/super-admin"
+              className="text-red-500 hover:text-red-400 px-4 py-2 font-bold text-sm tracking-wide"
+            >
+              ADMIN LOGIN
+            </Link>
           </div>
         </div>
       </header>
