@@ -36,39 +36,43 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6 md:justify-start md:space-x-10">
-            <div className="flex justify-start lg:w-0 lg:flex-1">
-              <div className="h-10 w-auto">
-                <img 
-                  className="h-10 w-auto" 
-                  src="https://static.wixstatic.com/media/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png/v1/fill/w_200,h_100,al_c,q_90,enc_avif,quality_auto/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png" 
-                  alt="FLEX Spa"
-                />
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-6">
+              {/* FLEXSPAS Logo */}
+              <div className="text-white">
+                <h1 className="text-4xl font-black tracking-tight" style={{
+                  textShadow: '2px 2px 0px rgba(255,255,255,0.1)',
+                  fontFamily: 'Arial Black, sans-serif'
+                }}>
+                  FLEXSPAS<span className="text-xs align-super">®</span>
+                </h1>
+              </div>
+              
+              {/* Website URL */}
+              <div className="text-red-500 font-bold text-lg tracking-wide">
+                FLEXSPAS.COM
               </div>
             </div>
-            <nav className="hidden md:flex space-x-10">
-              <a href="#locations" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Locations
-              </a>
-              <a href="#services" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Services
-              </a>
-              <a href="#about" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                About
-              </a>
-              <a href="#contact" className="text-base font-medium text-gray-500 hover:text-gray-900">
-                Contact
-              </a>
-            </nav>
-            <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
+            
+            <div className="flex items-center">
               <Link
                 to="/super-admin"
-                className="ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                className="text-red-500 hover:text-red-400 px-4 py-2 font-bold text-sm tracking-wide"
               >
-                Admin Login
+                ADMIN LOGIN
               </Link>
+            </div>
+          </div>
+          
+          {/* Location Cities Row */}
+          <div className="border-t border-gray-800 py-2">
+            <div className="flex justify-center space-x-8 text-red-500 font-bold text-sm tracking-widest">
+              <span>ATLANTA</span>
+              <span>CLEVELAND</span>
+              <span>LOS ANGELES</span>
+              <span>PHOENIX</span>
             </div>
           </div>
         </div>
