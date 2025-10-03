@@ -345,7 +345,7 @@ function App({ locationId }) {
               <p className="text-gray-300 text-lg font-medium">Sign in to access the spa management system</p>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <input
                   type="text"
@@ -353,7 +353,11 @@ function App({ locationId }) {
                   value={loginForm.username}
                   onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
                   required
-                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500 px-3 py-2 rounded-md"
+                  className="w-full bg-black border-2 border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500 px-4 py-3 rounded-lg text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                  style={{
+                    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+                    letterSpacing: '0.02em'
+                  }}
                 />
               </div>
               <div>
@@ -363,7 +367,11 @@ function App({ locationId }) {
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                   required
-                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500 px-3 py-2 rounded-md"
+                  className="w-full bg-black border-2 border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500 px-4 py-3 rounded-lg text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+                  style={{
+                    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+                    letterSpacing: '0.02em'
+                  }}
                 />
               </div>
               
