@@ -131,7 +131,7 @@ const LandingPage = () => {
           <div className="mt-10">
             <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
               {locations.map((location) => (
-                <div key={location.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div key={location.id} className="bg-gray-900 border border-red-500 rounded-lg shadow-lg overflow-hidden">
                   <div className="h-48 bg-gray-200">
                     <img
                       className="w-full h-full object-cover"
@@ -140,9 +140,9 @@ const LandingPage = () => {
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-lg font-medium text-gray-900">{location.name}</h3>
-                    <p className="mt-2 text-sm text-gray-500">{location.address}</p>
-                    <p className="mt-1 text-sm text-gray-500">{location.phone}</p>
+                    <h3 className="text-lg font-medium text-white">{location.name}</h3>
+                    <p className="mt-2 text-sm text-gray-300">{location.address}</p>
+                    <p className="mt-1 text-sm text-gray-300">{location.phone}</p>
                     <div className="mt-4">
                       <Link
                         to={`/${location.id}`}
