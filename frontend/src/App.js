@@ -5156,6 +5156,11 @@ function LoginPage({ locationId, locationName }) {
     setLoading(true);
     
     try {
+      console.log('Starting login process...');
+      console.log('API URL:', `${API}/api/login`);
+      console.log('Location ID:', locationId);
+      console.log('Login form data:', loginForm);
+      
       const headers = {
         'Content-Type': 'application/json'
       };
@@ -5163,9 +5168,14 @@ function LoginPage({ locationId, locationName }) {
       // Add location context if available
       if (locationId) {
         headers['X-Location'] = locationId;
+        console.log('Added X-Location header:', locationId);
       }
       
+      console.log('Request headers:', headers);
+      
       const response = await axios.post(`${API}/api/login`, loginForm, { headers });
+      console.log('Login response:', response.data);
+      
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
@@ -5174,12 +5184,14 @@ function LoginPage({ locationId, locationName }) {
         localStorage.setItem('currentLocation', locationId);
       }
       
+      console.log('Setting authenticated to true...');
       setIsAuthenticated(true);
       setUser(userData);
       setLoginForm({ username: '', password: '' });
+      console.log('Login successful!');
     } catch (error) {
       console.error('Login error:', error);
-      alert('Invalid credentials. Please check your username and password.');
+      alert(`Login failed: ${error.message || 'Invalid credentials'}`);
     }
     
     setLoading(false);
