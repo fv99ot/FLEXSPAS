@@ -272,15 +272,15 @@ const LandingPage = () => {
               </div>
               <div className="md:grid md:grid-cols-2 md:gap-8">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Company</h3>
+                  <h3 className="text-sm font-semibold text-red-500 tracking-wider uppercase">Company</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     <li>
-                      <a href="#" className="text-base text-gray-300 hover:text-white">
+                      <a href="#" className="text-base text-gray-300 hover:text-red-400">
                         About
                       </a>
                     </li>
                     <li>
-                      <a href="#" className="text-base text-gray-300 hover:text-white">
+                      <a href="#" className="text-base text-gray-300 hover:text-red-400">
                         Contact
                       </a>
                     </li>
