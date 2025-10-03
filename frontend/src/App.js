@@ -2176,28 +2176,51 @@ function App({ locationId }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
         <Tabs defaultValue="search" className="space-y-6">
           <div className="space-y-2">
-            <TabsList className="grid w-full grid-cols-4 gap-2 bg-white/10">
-              <TabsTrigger value="search" className="tab-dark">Customer Management</TabsTrigger>
-              <TabsTrigger value="pending" className="tab-dark">
-                Pending Approvals
+            {/* Updated circled highlighted tabs layout */}
+            <TabsList className="grid w-full grid-cols-6 gap-3 bg-transparent p-1">
+              <TabsTrigger 
+                value="search" 
+                className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
+              >
+                Customer Management
+              </TabsTrigger>
+              <TabsTrigger 
+                value="pending" 
+                className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
+              >
+                Registration & QR
                 {pendingCustomers.length > 0 && (
-                  <Badge variant="destructive" className="ml-1">{pendingCustomers.length}</Badge>
+                  <Badge variant="destructive" className="ml-2 rounded-full">{pendingCustomers.length}</Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="active" className="tab-dark">Active Check-ins</TabsTrigger>
-              <TabsTrigger value="map" className="tab-dark">Room Map</TabsTrigger>
-            </TabsList>
-            <TabsList className="grid w-full grid-cols-4 gap-2 bg-white/10">
-              <TabsTrigger value="cart" className="tab-dark">
-                Cart & Transactions
+              <TabsTrigger 
+                value="active" 
+                className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
+              >
+                Active Check-ins
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cart" 
+                className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
+              >
+                Transactions
                 {currentTransaction.items.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">{currentTransaction.items.length}</Badge>
+                  <Badge variant="secondary" className="ml-2 rounded-full">{currentTransaction.items.length}</Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="qr" className="tab-dark">QR Code</TabsTrigger>
-              <TabsTrigger value="reports" className="tab-dark">Sales Reports</TabsTrigger>
+              <TabsTrigger 
+                value="reports" 
+                className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
+              >
+                Sales Reports
+              </TabsTrigger>
               {user?.role === 'manager' && (
-                <TabsTrigger value="admin" className="tab-dark">Admin Settings</TabsTrigger>
+                <TabsTrigger 
+                  value="admin" 
+                  className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
+                >
+                  Admin & Room Map
+                </TabsTrigger>
               )}
             </TabsList>
           </div>
