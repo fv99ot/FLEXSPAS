@@ -494,17 +494,36 @@ async def get_locations():
 async def login(user_login: UserLogin, location: str = Depends(get_location_from_header)):
     location_db = get_location_db(location)
     user_doc = await location_db.users.find_one({"username": user_login.username})
+    
+    # If not found in location database, check Los Angeles database for super admins
+    if not user_doc:
+        la_db = client[LOCATION_DATABASES['los-angeles']]
+        user_doc = await la_db.users.find_one({"username": user_login.username})
+        
+        # Super admins can only login if they have cross-location access
+        if user_doc and user_doc.get("role") != "super_admin":
+            user_doc = None
+    
     if not user_doc or not verify_password(user_login.password, user_doc["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_jwt_token(user_doc["id"], user_doc["role"])
+    
+    # Determine user capabilities
+    is_super_admin = user_doc.get("role") == "super_admin"
+    can_see_all_locations = user_doc.get("can_see_all_locations", False) or is_super_admin
+    can_manage_users = user_doc.get("can_manage_users", False) or is_super_admin
+    
     return {
         "access_token": token,
         "token_type": "bearer",
         "user": {
             "id": user_doc["id"],
             "username": user_doc["username"],
-            "role": user_doc["role"]
+            "role": user_doc["role"],
+            "can_see_all_locations": can_see_all_locations,
+            "can_manage_users": can_manage_users,
+            "location": user_doc.get("location", location)
         },
         "location": location
     }
