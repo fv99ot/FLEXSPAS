@@ -2436,6 +2436,34 @@ function App({ locationId }) {
           </TabsContent>
 
           <TabsContent value="pending" className="space-y-6">
+            {/* QR Code Generation */}
+            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <Key className="h-5 w-5 mr-2" />
+                  Membership Form QR Code
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  QR code for customers to scan and fill out membership forms
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center space-y-4">
+                  {qrCodeUrl ? (
+                    <div className="inline-block p-4 bg-white rounded-lg">
+                      <img src={qrCodeUrl} alt="Membership Form QR Code" className="w-80 h-auto" />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-gray-400">Loading QR code...</div>
+                  )}
+                  <div className="text-sm text-gray-300">
+                    <p>Customers can scan this QR code to fill out their membership information.</p>
+                    <p>Applications will appear below for review and approval.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Pending Customer Approvals */}
             <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
               <CardHeader>
