@@ -160,25 +160,25 @@ const LocationApp = () => {
         </div>
 
         {/* Location Info */}
-        <div className="mt-8 bg-white shadow rounded-lg">
+        <div className="mt-8 bg-gray-900 shadow rounded-lg">
           <div className="px-6 py-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Location Information</h3>
+            <h3 className="text-lg font-medium text-white mb-4">Location Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Address</label>
-                <p className="mt-1 text-sm text-gray-900">{locationInfo.address}</p>
+                <label className="block text-sm font-medium text-red-500">Address</label>
+                <p className="mt-1 text-sm text-white">{locationInfo.address}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <p className="mt-1 text-sm text-gray-900">{locationInfo.phone}</p>
+                <label className="block text-sm font-medium text-red-500">Phone</label>
+                <p className="mt-1 text-sm text-white">{locationInfo.phone}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Database</label>
-                <p className="mt-1 text-sm text-gray-900">{locationInfo.dbName}</p>
+                <label className="block text-sm font-medium text-red-500">Database</label>
+                <p className="mt-1 text-sm text-white">{locationInfo.dbName}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Status</label>
-                <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <label className="block text-sm font-medium text-red-500">Status</label>
+                <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-600 text-white">
                   Active
                 </span>
               </div>
