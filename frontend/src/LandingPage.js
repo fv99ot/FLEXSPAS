@@ -51,7 +51,7 @@ const LandingPage = () => {
               About
             </a>
             <Link
-              to="/super-admin"
+              to="/admin-login"
               className="text-red-500 hover:text-red-400 px-4 py-2 font-bold text-sm tracking-wide"
             >
               ADMIN LOGIN
