@@ -5186,7 +5186,9 @@ function LoginPage({ locationId, locationName }) {
   };
 
   if (isAuthenticated) {
-    return <App />;
+    // Redirect to the main spa management interface
+    window.location.href = '/';
+    return null;
   }
 
   return (
