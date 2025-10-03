@@ -65,36 +65,56 @@ const LocationApp = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Location Header */}
-      <header className="bg-white shadow">
+      <header className="bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link to="/" className="flex-shrink-0">
-                <img
-                  className="h-8 w-auto"
-                  src="https://static.wixstatic.com/media/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png/v1/fill/w_200,h_100,al_c,q_90,enc_avif,quality_auto/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png"
-                  alt="FLEX Spa"
-                />
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-6">
+              {/* FLEXSPAS Logo */}
+              <Link to="/" className="text-white">
+                <h1 className="text-4xl font-black tracking-tight" style={{
+                  textShadow: '2px 2px 0px rgba(255,255,255,0.1)',
+                  fontFamily: 'Arial Black, sans-serif'
+                }}>
+                  FLEXSPAS<span className="text-xs align-super">®</span>
+                </h1>
               </Link>
-              <div className="ml-6">
-                <h1 className="text-xl font-semibold text-gray-900">FLEX Spa {locationInfo.name}</h1>
-                <p className="text-sm text-gray-500">{locationInfo.address}</p>
+              
+              {/* Website URL */}
+              <div className="text-red-500 font-bold text-lg tracking-wide">
+                FLEXSPAS.COM
               </div>
             </div>
+            
             <div className="flex items-center space-x-4">
               <Link
                 to="/super-admin"
-                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-red-500 hover:text-red-400 px-3 py-2 font-bold text-sm tracking-wide"
               >
-                Super Admin
+                SUPER ADMIN
               </Link>
               <Link
                 to="/"
-                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-red-500 hover:text-red-400 px-3 py-2 font-bold text-sm tracking-wide"
               >
-                Main Site
+                MAIN SITE
               </Link>
             </div>
+          </div>
+          
+          {/* Location Cities Row with current location highlighted */}
+          <div className="border-t border-gray-800 py-2">
+            <div className="flex justify-center space-x-8 text-sm tracking-widest font-bold">
+              <span className={locationInfo?.name === 'Atlanta' ? 'text-white' : 'text-red-500'}>ATLANTA</span>
+              <span className={locationInfo?.name === 'Cleveland' ? 'text-white' : 'text-red-500'}>CLEVELAND</span>
+              <span className={locationInfo?.name === 'Los Angeles' ? 'text-white' : 'text-red-500'}>LOS ANGELES</span>
+              <span className={locationInfo?.name === 'Phoenix' ? 'text-white' : 'text-red-500'}>PHOENIX</span>
+            </div>
+          </div>
+          
+          {/* Location Specific Info */}
+          <div className="py-2 text-center">
+            <h2 className="text-white text-xl font-bold">{locationInfo?.name.toUpperCase()}</h2>
+            <p className="text-gray-300 text-sm">{locationInfo?.address}</p>
           </div>
         </div>
       </header>
