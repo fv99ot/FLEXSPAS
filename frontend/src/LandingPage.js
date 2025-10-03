@@ -144,12 +144,13 @@ const LandingPage = () => {
                     <p className="text-sm text-gray-300 mb-2">{location.address}</p>
                     <p className="text-sm text-gray-300 mb-4">{location.phone}</p>
                     <div className="mt-4">
-                      <button
-                        onClick={() => window.location.href = `/${location.id}`}
-                        className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-bold rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 cursor-pointer"
+                      <a
+                        href={`/${location.id}`}
+                        className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-bold rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 cursor-pointer text-decoration-none"
+                        style={{ textDecoration: 'none' }}
                       >
                         STAFF LOGIN - {location.name.toUpperCase()}
-                      </button>
+                      </a>
                     </div>
                   </div>
                 </div>
