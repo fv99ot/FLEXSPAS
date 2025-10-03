@@ -66,56 +66,36 @@ const LocationApp = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Location Header */}
       <header className="bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-6">
-              {/* FLEXSPAS Logo */}
-              <Link to="/" className="text-white">
-                <h1 className="text-4xl font-black tracking-tight" style={{
-                  textShadow: '2px 2px 0px rgba(255,255,255,0.1)',
-                  fontFamily: 'Arial Black, sans-serif'
-                }}>
-                  FLEXSPAS<span className="text-xs align-super">®</span>
-                </h1>
-              </Link>
-              
-              {/* Website URL */}
-              <div className="text-red-500 font-bold text-lg tracking-wide">
-                FLEXSPAS.COM
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/super-admin"
-                className="text-red-500 hover:text-red-400 px-3 py-2 font-bold text-sm tracking-wide"
-              >
-                SUPER ADMIN
-              </Link>
-              <Link
-                to="/"
-                className="text-red-500 hover:text-red-400 px-3 py-2 font-bold text-sm tracking-wide"
-              >
-                MAIN SITE
-              </Link>
-            </div>
+        <div className="w-full">
+          <Link to="/">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_spatracker-1/artifacts/d6xck9vw_IMG_3413.jpeg"
+              alt="FLEXSPAS Header"
+              className="w-full h-auto max-h-32 object-contain cursor-pointer"
+            />
+          </Link>
+        </div>
+        {/* Navigation row */}
+        <div className="bg-black px-4 py-2">
+          <div className="max-w-7xl mx-auto flex justify-end space-x-4">
+            <Link
+              to="/super-admin"
+              className="text-red-500 hover:text-red-400 px-3 py-2 font-bold text-sm tracking-wide"
+            >
+              SUPER ADMIN
+            </Link>
+            <Link
+              to="/"
+              className="text-red-500 hover:text-red-400 px-3 py-2 font-bold text-sm tracking-wide"
+            >
+              MAIN SITE
+            </Link>
           </div>
-          
-          {/* Location Cities Row with current location highlighted */}
-          <div className="border-t border-gray-800 py-2">
-            <div className="flex justify-center space-x-8 text-sm tracking-widest font-bold">
-              <span className={locationInfo?.name === 'Atlanta' ? 'text-white' : 'text-red-500'}>ATLANTA</span>
-              <span className={locationInfo?.name === 'Cleveland' ? 'text-white' : 'text-red-500'}>CLEVELAND</span>
-              <span className={locationInfo?.name === 'Los Angeles' ? 'text-white' : 'text-red-500'}>LOS ANGELES</span>
-              <span className={locationInfo?.name === 'Phoenix' ? 'text-white' : 'text-red-500'}>PHOENIX</span>
-            </div>
-          </div>
-          
-          {/* Location Specific Info */}
-          <div className="py-2 text-center">
-            <h2 className="text-white text-xl font-bold">{locationInfo?.name.toUpperCase()}</h2>
-            <p className="text-gray-300 text-sm">{locationInfo?.address}</p>
-          </div>
+        </div>
+        {/* Location Specific Info */}
+        <div className="bg-black py-2 text-center border-t border-gray-800">
+          <h2 className="text-white text-xl font-bold">{locationInfo?.name.toUpperCase()}</h2>
+          <p className="text-gray-300 text-sm">{locationInfo?.address}</p>
         </div>
       </header>
 
