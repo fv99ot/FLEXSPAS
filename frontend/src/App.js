@@ -250,12 +250,19 @@ function App({ locationId }) {
     setLoading(true);
     
     try {
+      console.log('🔐 Starting login process...');
+      console.log('Location ID:', locationId);
+      console.log('Login form:', loginForm);
+      
       const headers = { 'Content-Type': 'application/json' };
       if (locationId) {
         headers['X-Location'] = locationId;
       }
       
+      console.log('📤 Sending login request...');
       const response = await axios.post(`${API}/api/login`, loginForm, { headers });
+      console.log('✅ Login response received:', response.data);
+      
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
@@ -264,16 +271,39 @@ function App({ locationId }) {
         localStorage.setItem('currentLocation', locationId);
       }
       
+      console.log('🔓 Setting authentication state...');
+      console.log('User data:', userData);
+      
       setIsAuthenticated(true);
       setUser(userData);
       setLoginForm({ username: '', password: '' });
+      
+      console.log('✅ Authentication state updated - should redirect to admin interface');
+      
+      // Force a small delay to ensure state updates
+      setTimeout(() => {
+        console.log('🔄 Checking authentication state after timeout...');
+        console.log('isAuthenticated should be true now');
+      }, 100);
+      
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       alert('Invalid credentials. Please check your username and password.');
     }
     
     setLoading(false);
   };
+
+  // Add useEffect to monitor authentication state changes
+  useEffect(() => {
+    console.log('🔍 Authentication state changed:', isAuthenticated);
+    if (isAuthenticated) {
+      console.log('✅ User is now authenticated, should show admin interface');
+      console.log('Current user:', user);
+    } else {
+      console.log('❌ User is not authenticated, showing login form');
+    }
+  }, [isAuthenticated, user]);
 
   // If not authenticated and we have a locationId, show location-specific login
   if (!isAuthenticated && locationId && currentLocation) {
