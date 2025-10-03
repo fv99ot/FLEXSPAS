@@ -3,7 +3,7 @@ import json
 
 def test_auth_for_all_locations():
     """Test authentication with admin/admin123 for each location"""
-    base_url = "https://spatracker-1.preview.emergentagent.com"
+    base_url = "https://flexspa-manager-1.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     locations = ['los-angeles', 'atlanta', 'cleveland', 'phoenix']
     
