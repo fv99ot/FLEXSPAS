@@ -234,6 +234,132 @@ function App({ locationId }) {
     }
   }, []);
 
+  // Location information
+  const locations = {
+    'los-angeles': { name: 'Los Angeles', address: '123 Spa Street, Los Angeles, CA 90210' },
+    'atlanta': { name: 'Atlanta', address: '456 Wellness Ave, Atlanta, GA 30309' },
+    'cleveland': { name: 'Cleveland', address: '789 Relaxation Blvd, Cleveland, OH 44115' },
+    'phoenix': { name: 'Phoenix', address: '321 Desert Spa Dr, Phoenix, AZ 85001' }
+  };
+
+  const currentLocation = locations[locationId] || null;
+
+  // Login function for location-specific authentication
+  const locationLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (locationId) {
+        headers['X-Location'] = locationId;
+      }
+      
+      const response = await axios.post(`${API}/api/login`, loginForm, { headers });
+      const { access_token, user: userData } = response.data;
+      
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      if (locationId) {
+        localStorage.setItem('currentLocation', locationId);
+      }
+      
+      setIsAuthenticated(true);
+      setUser(userData);
+      setLoginForm({ username: '', password: '' });
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Invalid credentials. Please check your username and password.');
+    }
+    
+    setLoading(false);
+  };
+
+  // If not authenticated and we have a locationId, show location-specific login
+  if (!isAuthenticated && locationId && currentLocation) {
+    return (
+      <div className="min-h-screen bg-black">
+        {/* Header with FLEXSPAS image */}
+        <header className="bg-black">
+          <div className="w-full">
+            <Link to="/">
+              <img 
+                src="https://customer-assets.emergentagent.com/job_spatracker-1/artifacts/d6xck9vw_IMG_3413.jpeg"
+                alt="FLEXSPAS Header"
+                className="w-full h-auto max-h-32 object-contain cursor-pointer"
+              />
+            </Link>
+          </div>
+          <div className="bg-black py-4 text-center border-t border-gray-800">
+            <h2 className="text-white text-2xl font-bold">{currentLocation.name.toUpperCase()} - STAFF LOGIN</h2>
+            <p className="text-gray-300 text-sm">{currentLocation.address}</p>
+          </div>
+        </header>
+
+        {/* Login Form */}
+        <div className="flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md mx-auto bg-gray-900 border border-red-500 rounded-lg p-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {currentLocation.name.toUpperCase()} - STAFF PORTAL
+              </h2>
+              <p className="text-gray-300">Sign in to access the spa management system</p>
+            </div>
+            
+            <form onSubmit={locationLogin} className="space-y-4">
+              <div>
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={loginForm.username}
+                  onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                  required
+                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500"
+                />
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                  required
+                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500"
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md"
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </form>
+            
+            <div className="mt-4 pt-4 border-t border-gray-600">
+              <p className="text-sm text-gray-400 text-center">
+                Default credentials: admin / admin123
+              </p>
+            </div>
+            
+            <div className="mt-6 text-center">
+              <Link to="/" className="text-red-500 hover:text-red-400 text-sm">
+                ← Back to Main Site
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated and no locationId, redirect to landing page
+  if (!isAuthenticated && !locationId) {
+    window.location.href = '/';
+    return null;
+  }
+
   // Fetch data when authenticated
   useEffect(() => {
     if (isAuthenticated) {
