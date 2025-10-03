@@ -5167,31 +5167,16 @@ function LoginPage({ locationId, locationName }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{
-      background: '#0f1419',
-      backgroundImage: `
-        radial-gradient(circle at 20% 50%, rgba(30, 58, 138, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(30, 64, 175, 0.2) 0%, transparent 50%),
-        radial-gradient(circle at 40% 80%, rgba(23, 37, 84, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 90% 90%, rgba(30, 58, 138, 0.15) 0%, transparent 50%)
-      `,
-      backgroundAttachment: 'fixed'
-    }}>
-      <div className="max-w-md w-full">
+    <div className="bg-black">
+      <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8">
-          <div style={{ background: '#000000', padding: '12px', borderRadius: '8px', display: 'inline-block', marginBottom: '16px' }}>
-            <img 
-              src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
-              alt="Flex Spa Los Angeles"
-              className="h-16 w-auto"
-              style={{ maxHeight: '64px', objectFit: 'contain' }}
-            />
-          </div>
-          <h2 className="text-3xl font-bold text-white">Admin Portal</h2>
-          <p className="text-gray-400 mt-2">Sign in to access the spa management system</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {locationName ? `${locationName.toUpperCase()} - STAFF PORTAL` : 'STAFF PORTAL'}
+          </h2>
+          <p className="text-gray-300">Sign in to access the spa management system</p>
         </div>
         
-        <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+        <Card className="bg-gray-900 border border-red-500">
           <CardContent className="p-6">
             <form onSubmit={login} className="space-y-4">
               <div>
@@ -5201,7 +5186,7 @@ function LoginPage({ locationId, locationName }) {
                   value={loginForm.username}
                   onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
                   required
-                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500"
                 />
               </div>
               <div>
@@ -5211,20 +5196,32 @@ function LoginPage({ locationId, locationName }) {
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                   required
-                  className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500"
                 />
               </div>
               
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full flex-button"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md"
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
+            
+            <div className="mt-4 pt-4 border-t border-gray-600">
+              <p className="text-sm text-gray-400 text-center">
+                Default credentials: admin / admin123
+              </p>
+            </div>
           </CardContent>
         </Card>
+        
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-red-500 hover:text-red-400 text-sm">
+            ← Back to Main Site
+          </Link>
+        </div>
       </div>
     </div>
   );
