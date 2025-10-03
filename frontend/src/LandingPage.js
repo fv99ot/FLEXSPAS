@@ -100,20 +100,6 @@ const LandingPage = () => {
                       Our Services
                     </a>
                   </div>
-                  
-                  {/* TEST NAVIGATION BUTTON */}
-                  <div className="mt-3 sm:mt-0 sm:ml-3">
-                    <button
-                      onClick={() => {
-                        console.log('TEST: Navigating to Los Angeles...');
-                        alert('Navigating to Los Angeles...');
-                        window.location.href = '/los-angeles';
-                      }}
-                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10"
-                    >
-                      TEST LA LOGIN
-                    </button>
-                  </div>
                 </div>
               </div>
             </main>
