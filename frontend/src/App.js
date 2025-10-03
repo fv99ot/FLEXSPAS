@@ -278,13 +278,12 @@ function App({ locationId }) {
       setUser(userData);
       setLoginForm({ username: '', password: '' });
       
-      console.log('✅ Authentication state updated - should redirect to admin interface');
+      console.log('✅ Authentication state updated - forcing page reload to ensure UI updates');
       
-      // Force a small delay to ensure state updates
+      // Force page reload to ensure authentication state is properly reflected
       setTimeout(() => {
-        console.log('🔄 Checking authentication state after timeout...');
-        console.log('isAuthenticated should be true now');
-      }, 100);
+        window.location.reload();
+      }, 500);
       
     } catch (error) {
       console.error('❌ Login error:', error);
