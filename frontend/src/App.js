@@ -5517,6 +5517,9 @@ export default function AppRouter() {
         {/* Landing page */}
         <Route path="/" element={<LandingPage />} />
         
+        {/* Admin login page */}
+        <Route path="/admin-login" element={<AdminLoginPage />} />
+        
         {/* Super admin dashboard */}
         <Route path="/super-admin" element={<SuperAdminDashboard />} />
         
