@@ -35,7 +35,6 @@ import MembershipForm from './MembershipForm';
 const API = process.env.REACT_APP_BACKEND_URL;
 
 function App() {
-  const navigate = useNavigate();
   
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
