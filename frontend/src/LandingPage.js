@@ -131,7 +131,7 @@ const LandingPage = () => {
           <div className="mt-10">
             <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
               {locations.map((location) => (
-                <div key={location.id} className="bg-gray-900 border border-red-500 rounded-lg shadow-lg overflow-hidden">
+                <div key={location.id} className="bg-gray-900 border-2 border-red-500 rounded-lg shadow-xl overflow-hidden min-h-96">
                   <div className="h-48 bg-gray-200">
                     <img
                       className="w-full h-full object-cover"
@@ -139,16 +139,16 @@ const LandingPage = () => {
                       alt={location.name}
                     />
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-medium text-white">{location.name}</h3>
-                    <p className="mt-2 text-sm text-gray-300">{location.address}</p>
-                    <p className="mt-1 text-sm text-gray-300">{location.phone}</p>
+                  <div className="p-6 bg-gray-900">
+                    <h3 className="text-xl font-bold text-white mb-3">{location.name}</h3>
+                    <p className="text-sm text-gray-300 mb-2">{location.address}</p>
+                    <p className="text-sm text-gray-300 mb-4">{location.phone}</p>
                     <div className="mt-4">
                       <Link
                         to={`/${location.id}`}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        className="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-bold rounded-md text-white bg-red-600 hover:bg-red-700 transition-colors duration-200"
                       >
-                        Staff Login - {location.name}
+                        STAFF LOGIN - {location.name.toUpperCase()}
                       </Link>
                     </div>
                   </div>
