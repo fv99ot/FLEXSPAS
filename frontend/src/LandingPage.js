@@ -6,28 +6,28 @@ const LandingPage = () => {
     {
       id: 'los-angeles',
       name: 'Los Angeles',
-      address: '123 Spa Street, Los Angeles, CA 90210',
+      address: '4424 Melrose Ave, Los Angeles, CA 90004',
       phone: '(555) 123-FLEX',
       image: 'https://static.wixstatic.com/media/ed6e13_8e2c0754480a439a82983733d57002ac~mv2.jpg/v1/fill/w_400,h_250,al_c,q_80,usm_0.66_1.00_0.01/ed6e13_8e2c0754480a439a82983733d57002ac~mv2.jpg'
     },
     {
       id: 'atlanta',
       name: 'Atlanta',
-      address: '456 Wellness Ave, Atlanta, GA 30309',
+      address: '76 4th St NW, Atlanta, GA 30308',
       phone: '(555) 456-FLEX',
       image: 'https://static.wixstatic.com/media/ed6e13_2d092fb28dfa447bbb43b48244ab02b6~mv2.jpg/v1/fill/w_400,h_250,al_c,q_80,usm_0.66_1.00_0.01/ed6e13_2d092fb28dfa447bbb43b48244ab02b6~mv2.jpg'
     },
     {
       id: 'cleveland',
       name: 'Cleveland', 
-      address: '789 Relaxation Blvd, Cleveland, OH 44115',
+      address: '2600 Hamilton Ave, Cleveland, OH 44114',
       phone: '(555) 789-FLEX',
       image: 'https://static.wixstatic.com/media/ed6e13_e804536ff1a343c0836af78e61213ceb~mv2.jpg/v1/fill/w_400,h_250,al_c,q_80,usm_0.66_1.00_0.01/ed6e13_e804536ff1a343c0836af78e61213ceb~mv2.jpg'
     },
     {
       id: 'phoenix',
       name: 'Phoenix',
-      address: '321 Desert Spa Dr, Phoenix, AZ 85001',
+      address: '1517 S Black Canyon Hwy, Phoenix, AZ 85009',
       phone: '(555) 321-FLEX',
       image: 'https://static.wixstatic.com/media/ed6e13_2fe54746788e4f07b2bca0cffdbd3582~mv2.jpg/v1/fill/w_400,h_250,al_c,q_80,usm_0.66_1.00_0.01/ed6e13_2fe54746788e4f07b2bca0cffdbd3582~mv2.jpg'
     }
