@@ -5230,19 +5230,91 @@ function LoginPage() {
   );
 }
 
-// Create a wrapper for the existing app functionality  
+// Location-aware login app component
 const LocationAdminApp = ({ locationId }) => {
-  // Add location context to the existing app functionality
-  // This is where we'll modify the existing app to use location-specific databases
+  const [locationInfo, setLocationInfo] = useState(null);
+  
+  const locations = {
+    'los-angeles': {
+      name: 'Los Angeles',
+      address: '123 Spa Street, Los Angeles, CA 90210',
+      phone: '(555) 123-FLEX',
+      dbName: 'flexspa_losangeles'
+    },
+    'atlanta': {
+      name: 'Atlanta',
+      address: '456 Wellness Ave, Atlanta, GA 30309', 
+      phone: '(555) 456-FLEX',
+      dbName: 'flexspa_atlanta'
+    },
+    'cleveland': {
+      name: 'Cleveland',
+      address: '789 Relaxation Blvd, Cleveland, OH 44115',
+      phone: '(555) 789-FLEX', 
+      dbName: 'flexspa_cleveland'
+    },
+    'phoenix': {
+      name: 'Phoenix',
+      address: '321 Desert Spa Dr, Phoenix, AZ 85001',
+      phone: '(555) 321-FLEX',
+      dbName: 'flexspa_phoenix'
+    }
+  };
+
   useEffect(() => {
-    if (locationId) {
+    if (locationId && locations[locationId]) {
+      setLocationInfo(locations[locationId]);
       // Set location context for API calls
       localStorage.setItem('currentLocation', locationId);
+      localStorage.setItem('currentDbName', locations[locationId].dbName);
     }
   }, [locationId]);
 
-  // Return the existing app functionality (LoginPage component)
-  return <LoginPage />;
+  if (!locationInfo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Location not found</h2>
+          <Link 
+            to="/" 
+            className="text-red-500 hover:text-red-400"
+          >
+            Return to main site
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Return the existing LoginPage with location styling and context
+  return (
+    <div className="min-h-screen bg-black">
+      {/* Location-specific header */}
+      <header className="bg-black">
+        <div className="w-full">
+          <Link to="/">
+            <img 
+              src="https://customer-assets.emergentagent.com/job_spatracker-1/artifacts/d6xck9vw_IMG_3413.jpeg"
+              alt="FLEXSPAS Header"
+              className="w-full h-auto max-h-32 object-contain cursor-pointer"
+            />
+          </Link>
+        </div>
+        {/* Location info */}
+        <div className="bg-black py-4 text-center border-t border-gray-800">
+          <h2 className="text-white text-2xl font-bold">{locationInfo.name.toUpperCase()} - STAFF LOGIN</h2>
+          <p className="text-gray-300 text-sm">{locationInfo.address}</p>
+        </div>
+      </header>
+
+      {/* Login form container */}
+      <div className="flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <LoginPage locationId={locationId} locationName={locationInfo.name} />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // Main App Router with multi-location support
