@@ -5256,17 +5256,11 @@ export default function AppRouter() {
         {/* Super admin dashboard */}
         <Route path="/super-admin" element={<SuperAdminDashboard />} />
         
-        {/* Location-specific routes */}
-        <Route path="/los-angeles" element={<LocationApp />} />
-        <Route path="/atlanta" element={<LocationApp />} />
-        <Route path="/cleveland" element={<LocationApp />} />
-        <Route path="/phoenix" element={<LocationApp />} />
-        
-        {/* Location-specific admin (existing app functionality) */}
-        <Route path="/los-angeles/admin" element={<LocationAdminApp locationId="los-angeles" />} />
-        <Route path="/atlanta/admin" element={<LocationAdminApp locationId="atlanta" />} />
-        <Route path="/cleveland/admin" element={<LocationAdminApp locationId="cleveland" />} />
-        <Route path="/phoenix/admin" element={<LocationAdminApp locationId="phoenix" />} />
+        {/* Location-specific LOGIN pages - direct from main site */}
+        <Route path="/los-angeles" element={<LocationAdminApp locationId="los-angeles" />} />
+        <Route path="/atlanta" element={<LocationAdminApp locationId="atlanta" />} />
+        <Route path="/cleveland" element={<LocationAdminApp locationId="cleveland" />} />
+        <Route path="/phoenix" element={<LocationAdminApp locationId="phoenix" />} />
         
         {/* QR code membership forms for each location */}
         <Route path="/los-angeles/membership" element={<MembershipForm />} />
