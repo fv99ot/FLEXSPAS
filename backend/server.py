@@ -382,22 +382,74 @@ async def check_waitlist_queue_enforcement(customer_id: str, room_type: str, man
     else:
         return f"There are {len(waitlist_entries)} people ahead of you in the waitlist for {room_type.replace('_', ' ')}. Please join the waitlist first."
 
-# Initialize default admin user
-async def create_default_admin():
-    # Create admin user in all location databases
+# Initialize default users with proper hierarchy
+async def create_default_users():
+    # Create Super Admins (cross-location access) in Los Angeles database
+    la_db = client[LOCATION_DATABASES['los-angeles']]
+    
+    super_admins = [
+        {"username": "admin1", "password": "admin1123", "role": "super_admin"},
+        {"username": "admin2", "password": "admin2123", "role": "super_admin"}, 
+        {"username": "admin3", "password": "admin3123", "role": "super_admin"}
+    ]
+    
+    for admin in super_admins:
+        existing = await la_db.users.find_one({"username": admin["username"]})
+        if not existing:
+            admin_user = {
+                "id": str(uuid.uuid4()),
+                "username": admin["username"],
+                "password": hash_password(admin["password"]),
+                "role": admin["role"],
+                "can_manage_users": True,
+                "can_see_all_locations": True,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await la_db.users.insert_one(admin_user)
+            print(f"Super Admin created: {admin['username']} / {admin['password']}")
+    
+    # Create Store Managers (location-specific access) in each location database  
+    store_managers = [
+        {"location": "los-angeles", "username": "la_manager", "password": "lamanager123"},
+        {"location": "atlanta", "username": "atl_manager", "password": "atlmanager123"},
+        {"location": "cleveland", "username": "cle_manager", "password": "clemanager123"},
+        {"location": "phoenix", "username": "phx_manager", "password": "phxmanager123"}
+    ]
+    
+    for manager in store_managers:
+        location_db = client[LOCATION_DATABASES[manager["location"]]]
+        existing = await location_db.users.find_one({"username": manager["username"]})
+        if not existing:
+            manager_user = {
+                "id": str(uuid.uuid4()),
+                "username": manager["username"],
+                "password": hash_password(manager["password"]),
+                "role": UserRole.MANAGER,
+                "location": manager["location"],
+                "can_manage_users": False,
+                "can_see_all_locations": False,
+                "created_at": datetime.now(timezone.utc)
+            }
+            await location_db.users.insert_one(manager_user)
+            print(f"Store Manager created for {manager['location']}: {manager['username']} / {manager['password']}")
+    
+    # Keep backwards compatibility - create admin/admin123 in all locations
     for location_id, db_name in LOCATION_DATABASES.items():
         location_db = client[db_name]
         admin_exists = await location_db.users.find_one({"username": "admin"})
         if not admin_exists:
             admin_user = {
                 "id": str(uuid.uuid4()),
-                "username": "admin",
+                "username": "admin", 
                 "password": hash_password("admin123"),
                 "role": UserRole.MANAGER,
+                "location": location_id,
+                "can_manage_users": False,
+                "can_see_all_locations": False,
                 "created_at": datetime.now(timezone.utc)
             }
             await location_db.users.insert_one(admin_user)
-            print(f"Default admin user created for {location_id} ({db_name}) - username: admin, password: admin123")
+            print(f"Legacy admin created for {location_id}: admin / admin123")
 
 # Routes
 @api_router.get("/locations")
