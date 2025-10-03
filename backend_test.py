@@ -54,6 +54,350 @@ class BathhouseAPITester:
         except Exception as e:
             return self.log_test("Admin Login", False, f"Exception: {str(e)}")
 
+    def test_multi_location_authentication(self):
+        """Test multi-location authentication system for login functionality as requested in review"""
+        print("\n🌍 TESTING MULTI-LOCATION AUTHENTICATION SYSTEM...")
+        print("   Testing location-specific login functionality for all 4 locations")
+        print("   Verifying admin/admin123 credentials work for each location database")
+        print("   Testing JWT token generation with location context")
+        
+        all_success = True
+        locations = ['los-angeles', 'atlanta', 'cleveland', 'phoenix']
+        
+        # Test 1: Test GET /api/locations endpoint first
+        print("   TEST 1: Get available locations...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/locations",
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'locations' in data and isinstance(data['locations'], list):
+                    returned_locations = [loc['id'] for loc in data['locations']]
+                    has_all_locations = all(loc in returned_locations for loc in locations)
+                    
+                    self.log_test("Get Locations Endpoint", has_all_locations, 
+                                f"Returned {len(returned_locations)} locations: {returned_locations}")
+                    
+                    if not has_all_locations:
+                        all_success = False
+                else:
+                    self.log_test("Get Locations Endpoint", False, "Invalid response format")
+                    all_success = False
+            else:
+                self.log_test("Get Locations Endpoint", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Get Locations Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 2: Test location-specific login for each location
+        print("   TEST 2: Location-specific login for all 4 locations...")
+        location_tokens = {}
+        
+        for location in locations:
+            print(f"      Testing login for {location}...")
+            try:
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'X-Location': location
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/login",
+                    json={"username": "admin", "password": "admin123"},
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Verify response contains required fields
+                    required_fields = ['access_token', 'token_type', 'user', 'location']
+                    has_required_fields = all(field in data for field in required_fields)
+                    
+                    # Verify location context is correct
+                    correct_location = data.get('location') == location
+                    
+                    # Verify user data
+                    user_data = data.get('user', {})
+                    correct_user = (user_data.get('username') == 'admin' and 
+                                  user_data.get('role') == 'manager')
+                    
+                    # Verify JWT token is valid
+                    token = data.get('access_token')
+                    valid_token = token and len(token) > 50  # JWT tokens are typically long
+                    
+                    login_success = (has_required_fields and correct_location and 
+                                   correct_user and valid_token)
+                    
+                    if login_success:
+                        location_tokens[location] = token
+                    
+                    details = f"Location: {data.get('location')}, User: {user_data.get('username')}, Role: {user_data.get('role')}, Token length: {len(token) if token else 0}"
+                    
+                    self.log_test(f"Login {location.title()}", login_success, details)
+                    
+                    if not login_success:
+                        all_success = False
+                else:
+                    self.log_test(f"Login {location.title()}", False, 
+                                f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Login {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 3: Test JWT token validation for each location
+        print("   TEST 3: JWT token validation for each location...")
+        for location, token in location_tokens.items():
+            print(f"      Testing JWT token for {location}...")
+            try:
+                headers_with_auth = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {token}',
+                    'X-Location': location
+                }
+                
+                # Test token by accessing a protected endpoint (customers)
+                response = requests.get(
+                    f"{self.api_url}/customers",
+                    headers=headers_with_auth,
+                    timeout=10
+                )
+                
+                token_valid = response.status_code == 200
+                
+                self.log_test(f"JWT Token Validation {location.title()}", token_valid, 
+                            f"Protected endpoint access: {response.status_code}")
+                
+                if not token_valid:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"JWT Token Validation {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 4: Test location context routing (create customer in specific location)
+        print("   TEST 4: Location context routing (database isolation)...")
+        test_customers = {}
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        for location, token in location_tokens.items():
+            print(f"      Testing customer creation in {location}...")
+            try:
+                headers_with_auth = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {token}',
+                    'X-Location': location
+                }
+                
+                customer_data = {
+                    "first_name": f"Location",
+                    "last_name": f"Test_{location.title()}",
+                    "id_number": f"LOC_TEST_{location.upper()}_{unique_timestamp}",
+                    "date_of_birth": "1990-01-01",
+                    "id_expiration_date": "2025-12-31",
+                    "state_of_id": "CA"
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/customers",
+                    json=customer_data,
+                    headers=headers_with_auth,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    customer = response.json()
+                    test_customers[location] = customer['id']
+                    
+                    self.log_test(f"Create Customer {location.title()}", True, 
+                                f"Customer ID: {customer['id']}, Name: {customer['first_name']} {customer['last_name']}")
+                else:
+                    self.log_test(f"Create Customer {location.title()}", False, 
+                                f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Create Customer {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 5: Test cross-location data isolation
+        print("   TEST 5: Cross-location data isolation...")
+        for location, token in location_tokens.items():
+            print(f"      Testing data isolation for {location}...")
+            try:
+                headers_with_auth = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {token}',
+                    'X-Location': location
+                }
+                
+                # Get customers for this location
+                response = requests.get(
+                    f"{self.api_url}/customers",
+                    headers=headers_with_auth,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    customers = response.json()
+                    
+                    # Check that this location's customer exists
+                    location_customer_exists = any(
+                        customer['id'] == test_customers.get(location) 
+                        for customer in customers
+                    ) if location in test_customers else True
+                    
+                    # Check that other locations' customers don't exist here
+                    other_customers_isolated = True
+                    for other_location, other_customer_id in test_customers.items():
+                        if other_location != location:
+                            customer_found = any(
+                                customer['id'] == other_customer_id 
+                                for customer in customers
+                            )
+                            if customer_found:
+                                other_customers_isolated = False
+                                break
+                    
+                    isolation_success = location_customer_exists and other_customers_isolated
+                    
+                    details = f"Own customer exists: {location_customer_exists}, Other customers isolated: {other_customers_isolated}, Total customers: {len(customers)}"
+                    
+                    self.log_test(f"Data Isolation {location.title()}", isolation_success, details)
+                    
+                    if not isolation_success:
+                        all_success = False
+                else:
+                    self.log_test(f"Data Isolation {location.title()}", False, 
+                                f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Data Isolation {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # Test 6: Test login without X-Location header (should default to los-angeles)
+        print("   TEST 6: Login without X-Location header (default behavior)...")
+        try:
+            response = requests.post(
+                f"{self.api_url}/login",
+                json={"username": "admin", "password": "admin123"},
+                headers={'Content-Type': 'application/json'},  # No X-Location header
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                defaults_to_la = data.get('location') == 'los-angeles'
+                
+                self.log_test("Default Location Fallback", defaults_to_la, 
+                            f"Defaults to los-angeles: {defaults_to_la}, Actual: {data.get('location')}")
+                
+                if not defaults_to_la:
+                    all_success = False
+            else:
+                self.log_test("Default Location Fallback", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Default Location Fallback", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 7: Test login with invalid location header
+        print("   TEST 7: Login with invalid X-Location header...")
+        try:
+            headers_with_invalid_location = {
+                'Content-Type': 'application/json',
+                'X-Location': 'invalid-location'
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/login",
+                json={"username": "admin", "password": "admin123"},
+                headers=headers_with_invalid_location,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                # Should fallback to default location (los-angeles)
+                fallback_to_default = data.get('location') == 'los-angeles'
+                
+                self.log_test("Invalid Location Fallback", fallback_to_default, 
+                            f"Falls back to los-angeles: {fallback_to_default}, Actual: {data.get('location')}")
+                
+                if not fallback_to_default:
+                    all_success = False
+            else:
+                self.log_test("Invalid Location Fallback", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid Location Fallback", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # Test 8: Test JWT token structure and claims
+        print("   TEST 8: JWT token structure and claims...")
+        if location_tokens:
+            sample_location = list(location_tokens.keys())[0]
+            sample_token = location_tokens[sample_location]
+            
+            try:
+                # Decode JWT token (without verification for testing purposes)
+                import base64
+                import json
+                
+                # Split token into parts
+                parts = sample_token.split('.')
+                if len(parts) == 3:
+                    # Decode payload (add padding if needed)
+                    payload = parts[1]
+                    payload += '=' * (4 - len(payload) % 4)  # Add padding
+                    decoded_payload = base64.b64decode(payload)
+                    claims = json.loads(decoded_payload)
+                    
+                    # Check required claims
+                    required_claims = ['user_id', 'role', 'exp']
+                    has_required_claims = all(claim in claims for claim in required_claims)
+                    
+                    # Check role is correct
+                    correct_role = claims.get('role') == 'manager'
+                    
+                    # Check expiration is in the future
+                    exp_timestamp = claims.get('exp', 0)
+                    current_timestamp = datetime.now(timezone.utc).timestamp()
+                    not_expired = exp_timestamp > current_timestamp
+                    
+                    token_structure_valid = has_required_claims and correct_role and not_expired
+                    
+                    details = f"Required claims: {has_required_claims}, Role: {claims.get('role')}, Not expired: {not_expired}"
+                    
+                    self.log_test("JWT Token Structure", token_structure_valid, details)
+                    
+                    if not token_structure_valid:
+                        all_success = False
+                else:
+                    self.log_test("JWT Token Structure", False, "Invalid JWT format")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("JWT Token Structure", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("JWT Token Structure", False, "No tokens available for testing")
+            all_success = False
+        
+        return all_success
+
     def test_invalid_login(self):
         """Test login with invalid credentials"""
         try:
