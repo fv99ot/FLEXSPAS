@@ -2974,7 +2974,6 @@ function App({ locationId }) {
           </TabsContent>
 
           {/* Room Map merged into Admin & Room Map tab */}
-          {/* Content moved to Admin & Room Map tab */}
           <TabsContent value="cart" className="space-y-6">
             {/* Current Cart/Transaction */}
             <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
