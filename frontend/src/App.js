@@ -5123,7 +5123,7 @@ function App() {
 }
 
 // Login Component
-function LoginPage() {
+function LoginPage({ locationId, locationName }) {
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
