@@ -374,9 +374,16 @@ function App({ locationId }) {
                   locationLogin(e);
                 }}
                 disabled={loading}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md disabled:opacity-50"
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-4 px-6 rounded-lg disabled:opacity-50 transform transition-all duration-200 hover:scale-105"
+                style={{
+                  fontFamily: 'Impact, "Franklin Gothic Bold", "Arial Black", sans-serif',
+                  fontSize: '1.25rem',
+                  fontWeight: '900',
+                  letterSpacing: '0.1em',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+                }}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading ? 'SIGNING IN...' : 'SIGN IN'}
               </button>
             </div>
             
