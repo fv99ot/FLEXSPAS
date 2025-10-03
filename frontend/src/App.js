@@ -338,33 +338,34 @@ function App({ locationId }) {
             
             <form onSubmit={locationLogin} className="space-y-4">
               <div>
-                <Input
+                <input
                   type="text"
                   placeholder="Username"
                   value={loginForm.username}
                   onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
                   required
-                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500"
+                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500 px-3 py-2 rounded-md"
                 />
               </div>
               <div>
-                <Input
+                <input
                   type="password"
                   placeholder="Password"
                   value={loginForm.password}
                   onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                   required
-                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500"
+                  className="w-full bg-black border border-gray-600 text-white placeholder:text-gray-400 focus:border-red-500 px-3 py-2 rounded-md"
                 />
               </div>
               
-              <Button 
+              <button 
                 type="submit" 
                 disabled={loading}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md disabled:opacity-50"
+                onClick={() => console.log('🔘 Sign In button clicked!')}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
+              </button>
             </form>
             
             <div className="mt-4 pt-4 border-t border-gray-600">
