@@ -391,10 +391,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Two-Step Check-in Process Testing"
-    - "Check-in Security Features Testing"
-    - "Payment Flow Protection Testing"
-  stuck_tasks: []
+    - "QR Code Generation & Redirect Fix"
+    - "Authentication System Verification"
+    - "Multi-Location Database Isolation"
+    - "Membership Form Access"
+  stuck_tasks: 
+    - "QR Code URL Configuration Issue"
+    - "Super Admin Cross-Location Access"
   test_all: false
   test_priority: "high_first"
 
