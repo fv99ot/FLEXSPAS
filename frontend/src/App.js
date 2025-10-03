@@ -2975,7 +2975,6 @@ function App({ locationId }) {
 
           {/* Room Map merged into Admin & Room Map tab */}
           {/* Content moved to Admin & Room Map tab */}
-                <div className="space-y-6">
                   <div className="flex space-x-4 text-sm">
                     <div className="flex items-center space-x-2">
                       <div className="w-4 h-4 bg-green-500 rounded"></div>
