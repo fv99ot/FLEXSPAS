@@ -46,7 +46,10 @@ const LandingPage = () => {
         </div>
         {/* Navigation row */}
         <div className="bg-black px-4 py-2">
-          <div className="max-w-7xl mx-auto flex justify-end">
+          <div className="max-w-7xl mx-auto flex justify-end space-x-4">
+            <a href="#about" className="text-base font-medium text-red-500 hover:text-red-400">
+              About
+            </a>
             <Link
               to="/super-admin"
               className="text-red-500 hover:text-red-400 px-4 py-2 font-bold text-sm tracking-wide"
