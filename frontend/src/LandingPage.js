@@ -224,15 +224,13 @@ const LandingPage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-800">
+      <footer className="bg-black border-t border-gray-800">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <div className="space-y-8 xl:col-span-1">
-              <img
-                className="h-10"
-                src="https://static.wixstatic.com/media/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png/v1/fill/w_200,h_100,al_c,q_90,enc_avif,quality_auto/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png"
-                alt="FLEX Spa"
-              />
+              <div className="text-white">
+                <h3 className="text-2xl font-black tracking-tight">FLEXSPAS®</h3>
+              </div>
               <p className="text-gray-300 text-base">
                 Premium spa and wellness facilities across the nation. Your journey to pure indulgence starts here.
               </p>
