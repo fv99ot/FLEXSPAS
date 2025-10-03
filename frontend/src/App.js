@@ -335,7 +335,7 @@ function App({ locationId }) {
               <p className="text-gray-300">Sign in to access the spa management system</p>
             </div>
             
-            <form onSubmit={locationLogin} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <input
                   type="text"
@@ -358,14 +358,17 @@ function App({ locationId }) {
               </div>
               
               <button 
-                type="submit" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log('🔘 Direct Sign In button clicked!');
+                  locationLogin(e);
+                }}
                 disabled={loading}
                 className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-md disabled:opacity-50"
-                onClick={() => console.log('🔘 Sign In button clicked!')}
               >
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
-            </form>
+            </div>
             
             <div className="mt-4 pt-4 border-t border-gray-600">
               <p className="text-sm text-gray-400 text-center">
