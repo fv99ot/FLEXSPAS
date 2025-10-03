@@ -5145,18 +5145,30 @@ function LoginPage({ locationId, locationName }) {
     setLoading(true);
     
     try {
-      const response = await axios.post(`${API}/api/login`, loginForm);
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add location context if available
+      if (locationId) {
+        headers['X-Location'] = locationId;
+      }
+      
+      const response = await axios.post(`${API}/api/login`, loginForm, { headers });
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
+      if (locationId) {
+        localStorage.setItem('currentLocation', locationId);
+      }
       
       setIsAuthenticated(true);
       setUser(userData);
       setLoginForm({ username: '', password: '' });
     } catch (error) {
       console.error('Login error:', error);
-      alert('Invalid credentials');
+      alert('Invalid credentials. Please check your username and password.');
     }
     
     setLoading(false);
