@@ -334,7 +334,7 @@ const LandingPage = () => {
                   <h3 className="text-sm font-semibold text-red-500 tracking-wider uppercase">Company</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     <li>
-                      <a href="#" className="text-base text-gray-300 hover:text-red-400">
+                      <a href="#about" className="text-base text-red-500 hover:text-red-400">
                         About
                       </a>
                     </li>
