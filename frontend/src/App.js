@@ -5186,7 +5186,73 @@ function LoginPage({ locationId, locationName }) {
   };
 
   if (isAuthenticated) {
-    return <App />;
+    return (
+      <div className="min-h-screen" style={{
+        background: '#0f1419',
+        backgroundImage: `
+          radial-gradient(circle at 20% 50%, rgba(30, 58, 138, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 80% 20%, rgba(30, 64, 175, 0.2) 0%, transparent 50%),
+          radial-gradient(circle at 40% 80%, rgba(23, 37, 84, 0.3) 0%, transparent 50%),
+          radial-gradient(circle at 90% 90%, rgba(30, 58, 138, 0.15) 0%, transparent 50%)
+        `,
+        backgroundAttachment: 'fixed'
+      }}>
+        {/* Header */}
+        <header className="header-dark shadow-sm border-b" style={{ background: '#000000', backgroundColor: '#000000' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ background: '#000000', backgroundColor: '#000000' }}>
+            <div className="flex justify-between items-center h-16" style={{ background: '#000000', backgroundColor: '#000000' }}>
+              <div className="flex items-center">
+                <div style={{ background: '#000000', padding: '8px', borderRadius: '4px', marginRight: '12px' }}>
+                  <img 
+                    src="https://customer-assets.emergentagent.com/job_bathhouse-admin/artifacts/vytho0m6_IMG_3221%202.jpg" 
+                    alt="Flex Spa Los Angeles"
+                    className="h-10 w-auto"
+                    style={{ maxHeight: '40px', objectFit: 'contain' }}
+                  />
+                </div>
+                <Badge variant="secondary" className="ml-3 badge-manager">
+                  {user?.role === 'manager' ? 'Manager' : 'Employee'}
+                </Badge>
+              </div>
+              <div className="flex items-center space-x-4">
+                <Avatar>
+                  <AvatarFallback className="bg-red-600 text-white">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-gray-300">{user?.username}</span>
+                <Button variant="outline" size="sm" onClick={() => {
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
+                  setIsAuthenticated(false);
+                  setUser(null);
+                }} className="border-white/20 text-white hover:bg-white/10">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white mb-4">
+              {locationName ? `${locationName.toUpperCase()} - SPA MANAGEMENT` : 'SPA MANAGEMENT SYSTEM'}
+            </h1>
+            <p className="text-gray-300 mb-8">
+              Welcome to the spa management interface. The full system is loading...
+            </p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Load Full Management System
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
