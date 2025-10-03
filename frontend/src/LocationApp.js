@@ -101,13 +101,13 @@ const LocationApp = () => {
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white shadow rounded-lg">
+        <div className="bg-gray-900 shadow rounded-lg">
           <div className="px-6 py-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl font-bold text-white mb-4">
                 Welcome to FLEX Spa {locationInfo.name}
               </h2>
-              <p className="text-lg text-gray-600 mb-8">
+              <p className="text-lg text-gray-300 mb-8">
                 Location-specific admin portal coming soon. This will contain the full spa management system.
               </p>
               
