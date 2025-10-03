@@ -34,7 +34,7 @@ import MembershipForm from './MembershipForm';
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
-function App() {
+function App({ locationId }) {
   
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
