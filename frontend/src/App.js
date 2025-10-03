@@ -5282,42 +5282,28 @@ function LoginPage({ locationId, locationName }) {
     setLoading(true);
     
     try {
-      console.log('Starting login process...');
-      console.log('API URL:', `${API}/api/login`);
-      console.log('Location ID:', locationId);
-      console.log('Login form data:', loginForm);
-      
       const headers = {
         'Content-Type': 'application/json'
       };
       
       // Add location context if available
-      if (locationId) {
-        headers['X-Location'] = locationId;
-        console.log('Added X-Location header:', locationId);
+      const currentLocation = localStorage.getItem('currentLocation');
+      if (currentLocation) {
+        headers['X-Location'] = currentLocation;
       }
       
-      console.log('Request headers:', headers);
-      
       const response = await axios.post(`${API}/api/login`, loginForm, { headers });
-      console.log('Login response:', response.data);
-      
       const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
-      if (locationId) {
-        localStorage.setItem('currentLocation', locationId);
-      }
       
-      console.log('Setting authenticated to true...');
       setIsAuthenticated(true);
       setUser(userData);
       setLoginForm({ username: '', password: '' });
-      console.log('Login successful!');
     } catch (error) {
       console.error('Login error:', error);
-      alert(`Login failed: ${error.message || 'Invalid credentials'}`);
+      alert('Invalid credentials. Please check your username and password.');
     }
     
     setLoading(false);
