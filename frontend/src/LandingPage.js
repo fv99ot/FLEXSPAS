@@ -238,11 +238,11 @@ const LandingPage = () => {
             <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
               <div className="md:grid md:grid-cols-2 md:gap-8">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Locations</h3>
+                  <h3 className="text-sm font-semibold text-red-500 tracking-wider uppercase">Locations</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     {locations.map((location) => (
                       <li key={location.id}>
-                        <Link to={`/${location.id}`} className="text-base text-gray-300 hover:text-white">
+                        <Link to={`/${location.id}`} className="text-base text-gray-300 hover:text-red-400">
                           {location.name}
                         </Link>
                       </li>
@@ -250,20 +250,20 @@ const LandingPage = () => {
                   </ul>
                 </div>
                 <div className="mt-12 md:mt-0">
-                  <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Services</h3>
+                  <h3 className="text-sm font-semibold text-red-500 tracking-wider uppercase">Services</h3>
                   <ul role="list" className="mt-4 space-y-4">
                     <li>
-                      <a href="#" className="text-base text-gray-300 hover:text-white">
+                      <a href="#" className="text-base text-gray-300 hover:text-red-400">
                         Spa Services
                       </a>
                     </li>
                     <li>
-                      <a href="#" className="text-base text-gray-300 hover:text-white">
+                      <a href="#" className="text-base text-gray-300 hover:text-red-400">
                         Premium Rooms
                       </a>
                     </li>
                     <li>
-                      <a href="#" className="text-base text-gray-300 hover:text-white">
+                      <a href="#" className="text-base text-gray-300 hover:text-red-400">
                         Memberships
                       </a>
                     </li>
