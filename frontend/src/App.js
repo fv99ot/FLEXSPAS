@@ -2974,17 +2974,7 @@ function App({ locationId }) {
           </TabsContent>
 
           {/* Room Map merged into Admin & Room Map tab */}
-            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
-              <CardHeader>
-                <CardTitle className="flex items-center text-white">
-                  <MapPin className="h-5 w-5 mr-2" />
-                  Room & Locker Availability Map
-                </CardTitle>
-                <CardDescription className="text-gray-300">
-                  Real-time view of all rooms and lockers - Click occupied rooms to manage
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+          {/* Content moved to Admin & Room Map tab */}
                 <div className="space-y-6">
                   <div className="flex space-x-4 text-sm">
                     <div className="flex items-center space-x-2">
