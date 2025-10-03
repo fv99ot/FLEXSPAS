@@ -316,9 +316,11 @@ function App() {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('currentLocation');
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/');
+    // Redirect to landing page
+    window.location.href = '/';
   };
 
   const searchCustomers = async () => {
