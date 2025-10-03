@@ -50,29 +50,49 @@ const SuperAdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link to="/" className="flex-shrink-0">
-                <img
-                  className="h-8 w-auto"
-                  src="https://static.wixstatic.com/media/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png/v1/fill/w_200,h_100,al_c,q_90,enc_avif,quality_auto/ed6e13_9c62b8fa86b54ece9878611dd93f51c0~mv2.png"
-                  alt="FLEX Spa"
-                />
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-6">
+              {/* FLEXSPAS Logo */}
+              <Link to="/" className="text-white">
+                <h1 className="text-4xl font-black tracking-tight" style={{
+                  textShadow: '2px 2px 0px rgba(255,255,255,0.1)',
+                  fontFamily: 'Arial Black, sans-serif'
+                }}>
+                  FLEXSPAS<span className="text-xs align-super">®</span>
+                </h1>
               </Link>
-              <div className="ml-6">
-                <h1 className="text-xl font-semibold text-gray-900">Super Admin Dashboard</h1>
+              
+              {/* Website URL */}
+              <div className="text-red-500 font-bold text-lg tracking-wide">
+                FLEXSPAS.COM
               </div>
             </div>
+            
             <div className="flex items-center">
               <Link
                 to="/"
-                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-red-500 hover:text-red-400 px-3 py-2 font-bold text-sm tracking-wide"
               >
-                Back to Main Site
+                BACK TO MAIN SITE
               </Link>
             </div>
+          </div>
+          
+          {/* Location Cities Row */}
+          <div className="border-t border-gray-800 py-2">
+            <div className="flex justify-center space-x-8 text-red-500 font-bold text-sm tracking-widest">
+              <span>ATLANTA</span>
+              <span>CLEVELAND</span>
+              <span>LOS ANGELES</span>
+              <span>PHOENIX</span>
+            </div>
+          </div>
+          
+          {/* Super Admin Title */}
+          <div className="py-2 text-center border-t border-gray-800">
+            <h2 className="text-white text-xl font-bold">SUPER ADMIN DASHBOARD</h2>
           </div>
         </div>
       </header>
