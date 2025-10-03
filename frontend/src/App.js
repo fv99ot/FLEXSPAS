@@ -395,11 +395,7 @@ function App({ locationId }) {
               </button>
             </div>
             
-            <div className="mt-4 pt-4 border-t border-gray-600">
-              <p className="text-sm text-gray-400 text-center">
-                Default credentials: admin / admin123
-              </p>
-            </div>
+            {/* Removed preset passwords as requested */}
             
             <div className="mt-6 text-center">
               <Link to="/" className="text-red-500 hover:text-red-400 text-sm">
@@ -5477,11 +5473,7 @@ function LoginPage({ locationId, locationName }) {
               </Button>
             </form>
             
-            <div className="mt-4 pt-4 border-t border-gray-600">
-              <p className="text-sm text-gray-400 text-center">
-                Default credentials: admin / admin123
-              </p>
-            </div>
+            {/* Removed preset passwords as requested */}
           </CardContent>
         </Card>
         
