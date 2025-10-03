@@ -319,9 +319,15 @@ function App({ locationId }) {
               />
             </Link>
           </div>
-          <div className="bg-black py-4 text-center border-t border-gray-800">
-            <h2 className="text-white text-2xl font-bold">{currentLocation.name.toUpperCase()} - STAFF LOGIN</h2>
-            <p className="text-gray-300 text-sm">{currentLocation.address}</p>
+          <div className="bg-black py-6 text-center border-t border-gray-800">
+            <h2 className="text-white text-3xl font-black mb-2 tracking-widest" style={{
+              fontFamily: 'Impact, "Franklin Gothic Bold", "Arial Black", sans-serif',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+              letterSpacing: '0.15em'
+            }}>
+              {currentLocation.name.toUpperCase()} - STAFF LOGIN
+            </h2>
+            <p className="text-gray-300 text-base font-medium tracking-wide">{currentLocation.address}</p>
           </div>
         </header>
 
