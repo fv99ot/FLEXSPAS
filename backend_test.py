@@ -14294,6 +14294,10 @@ class BathhouseAPITester:
             print("❌ Authentication failed - stopping tests")
             return False
         
+        # PRIORITY: Multi-Location Authentication System Testing (as requested in review)
+        print("\n🔥 PRIORITY TESTING: Multi-Location Authentication System")
+        self.test_multi_location_authentication()
+        
         # PRIORITY: Payment Processing Fix (HIGHEST PRIORITY - as requested in review)
         print("\n🔥 PRIORITY TESTING: Payment Processing Fix")
         self.test_payment_processing_fix()
