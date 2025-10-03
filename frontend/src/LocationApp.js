@@ -63,7 +63,7 @@ const LocationApp = () => {
 
   // For now, show a placeholder that will be replaced with the actual app
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black">
       {/* Location Header */}
       <header className="bg-black">
         <div className="w-full">
