@@ -800,7 +800,7 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
             raise HTTPException(status_code=400, detail="Room is already occupied")
     
     # Check daily shift limit
-    shift_check = await check_daily_shift_limit(customer_id)
+    shift_check = await check_daily_shift_limit(customer_id, location_db)
     if not shift_check["can_continue"]:
         raise HTTPException(status_code=400, detail=shift_check["message"])
     
