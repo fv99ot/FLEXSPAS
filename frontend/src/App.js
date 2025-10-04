@@ -2113,6 +2113,18 @@ function App({ locationId }) {
     return rateMap[roomType] || (isWeekend ? pricingConfig.locker_weekend : pricingConfig.locker_weekday);
   };
 
+  // Handle authentication state - no early returns, just conditional rendering
+  if (!isAuthenticated && locationId && currentLocation) {
+    return <LocationLoginComponent />;
+  }
+
+  if (!isAuthenticated && !locationId) {
+    // Redirect to landing page
+    window.location.href = '/';
+    return null;
+  }
+
+  // Main authenticated interface
   return (
     <div className="min-h-screen" style={{
       background: '#0f1419',
