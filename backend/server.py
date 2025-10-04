@@ -880,7 +880,7 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
         "expires_at": datetime.now(timezone.utc) + timedelta(minutes=10)  # Auto-expire after 10 minutes
     }
     
-    await db.pending_check_ins.insert_one(pending_checkin_doc)
+    await location_db.pending_check_ins.insert_one(pending_checkin_doc)
     
     return {
         "pending_checkin_id": pending_checkin_doc["id"],
