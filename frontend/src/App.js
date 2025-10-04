@@ -5428,7 +5428,7 @@ const AdminLoginPage = () => {
         </div>
       </div>
     </div>
-      )}
+    )}
     </>
   );
 };
