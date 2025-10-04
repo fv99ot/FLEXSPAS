@@ -772,7 +772,7 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
     
     # Check if room/locker is available
     if room_type == "locker":
-        existing_checkin = await db.check_ins.find_one({
+        existing_checkin = await location_db.check_ins.find_one({
             "room_number": room_number,
             "room_type": "locker",
             "check_out_time": None
@@ -781,14 +781,14 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
             raise HTTPException(status_code=400, detail="Locker is already occupied")
         
         # Check if locker is assigned to an employee
-        employee_assignment = await db.users.find_one({
+        employee_assignment = await location_db.users.find_one({
             "assigned_locker_number": str(room_number)
         })
         if employee_assignment:
             raise HTTPException(status_code=400, detail="Locker is assigned to an employee and not available for customers")
     else:
         # For rooms, check availability
-        existing_checkin = await db.check_ins.find_one({
+        existing_checkin = await location_db.check_ins.find_one({
             "room_number": room_number,
             "room_type": room_type,
             "check_out_time": None
