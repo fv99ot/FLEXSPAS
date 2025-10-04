@@ -397,13 +397,6 @@ function App({ locationId }) {
         </div>
       </div>
     );
-  }
-
-  // If not authenticated and no locationId, redirect to landing page
-  if (!isAuthenticated && !locationId) {
-    window.location.href = '/';
-    return null;
-  }
 
   // Fetch data when authenticated
   useEffect(() => {
