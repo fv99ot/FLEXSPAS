@@ -969,10 +969,10 @@ async def complete_checkin(completion_data: dict, current_user: User = Depends(g
         "completed_at": check_in_time
     }
     
-    await db.check_ins.insert_one(checkin_doc)
+    await location_db.check_ins.insert_one(checkin_doc)
     
     # Mark pending check-in as completed
-    await db.pending_check_ins.update_one(
+    await location_db.pending_check_ins.update_one(
         {"id": pending_checkin_id},
         {"$set": {"status": "completed", "completed_at": check_in_time}}
     )
