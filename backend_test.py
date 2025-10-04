@@ -1234,6 +1234,10 @@ class BathhouseAPITester:
         print("🎯 PRIORITY TESTS FROM REVIEW REQUEST")
         print("="*80)
         
+        # MAIN FOCUS: Transaction Completion API with Location Headers
+        self.test_transaction_completion_with_location_headers()
+        
+        # Additional tests from previous reviews
         # 1. QR Code Generation & Redirect Fix
         self.test_qr_code_generation_and_redirect()
         
