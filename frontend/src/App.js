@@ -2113,17 +2113,17 @@ function App({ locationId }) {
     return rateMap[roomType] || (isWeekend ? pricingConfig.locker_weekend : pricingConfig.locker_weekday);
   };
 
-  // Use conditional JSX rendering instead of early returns to avoid hooks violations
+  // Handle authentication state
+  if (!isAuthenticated && locationId && currentLocation) {
+    return <LocationLoginComponent />;
+  }
+
+  if (!isAuthenticated && !locationId) {
+    window.location.href = '/';
+    return null;
+  }
+
   return (
-    <>
-      {!isAuthenticated && locationId && currentLocation && <LocationLoginComponent />}
-      {!isAuthenticated && !locationId && (
-        <div>
-          {/* Redirect to landing page */}
-          {window.location.href = '/', null}
-        </div>
-      )}
-      {isAuthenticated && (
     <div className="min-h-screen" style={{
       background: '#0f1419',
       backgroundImage: `
