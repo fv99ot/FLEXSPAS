@@ -212,48 +212,7 @@ function App({ locationId }) {
   // Customer overtime checkout state
   const [checkoutOvertimeData, setCheckoutOvertimeData] = useState(null);
 
-  // Dynamic favicon badge for overtime customers
-  const updateFaviconBadge = (overtimeCount) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const size = 32;
-    canvas.width = size;
-    canvas.height = size;
-
-    // Draw red circle background
-    ctx.fillStyle = '#dc2626';
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Draw white text
-    if (overtimeCount > 0) {
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 20px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const text = overtimeCount > 99 ? '99+' : overtimeCount.toString();
-      ctx.fillText(text, size / 2, size / 2);
-    }
-
-    // Create favicon link
-    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-    link.rel = 'icon';
-    link.href = canvas.toDataURL();
-    document.getElementsByTagName('head')[0].appendChild(link);
-  };
-
-  // Update favicon when active check-ins change
-  useEffect(() => {
-    if (activeCheckins.length > 0) {
-      const overtimeCustomers = activeCheckins.filter(checkin => 
-        checkin.is_overtime || (checkin.remaining_hours && checkin.remaining_hours < 0)
-      );
-      updateFaviconBadge(overtimeCustomers.length);
-    } else {
-      updateFaviconBadge(0);
-    }
-  }, [activeCheckins]);
+  // TODO: Re-implement favicon badge functionality after fixing authentication flow
 
   // Check authentication on component mount
   useEffect(() => {
