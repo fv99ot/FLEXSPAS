@@ -296,9 +296,8 @@ function App({ locationId }) {
     }
   }, [isAuthenticated, user]);
 
-  // If not authenticated and we have a locationId, show location-specific login
-  if (!isAuthenticated && locationId && currentLocation) {
-    return (
+  // Location login component (will be rendered conditionally at the end)
+  const LocationLoginComponent = () => (
       <div className="min-h-screen bg-black">
         {/* Header with FLEXSPAS image */}
         <header className="bg-black">
