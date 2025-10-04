@@ -1602,9 +1602,11 @@ async def get_transactions(
     transaction_type: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    location: str = Depends(get_location_from_header)
 ):
     """Get transaction history with optional filters"""
+    location_db = get_location_db(location)
     query = {}
     
     if customer_id:
@@ -1617,7 +1619,7 @@ async def get_transactions(
             "$lte": datetime.fromisoformat(end_date)
         }
     
-    transactions = await db.transactions.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+    transactions = await location_db.transactions.find(query).sort("created_at", -1).limit(limit).to_list(limit)
     return [Transaction(**tx) for tx in transactions]
 
 @api_router.post("/transactions/{transaction_id}/refund")
