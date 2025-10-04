@@ -296,8 +296,8 @@ function App({ locationId }) {
     }
   }, [isAuthenticated, user]);
 
-  // Location login component (will be rendered conditionally at the end)
-  const LocationLoginComponent = () => (
+  // Use the existing LoginPage component for location-specific login
+  const LocationLoginComponent = () => <LoginPage locationId={locationId} locationName={currentLocation?.name} />;
       <div className="min-h-screen bg-black">
         {/* Header with FLEXSPAS image */}
         <header className="bg-black">
