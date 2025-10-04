@@ -211,9 +211,12 @@ async def get_pricing_config() -> PricingConfig:
         await db.pricing_config.insert_one(default_pricing.dict())
         return default_pricing
 
-async def check_daily_shift_limit(customer_id: str) -> dict:
+async def check_daily_shift_limit(customer_id: str, location_db=None) -> dict:
     """Check if customer has reached daily shift limit (3 shifts max)
     Returns dict with: can_continue, current_shifts, last_session_end, message"""
+    
+    # Use provided location_db or default to main db for backwards compatibility
+    database = location_db if location_db is not None else db
     
     # Get today's date range (UTC)
     now = datetime.now(timezone.utc)
@@ -221,7 +224,7 @@ async def check_daily_shift_limit(customer_id: str) -> dict:
     end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=999999)
     
     # Get all check-ins for this customer today (both active and completed)
-    todays_checkins = await db.check_ins.find({
+    todays_checkins = await database.check_ins.find({
         "customer_id": customer_id,
         "check_in_time": {
             "$gte": start_of_day,
