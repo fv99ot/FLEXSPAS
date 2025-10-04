@@ -321,12 +321,7 @@ function App({ locationId }) {
       setUser(userData);
       setLoginForm({ username: '', password: '' });
       
-      console.log('✅ Authentication state updated - forcing page reload to ensure UI updates');
-      
-      // Force page reload to ensure authentication state is properly reflected
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      console.log('✅ Authentication state updated successfully');
       
     } catch (error) {
       console.error('❌ Login error:', error);
