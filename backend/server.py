@@ -805,7 +805,7 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
     membership_status = None
     
     # First, check if customer has valid existing membership regardless of what was requested
-    recent_checkin = await db.check_ins.find_one(
+    recent_checkin = await location_db.check_ins.find_one(
         {
             "customer_id": customer_id,
             "membership_type": "6_month",
