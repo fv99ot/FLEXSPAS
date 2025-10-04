@@ -1657,7 +1657,7 @@ async def create_refund(
         notes=notes
     )
     
-    await db.transactions.insert_one(refund_transaction.dict())
+    await location_db.transactions.insert_one(refund_transaction.dict())
     return {"message": "Refund processed successfully", "refund_id": refund_transaction.id}
 
 # Discount System Models
