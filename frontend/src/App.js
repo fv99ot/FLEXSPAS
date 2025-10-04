@@ -69,18 +69,7 @@ function App({ locationId }) {
   const [showRoomManagement, setShowRoomManagement] = useState(false);
   const [selectedRoomForManagement, setSelectedRoomForManagement] = useState(null);
 
-  // Add debugging for modal state
-  useEffect(() => {
-    console.log('Modal states:', {
-      showAddCustomer,
-      showCheckIn,
-      showPayment,
-      showUpgrade,
-      showOvertimePayment,
-      showOvertimePrompt,
-      showRoomManagement
-    });
-  }, [showAddCustomer, showCheckIn, showPayment, showUpgrade, showOvertimePayment, showOvertimePrompt, showRoomManagement]);
+  // Removed debugging useEffect that could cause hook ordering issues
   
   // Check-in state
   const [checkinForm, setCheckinForm] = useState({
