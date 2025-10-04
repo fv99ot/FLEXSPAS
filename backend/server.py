@@ -746,8 +746,10 @@ async def get_available_rooms_for_type(room_type: RoomType, current_user: User =
 
 # Check-in System - Two-Step Process with Waitlist Queue Enforcement
 @api_router.post("/checkin/prepare")
-async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depends(get_current_user)):
+async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depends(get_current_user),
+                         location: str = Depends(get_location_from_header)):
     """Prepare check-in: validate customer, check availability, calculate costs, enforce waitlist queue - but don't actually check in yet"""
+    location_db = get_location_db(location)
     customer_id = checkin_data.customer_id
     membership_type = checkin_data.membership_type
     room_type = checkin_data.room_type
@@ -756,7 +758,7 @@ async def prepare_checkin(checkin_data: CheckInCreate, current_user: User = Depe
     manager_password = getattr(checkin_data, 'manager_password', None)
     
     # Validate customer exists
-    customer = await db.customers.find_one({"id": customer_id})
+    customer = await location_db.customers.find_one({"id": customer_id})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     
