@@ -919,7 +919,7 @@ class BathhouseAPITester:
                     "customer_id": location_customers[location],
                     "membership_type": "1_day",
                     "room_type": "locker",
-                    "room_number": 140 + locations.index(location)  # Different room for each location (140, 141, 142, 143)
+                    "room_number": 50 + (locations.index(location) * 10)  # Different room for each location (50, 60, 70, 80)
                 }
                 
                 prepare_response = requests.post(
