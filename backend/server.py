@@ -1627,14 +1627,17 @@ async def create_refund(
     transaction_id: str, 
     refund_amount: float, 
     notes: Optional[str] = None,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    location: str = Depends(get_location_from_header)
 ):
     """Create a refund for a transaction"""
     if current_user.role != UserRole.MANAGER:
         raise HTTPException(status_code=403, detail="Only managers can process refunds")
     
+    location_db = get_location_db(location)
+    
     # Find original transaction
-    original_transaction = await db.transactions.find_one({"id": transaction_id})
+    original_transaction = await location_db.transactions.find_one({"id": transaction_id})
     if not original_transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     
