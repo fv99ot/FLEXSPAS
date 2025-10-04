@@ -753,6 +753,463 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_transaction_completion_with_location_headers(self):
+        """Test Transaction Completion API with Location Headers as requested in review"""
+        print("\n💳 TESTING TRANSACTION COMPLETION API WITH LOCATION HEADERS...")
+        print("   Testing POST /api/transactions endpoint with proper X-Location header")
+        print("   Testing complete check-in flow with location headers")
+        print("   Testing multi-location transaction isolation")
+        print("   Testing payment methods (cash and card)")
+        print("   Testing error handling for missing/invalid location headers")
+        
+        all_success = True
+        locations = ['los-angeles', 'atlanta', 'cleveland', 'phoenix']
+        location_tokens = {}
+        location_customers = {}
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        # SETUP: Get tokens for each location
+        print("   SETUP: Getting authentication tokens for each location...")
+        for location in locations:
+            try:
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'X-Location': location
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/login",
+                    json={"username": "admin", "password": "admin123"},
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    location_tokens[location] = data['access_token']
+                    print(f"      ✅ Got token for {location}")
+                else:
+                    print(f"      ❌ Failed to get token for {location}: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                print(f"      ❌ Exception getting token for {location}: {str(e)}")
+                all_success = False
+        
+        # SETUP: Create test customers in each location
+        print("   SETUP: Creating test customers in each location...")
+        for location, token in location_tokens.items():
+            try:
+                headers_with_auth = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {token}',
+                    'X-Location': location
+                }
+                
+                customer_data = {
+                    "first_name": "Transaction",
+                    "last_name": f"Test_{location.title()}",
+                    "id_number": f"TXN_TEST_{location.upper()}_{unique_timestamp}",
+                    "date_of_birth": "1990-01-01",
+                    "id_expiration_date": "2025-12-31",
+                    "state_of_id": "CA"
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/customers",
+                    json=customer_data,
+                    headers=headers_with_auth,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    customer = response.json()
+                    location_customers[location] = customer['id']
+                    print(f"      ✅ Created customer for {location}: {customer['id']}")
+                else:
+                    print(f"      ❌ Failed to create customer for {location}: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                print(f"      ❌ Exception creating customer for {location}: {str(e)}")
+                all_success = False
+        
+        # TEST 1: Transaction API with Location Headers
+        print("   TEST 1: Transaction API with Location Headers...")
+        transaction_ids = {}
+        
+        for location, token in location_tokens.items():
+            if location not in location_customers:
+                continue
+                
+            try:
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {token}',
+                    'X-Location': location
+                }
+                
+                transaction_data = {
+                    "customer_id": location_customers[location],
+                    "customer_name": f"Transaction Test_{location.title()}",
+                    "transaction_type": "standalone",
+                    "items": [
+                        {"name": "Test Service", "price": 50.0, "quantity": 1}
+                    ],
+                    "subtotal": 50.0,
+                    "discount_amount": 0.0,
+                    "total_amount": 50.0,
+                    "payment_method": "cash",
+                    "notes": f"Test transaction for {location}"
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/transactions",
+                    json=transaction_data,
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    transaction = response.json()
+                    transaction_ids[location] = transaction.get('id')
+                    
+                    # Verify transaction structure
+                    required_fields = ['id', 'customer_id', 'transaction_type', 'total_amount', 'payment_method']
+                    has_required_fields = all(field in transaction for field in required_fields)
+                    
+                    # Verify data integrity
+                    correct_customer = transaction.get('customer_id') == location_customers[location]
+                    correct_amount = transaction.get('total_amount') == 50.0
+                    correct_payment = transaction.get('payment_method') == 'cash'
+                    
+                    transaction_success = has_required_fields and correct_customer and correct_amount and correct_payment
+                    
+                    details = f"Required fields: {has_required_fields}, Customer: {correct_customer}, Amount: {correct_amount}, Payment: {correct_payment}"
+                    self.log_test(f"Transaction API {location.title()}", transaction_success, details)
+                    
+                    if not transaction_success:
+                        all_success = False
+                else:
+                    self.log_test(f"Transaction API {location.title()}", False, 
+                                f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Transaction API {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 2: Check-in Complete Transaction Flow
+        print("   TEST 2: Check-in Complete Transaction Flow...")
+        checkin_ids = {}
+        
+        for location, token in location_tokens.items():
+            if location not in location_customers:
+                continue
+                
+            try:
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {token}',
+                    'X-Location': location
+                }
+                
+                # Step 1: Prepare check-in
+                prepare_data = {
+                    "customer_id": location_customers[location],
+                    "membership_type": "1_day",
+                    "room_type": "locker",
+                    "room_number": 100 + locations.index(location)  # Different room for each location
+                }
+                
+                prepare_response = requests.post(
+                    f"{self.api_url}/checkin/prepare",
+                    json=prepare_data,
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                if prepare_response.status_code == 200:
+                    prepare_data_response = prepare_response.json()
+                    pending_checkin_id = prepare_data_response.get('pending_checkin_id')
+                    
+                    # Step 2: Complete check-in
+                    complete_data = {
+                        "pending_checkin_id": pending_checkin_id
+                    }
+                    
+                    complete_response = requests.post(
+                        f"{self.api_url}/checkin/complete",
+                        json=complete_data,
+                        headers=headers_with_location,
+                        timeout=10
+                    )
+                    
+                    if complete_response.status_code == 200:
+                        complete_data_response = complete_response.json()
+                        checkin_id = complete_data_response.get('id')
+                        checkin_ids[location] = checkin_id
+                        
+                        # Step 3: Create transaction with location header
+                        transaction_data = {
+                            "customer_id": location_customers[location],
+                            "customer_name": f"Transaction Test_{location.title()}",
+                            "transaction_type": "checkin",
+                            "items": [
+                                {"name": "1-Day Membership", "price": 25.0, "quantity": 1}
+                            ],
+                            "subtotal": 25.0,
+                            "discount_amount": 0.0,
+                            "total_amount": 25.0,
+                            "payment_method": "card",
+                            "checkin_id": checkin_id,
+                            "membership_type": "1_day",
+                            "notes": f"Check-in transaction for {location}"
+                        }
+                        
+                        transaction_response = requests.post(
+                            f"{self.api_url}/transactions",
+                            json=transaction_data,
+                            headers=headers_with_location,
+                            timeout=10
+                        )
+                        
+                        if transaction_response.status_code == 200:
+                            transaction = transaction_response.json()
+                            
+                            # Verify complete flow success
+                            has_checkin_id = transaction.get('checkin_id') == checkin_id
+                            correct_membership = transaction.get('membership_type') == '1_day'
+                            correct_type = transaction.get('transaction_type') == 'checkin'
+                            
+                            flow_success = has_checkin_id and correct_membership and correct_type
+                            
+                            details = f"Checkin ID: {has_checkin_id}, Membership: {correct_membership}, Type: {correct_type}"
+                            self.log_test(f"Complete Flow {location.title()}", flow_success, details)
+                            
+                            if not flow_success:
+                                all_success = False
+                        else:
+                            self.log_test(f"Complete Flow {location.title()}", False, 
+                                        f"Transaction failed: {transaction_response.status_code}")
+                            all_success = False
+                    else:
+                        self.log_test(f"Complete Flow {location.title()}", False, 
+                                    f"Complete failed: {complete_response.status_code}")
+                        all_success = False
+                else:
+                    self.log_test(f"Complete Flow {location.title()}", False, 
+                                f"Prepare failed: {prepare_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Complete Flow {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 3: Multi-Location Transaction Isolation
+        print("   TEST 3: Multi-Location Transaction Isolation...")
+        for location, token in location_tokens.items():
+            try:
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {token}',
+                    'X-Location': location
+                }
+                
+                # Get transactions for this location
+                response = requests.get(
+                    f"{self.api_url}/transactions",
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    transactions = response.json()
+                    
+                    # Check that this location's transactions exist
+                    location_transaction_exists = any(
+                        txn.get('id') == transaction_ids.get(location) 
+                        for txn in transactions
+                    ) if location in transaction_ids else True
+                    
+                    # Check that other locations' transactions don't exist here
+                    other_transactions_isolated = True
+                    for other_location, other_txn_id in transaction_ids.items():
+                        if other_location != location and other_txn_id:
+                            transaction_found = any(
+                                txn.get('id') == other_txn_id 
+                                for txn in transactions
+                            )
+                            if transaction_found:
+                                other_transactions_isolated = False
+                                break
+                    
+                    isolation_success = location_transaction_exists and other_transactions_isolated
+                    
+                    details = f"Own transaction exists: {location_transaction_exists}, Other transactions isolated: {other_transactions_isolated}, Total transactions: {len(transactions)}"
+                    
+                    self.log_test(f"Transaction Isolation {location.title()}", isolation_success, details)
+                    
+                    if not isolation_success:
+                        all_success = False
+                else:
+                    self.log_test(f"Transaction Isolation {location.title()}", False, 
+                                f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Transaction Isolation {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 4: Payment Methods (Cash and Card)
+        print("   TEST 4: Payment Methods (Cash and Card)...")
+        payment_methods = ['cash', 'card']
+        
+        for payment_method in payment_methods:
+            # Use Los Angeles for payment method testing
+            location = 'los-angeles'
+            if location not in location_tokens or location not in location_customers:
+                continue
+                
+            try:
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {location_tokens[location]}',
+                    'X-Location': location
+                }
+                
+                transaction_data = {
+                    "customer_id": location_customers[location],
+                    "customer_name": f"Transaction Test_{location.title()}",
+                    "transaction_type": "standalone",
+                    "items": [
+                        {"name": f"Test {payment_method.title()} Payment", "price": 30.0, "quantity": 1}
+                    ],
+                    "subtotal": 30.0,
+                    "discount_amount": 0.0,
+                    "total_amount": 30.0,
+                    "payment_method": payment_method,
+                    "notes": f"Test {payment_method} payment method"
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/transactions",
+                    json=transaction_data,
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    transaction = response.json()
+                    
+                    # Verify payment method is correctly stored
+                    correct_payment_method = transaction.get('payment_method') == payment_method
+                    has_transaction_id = 'id' in transaction
+                    correct_amount = transaction.get('total_amount') == 30.0
+                    
+                    payment_success = correct_payment_method and has_transaction_id and correct_amount
+                    
+                    details = f"Payment method: {transaction.get('payment_method')}, Amount: {transaction.get('total_amount')}, ID: {has_transaction_id}"
+                    self.log_test(f"Payment Method {payment_method.title()}", payment_success, details)
+                    
+                    if not payment_success:
+                        all_success = False
+                else:
+                    self.log_test(f"Payment Method {payment_method.title()}", False, 
+                                f"Status: {response.status_code}, Response: {response.text}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Payment Method {payment_method.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 5: Error Handling - Missing X-Location Header
+        print("   TEST 5: Error Handling - Missing X-Location Header...")
+        try:
+            headers_no_location = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}'  # Use default token without location
+            }
+            
+            transaction_data = {
+                "customer_id": location_customers.get('los-angeles', 'test-id'),
+                "customer_name": "Test Customer",
+                "transaction_type": "standalone",
+                "items": [
+                    {"name": "Test Service", "price": 25.0, "quantity": 1}
+                ],
+                "subtotal": 25.0,
+                "discount_amount": 0.0,
+                "total_amount": 25.0,
+                "payment_method": "cash",
+                "notes": "Test missing location header"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/transactions",
+                json=transaction_data,
+                headers=headers_no_location,
+                timeout=10
+            )
+            
+            # Should default to los-angeles location and work
+            missing_header_handled = response.status_code == 200
+            
+            self.log_test("Missing X-Location Header", missing_header_handled, 
+                        f"Status: {response.status_code} (should default to los-angeles)")
+            
+            if not missing_header_handled:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Missing X-Location Header", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 6: Error Handling - Invalid X-Location Header
+        print("   TEST 6: Error Handling - Invalid X-Location Header...")
+        try:
+            headers_invalid_location = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}',
+                'X-Location': 'invalid-location'
+            }
+            
+            transaction_data = {
+                "customer_id": location_customers.get('los-angeles', 'test-id'),
+                "customer_name": "Test Customer",
+                "transaction_type": "standalone",
+                "items": [
+                    {"name": "Test Service", "price": 25.0, "quantity": 1}
+                ],
+                "subtotal": 25.0,
+                "discount_amount": 0.0,
+                "total_amount": 25.0,
+                "payment_method": "cash",
+                "notes": "Test invalid location header"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/transactions",
+                json=transaction_data,
+                headers=headers_invalid_location,
+                timeout=10
+            )
+            
+            # Should default to los-angeles location and work
+            invalid_header_handled = response.status_code == 200
+            
+            self.log_test("Invalid X-Location Header", invalid_header_handled, 
+                        f"Status: {response.status_code} (should default to los-angeles)")
+            
+            if not invalid_header_handled:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid X-Location Header", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def get_summary(self):
         """Get test summary"""
         return {
