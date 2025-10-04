@@ -929,27 +929,27 @@ async def complete_checkin(completion_data: dict, current_user: User = Depends(g
         expires_at = expires_at.replace(tzinfo=timezone.utc)
     
     if datetime.now(timezone.utc) > expires_at:
-        await db.pending_check_ins.update_one(
+        await location_db.pending_check_ins.update_one(
             {"id": pending_checkin_id},
             {"$set": {"status": "expired"}}
         )
         raise HTTPException(status_code=400, detail="Check-in request has expired. Please start again.")
     
     # Verify room is still available
-    existing_checkin = await db.check_ins.find_one({
+    existing_checkin = await location_db.check_ins.find_one({
         "room_number": pending_checkin["room_number"],
         "room_type": pending_checkin["room_type"],
         "check_out_time": None
     })
     if existing_checkin:
-        await db.pending_check_ins.update_one(
+        await location_db.pending_check_ins.update_one(
             {"id": pending_checkin_id},
             {"$set": {"status": "cancelled", "cancellation_reason": "room_no_longer_available"}}
         )
         raise HTTPException(status_code=400, detail="Room/locker is no longer available")
     
     # Verify customer still exists
-    customer = await db.customers.find_one({"id": pending_checkin["customer_id"]})
+    customer = await location_db.customers.find_one({"id": pending_checkin["customer_id"]})
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     
