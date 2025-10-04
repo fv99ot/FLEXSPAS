@@ -5095,7 +5095,6 @@ function App({ locationId }) {
         </div>
       )}
     </div>
-      )}
     </>
   );
 }
