@@ -36,9 +36,15 @@ const API = process.env.REACT_APP_BACKEND_URL;
 
 function App({ locationId }) {
   
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  // Authentication state - initialized from localStorage to avoid hydration issues
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem('token');
+    return !!token;
+  });
+  const [user, setUser] = useState(() => {
+    const userData = localStorage.getItem('user');
+    return userData ? JSON.parse(userData) : null;
+  });
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   
   // General state
