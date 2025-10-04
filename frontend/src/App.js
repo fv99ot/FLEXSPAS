@@ -1625,6 +1625,12 @@ function App({ locationId }) {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       
+      // Add location header for multi-location support
+      const currentLocation = localStorage.getItem('currentLocation');
+      if (currentLocation) {
+        headers['X-Location'] = currentLocation;
+      }
+      
       // Create transaction record for all transaction types
       const transactionData = {
         customer_id: paymentData.customerId || selectedCustomer?.id || '',
