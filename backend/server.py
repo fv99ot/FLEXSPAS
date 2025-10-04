@@ -1582,15 +1582,17 @@ async def renew_session(checkin_id: str, current_user: User = Depends(get_curren
     }
 
 @api_router.post("/transactions", response_model=Transaction)
-async def create_transaction(transaction_data: Transaction, current_user: User = Depends(get_current_user)):
+async def create_transaction(transaction_data: Transaction, current_user: User = Depends(get_current_user),
+                           location: str = Depends(get_location_from_header)):
     """Create a new transaction record"""
+    location_db = get_location_db(location)
     transaction_dict = transaction_data.dict()
     
     # Auto-populate created_by if not provided
     if not transaction_dict.get("created_by"):
         transaction_dict["created_by"] = current_user.id
     
-    await db.transactions.insert_one(transaction_dict)
+    await location_db.transactions.insert_one(transaction_dict)
     return transaction_data
 
 @api_router.get("/transactions", response_model=List[Transaction])
