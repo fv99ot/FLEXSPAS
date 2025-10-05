@@ -2205,11 +2205,9 @@ async def prepare_room_upgrade(checkin_id: str, upgrade_data: dict, current_user
     if existing_checkin:
         raise HTTPException(status_code=400, detail="Room is already occupied")
     
-    # Calculate upgrade cost
+    # Calculate upgrade cost using specific upgrade pricing
     is_weekend = is_weekend_time()
-    old_room_fee = await get_room_pricing(RoomType(checkin["room_type"]), is_weekend)
-    new_room_fee = await get_room_pricing(RoomType(new_room_type), is_weekend)
-    upgrade_fee = max(0, new_room_fee - old_room_fee)
+    upgrade_fee = await get_upgrade_pricing(RoomType(checkin["room_type"]), RoomType(new_room_type), is_weekend)
     
     # Cleaning fee only applies if customer is upgrading from or to a room (not locker)
     old_is_room = checkin["room_type"] != "locker"  
