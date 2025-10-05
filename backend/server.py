@@ -1999,11 +1999,9 @@ async def prepare_waitlist_upgrade(entry_id: str, upgrade_data: dict, current_us
     if not current_checkin:
         raise HTTPException(status_code=400, detail="Customer must be checked in to upgrade from waitlist")
     
-    # Calculate upgrade cost
+    # Calculate upgrade cost using specific upgrade pricing
     is_weekend = is_weekend_time()
-    old_room_fee = await get_room_pricing(RoomType(current_checkin["room_type"]), is_weekend)
-    new_room_fee = await get_room_pricing(RoomType(new_room_type), is_weekend)
-    upgrade_fee = max(0, new_room_fee - old_room_fee)
+    upgrade_fee = await get_upgrade_pricing(RoomType(current_checkin["room_type"]), RoomType(new_room_type), is_weekend)
     
     # Cleaning fee only applies if customer is upgrading from or to a room (not locker)
     old_is_room = current_checkin["room_type"] != "locker"  
