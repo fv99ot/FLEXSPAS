@@ -347,7 +347,7 @@ async def check_waitlist_queue_enforcement(customer_id: str, room_type: str, man
             return "Manager override requires password"
         
         # Validate manager password using environment variable
-        manager_override_password = os.environ.get('MANAGER_OVERRIDE_PASSWORD', 'manager123')
+        manager_override_password = os.environ.get('MANAGER_OVERRIDE_PASSWORD')
         if manager_password != manager_override_password:
             return "Invalid manager password"
         
