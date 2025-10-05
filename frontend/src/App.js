@@ -5136,6 +5136,13 @@ function LoginPage({ locationId, locationName }) {
     <div className="bg-black">
       <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8">
+          <div className="mb-6">
+            <img 
+              src={currentLogo} 
+              alt={`${locationName || 'FLEX SPA'} Logo`}
+              className="h-16 w-auto mx-auto object-contain"
+            />
+          </div>
           <h2 className="text-2xl font-bold text-white mb-2">
             {locationName ? `${locationName.toUpperCase()} - STAFF PORTAL` : 'STAFF PORTAL'}
           </h2>
