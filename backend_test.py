@@ -1210,6 +1210,379 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_transaction_completion_error_reproduction(self):
+        """REPRODUCE THE 'ERROR COMPLETING TRANSACTION' ISSUE AS REQUESTED IN REVIEW"""
+        print("\n🚨 REPRODUCING 'ERROR COMPLETING TRANSACTION' ISSUE...")
+        print("   Testing complete check-in flow to reproduce user-reported issue")
+        print("   User reports: 'error completing transaction' messages but transactions appear in history")
+        print("   This indicates backend works but frontend shows false error messages")
+        print("   Testing: POST /api/checkin/prepare → POST /api/checkin/complete → POST /api/transactions")
+        print("   Checking response formats, status codes, and API consistency")
+        
+        all_success = True
+        
+        # Create test customer first
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        customer_data = {
+            "first_name": "ErrorTest",
+            "last_name": "Customer",
+            "id_number": f"ERROR_TEST_{unique_timestamp}",
+            "date_of_birth": "1990-01-01",
+            "id_expiration_date": "2025-12-31",
+            "state_of_id": "CA"
+        }
+        
+        print("   SETUP: Creating test customer...")
+        try:
+            customer_response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if customer_response.status_code == 200:
+                customer = customer_response.json()
+                customer_id = customer['id']
+                print(f"      ✅ Created test customer: {customer_id}")
+            else:
+                print(f"      ❌ Failed to create customer: {customer_response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"      ❌ Exception creating customer: {str(e)}")
+            return False
+        
+        # TEST 1: Check-in Prepare Step
+        print("   TEST 1: Check-in Prepare Step (POST /api/checkin/prepare)...")
+        try:
+            prepare_data = {
+                "customer_id": customer_id,
+                "membership_type": "1_day",
+                "room_type": "locker",
+                "room_number": 101
+            }
+            
+            prepare_response = requests.post(
+                f"{self.api_url}/checkin/prepare",
+                json=prepare_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {prepare_response.status_code}")
+            print(f"      Response Headers: {dict(prepare_response.headers)}")
+            
+            if prepare_response.status_code == 200:
+                prepare_data_response = prepare_response.json()
+                print(f"      Response Body: {json.dumps(prepare_data_response, indent=2)}")
+                
+                # Check required fields in prepare response
+                required_fields = ['pending_checkin_id', 'customer', 'room_type', 'room_number', 'total_amount', 'expires_at', 'message']
+                missing_fields = [field for field in required_fields if field not in prepare_data_response]
+                
+                # Check response format
+                has_proper_json = isinstance(prepare_data_response, dict)
+                has_required_fields = len(missing_fields) == 0
+                has_pending_id = prepare_data_response.get('pending_checkin_id') is not None
+                
+                prepare_success = has_proper_json and has_required_fields and has_pending_id
+                
+                details = f"JSON: {has_proper_json}, Required fields: {has_required_fields}, Missing: {missing_fields}, Pending ID: {has_pending_id}"
+                self.log_test("Check-in Prepare", prepare_success, details)
+                
+                if prepare_success:
+                    pending_checkin_id = prepare_data_response['pending_checkin_id']
+                else:
+                    all_success = False
+                    pending_checkin_id = None
+            else:
+                print(f"      Error Response: {prepare_response.text}")
+                self.log_test("Check-in Prepare", False, f"Status: {prepare_response.status_code}")
+                all_success = False
+                pending_checkin_id = None
+                
+        except Exception as e:
+            self.log_test("Check-in Prepare", False, f"Exception: {str(e)}")
+            all_success = False
+            pending_checkin_id = None
+        
+        # TEST 2: Check-in Complete Step
+        print("   TEST 2: Check-in Complete Step (POST /api/checkin/complete)...")
+        checkin_id = None
+        if pending_checkin_id:
+            try:
+                complete_data = {
+                    "pending_checkin_id": pending_checkin_id
+                }
+                
+                complete_response = requests.post(
+                    f"{self.api_url}/checkin/complete",
+                    json=complete_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                print(f"      Response Status: {complete_response.status_code}")
+                print(f"      Response Headers: {dict(complete_response.headers)}")
+                
+                if complete_response.status_code == 200:
+                    complete_data_response = complete_response.json()
+                    print(f"      Response Body: {json.dumps(complete_data_response, indent=2)}")
+                    
+                    # Check required fields in complete response
+                    required_fields = ['id', 'customer_id', 'membership_type', 'room_type', 'room_number', 'check_in_time', 'total_amount', 'message']
+                    missing_fields = [field for field in required_fields if field not in complete_data_response]
+                    
+                    # Check response format
+                    has_proper_json = isinstance(complete_data_response, dict)
+                    has_required_fields = len(missing_fields) == 0
+                    has_checkin_id = complete_data_response.get('id') is not None
+                    
+                    complete_success = has_proper_json and has_required_fields and has_checkin_id
+                    
+                    details = f"JSON: {has_proper_json}, Required fields: {has_required_fields}, Missing: {missing_fields}, Checkin ID: {has_checkin_id}"
+                    self.log_test("Check-in Complete", complete_success, details)
+                    
+                    if complete_success:
+                        checkin_id = complete_data_response['id']
+                    else:
+                        all_success = False
+                else:
+                    print(f"      Error Response: {complete_response.text}")
+                    self.log_test("Check-in Complete", False, f"Status: {complete_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Check-in Complete", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Check-in Complete", False, "No pending_checkin_id from prepare step")
+            all_success = False
+        
+        # TEST 3: Transaction Creation Step
+        print("   TEST 3: Transaction Creation Step (POST /api/transactions)...")
+        transaction_id = None
+        if checkin_id:
+            try:
+                transaction_data = {
+                    "customer_id": customer_id,
+                    "customer_name": "ErrorTest Customer",
+                    "transaction_type": "checkin",
+                    "items": [
+                        {"name": "1-Day Membership", "price": 25.0, "quantity": 1}
+                    ],
+                    "subtotal": 25.0,
+                    "discount_amount": 0.0,
+                    "total_amount": 25.0,
+                    "payment_method": "cash",
+                    "checkin_id": checkin_id,
+                    "membership_type": "1_day",
+                    "notes": "Test transaction for error reproduction"
+                }
+                
+                transaction_response = requests.post(
+                    f"{self.api_url}/transactions",
+                    json=transaction_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                print(f"      Response Status: {transaction_response.status_code}")
+                print(f"      Response Headers: {dict(transaction_response.headers)}")
+                
+                if transaction_response.status_code == 200:
+                    transaction_data_response = transaction_response.json()
+                    print(f"      Response Body: {json.dumps(transaction_data_response, indent=2)}")
+                    
+                    # Check required fields in transaction response
+                    required_fields = ['id', 'customer_id', 'transaction_type', 'total_amount', 'payment_method', 'created_at']
+                    missing_fields = [field for field in required_fields if field not in transaction_data_response]
+                    
+                    # Check response format
+                    has_proper_json = isinstance(transaction_data_response, dict)
+                    has_required_fields = len(missing_fields) == 0
+                    has_transaction_id = transaction_data_response.get('id') is not None
+                    
+                    transaction_success = has_proper_json and has_required_fields and has_transaction_id
+                    
+                    details = f"JSON: {has_proper_json}, Required fields: {has_required_fields}, Missing: {missing_fields}, Transaction ID: {has_transaction_id}"
+                    self.log_test("Transaction Creation", transaction_success, details)
+                    
+                    if transaction_success:
+                        transaction_id = transaction_data_response['id']
+                    else:
+                        all_success = False
+                else:
+                    print(f"      Error Response: {transaction_response.text}")
+                    self.log_test("Transaction Creation", False, f"Status: {transaction_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Transaction Creation", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Transaction Creation", False, "No checkin_id from complete step")
+            all_success = False
+        
+        # TEST 4: Verify Transaction Appears in History
+        print("   TEST 4: Verify Transaction Appears in History (GET /api/transactions)...")
+        if transaction_id:
+            try:
+                history_response = requests.get(
+                    f"{self.api_url}/transactions",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                print(f"      Response Status: {history_response.status_code}")
+                
+                if history_response.status_code == 200:
+                    transactions = history_response.json()
+                    print(f"      Found {len(transactions)} total transactions")
+                    
+                    # Find our transaction
+                    our_transaction = None
+                    for txn in transactions:
+                        if txn.get('id') == transaction_id:
+                            our_transaction = txn
+                            break
+                    
+                    transaction_in_history = our_transaction is not None
+                    
+                    if transaction_in_history:
+                        print(f"      ✅ Transaction found in history: {json.dumps(our_transaction, indent=2)}")
+                    else:
+                        print(f"      ❌ Transaction NOT found in history")
+                    
+                    self.log_test("Transaction in History", transaction_in_history, 
+                                f"Transaction ID {transaction_id} found: {transaction_in_history}")
+                    
+                    if not transaction_in_history:
+                        all_success = False
+                else:
+                    print(f"      Error Response: {history_response.text}")
+                    self.log_test("Transaction in History", False, f"Status: {history_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Transaction in History", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Transaction in History", False, "No transaction_id to verify")
+            all_success = False
+        
+        # TEST 5: Error Scenarios - Missing Location Headers
+        print("   TEST 5: Error Scenarios - Missing Location Headers...")
+        try:
+            headers_no_location = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}'
+            }
+            
+            prepare_data = {
+                "customer_id": customer_id,
+                "membership_type": "1_day",
+                "room_type": "locker",
+                "room_number": 102
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/checkin/prepare",
+                json=prepare_data,
+                headers=headers_no_location,
+                timeout=10
+            )
+            
+            # Should work (defaults to los-angeles)
+            missing_header_handled = response.status_code == 200
+            
+            self.log_test("Missing Location Header", missing_header_handled, 
+                        f"Status: {response.status_code} (should default to los-angeles)")
+            
+            if not missing_header_handled:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Missing Location Header", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 6: Error Scenarios - Invalid pending_checkin_id
+        print("   TEST 6: Error Scenarios - Invalid pending_checkin_id...")
+        try:
+            complete_data = {
+                "pending_checkin_id": "invalid-id-12345"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/checkin/complete",
+                json=complete_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should return 404
+            invalid_id_handled = response.status_code == 404
+            
+            self.log_test("Invalid Pending Checkin ID", invalid_id_handled, 
+                        f"Status: {response.status_code} (should be 404)")
+            
+            if not invalid_id_handled:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid Pending Checkin ID", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 7: Error Scenarios - Already Completed Check-ins
+        print("   TEST 7: Error Scenarios - Already Completed Check-ins...")
+        if pending_checkin_id:
+            try:
+                # Try to complete the same check-in again
+                complete_data = {
+                    "pending_checkin_id": pending_checkin_id
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/checkin/complete",
+                    json=complete_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                # Should return 404 (already processed)
+                already_completed_handled = response.status_code == 404
+                
+                self.log_test("Already Completed Checkin", already_completed_handled, 
+                            f"Status: {response.status_code} (should be 404)")
+                
+                if not already_completed_handled:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Already Completed Checkin", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Already Completed Checkin", False, "No pending_checkin_id to test")
+            all_success = False
+        
+        # SUMMARY
+        print("\n   🔍 ANALYSIS SUMMARY:")
+        if all_success:
+            print("   ✅ ALL BACKEND APIs WORKING CORRECTLY")
+            print("   ✅ Complete check-in flow successful")
+            print("   ✅ Transactions appear in history as expected")
+            print("   ✅ Response formats are proper JSON")
+            print("   ✅ Error handling works correctly")
+            print("   📝 CONCLUSION: Backend is working correctly.")
+            print("   📝 User's 'error completing transaction' issue is likely FRONTEND-RELATED.")
+            print("   📝 Frontend may be incorrectly interpreting successful API responses as errors.")
+        else:
+            print("   ❌ BACKEND ISSUES FOUND")
+            print("   📝 Backend API problems may be causing the user's transaction completion errors.")
+        
+        return all_success
+
     def get_summary(self):
         """Get test summary"""
         return {
