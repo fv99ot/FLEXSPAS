@@ -188,12 +188,12 @@ function App({ locationId }) {
   const [pricingConfig, setPricingConfig] = useState({
     locker_weekday: 25.0,
     locker_weekend: 28.0,
-    small_room_weekday: 33.0,
-    small_room_weekend: 36.0,
-    regular_room_weekday: 40.0,
-    regular_room_weekend: 45.0,
-    deluxe_room_weekday: 45.0,
-    deluxe_room_weekend: 50.0
+    small_room_weekday: 33.0,    // Regular Room
+    small_room_weekend: 36.0,     // Regular Room  
+    regular_room_weekday: 40.0,   // Video Room
+    regular_room_weekend: 45.0,   // Video Room
+    deluxe_room_weekday: 45.0,    // Large Video Room
+    deluxe_room_weekend: 50.0     // Large Video Room
   });
   const [showPricingDialog, setShowPricingDialog] = useState(false);
   
