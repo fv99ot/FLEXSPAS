@@ -5145,7 +5145,7 @@ function LoginPage({ locationId, locationName }) {
             <img 
               src={currentLogo} 
               alt={`${locationName || 'FLEX SPA'} Logo`}
-              className="h-16 w-auto mx-auto object-contain"
+              className="h-24 w-auto mx-auto object-contain"
             />
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">
