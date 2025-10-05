@@ -1732,14 +1732,13 @@ function App({ locationId }) {
         // Check if this might be a false positive (transaction succeeded but with response parsing issues)
         if (error.response?.status === 200 || error.response?.status === 201) {
           console.log('Transaction likely succeeded despite error - status code indicates success');
-          alert('Transaction completed successfully! (Ignoring response parsing error)');
+          alert('Transaction completed successfully!');
           // Don't return - let the dialog close normally
         } else {
           alert(`Error completing transaction. Please check transaction history to verify if it succeeded.\n\nDetails: ${error.response?.data?.detail || error.message || 'Unknown error'}`);
-          return; // Don't close dialog for real errors
+          return; // Don't close dialog for real errors  
         }
       }
-      return; // Don't close dialog if there's an error
     }
     
     // Close payment dialog and reset data
