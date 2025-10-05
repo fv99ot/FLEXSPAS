@@ -1712,9 +1712,21 @@ function App({ locationId }) {
       } else if (error.message && error.message.includes('Network Error')) {
         alert('Network error. Please check your connection and try again.');
       } else {
-        // For unknown errors, check if the transaction actually succeeded by checking the response
+        // For unknown errors, provide more details and suggest checking transaction history
         console.log('Full error details:', error);
-        alert(`Transaction may have succeeded but with errors. Please check transaction history.\n\nError: ${error.response?.data?.detail || error.message || 'Unknown error'}`);
+        console.log('Error response:', error.response);
+        console.log('Error status:', error.response?.status);
+        console.log('Error data:', error.response?.data);
+        
+        // Check if this might be a false positive (transaction succeeded but with response parsing issues)
+        if (error.response?.status === 200 || error.response?.status === 201) {
+          console.log('Transaction likely succeeded despite error - status code indicates success');
+          alert('Transaction completed successfully! (Ignoring response parsing error)');
+          // Don't return - let the dialog close normally
+        } else {
+          alert(`Error completing transaction. Please check transaction history to verify if it succeeded.\n\nDetails: ${error.response?.data?.detail || error.message || 'Unknown error'}`);
+          return; // Don't close dialog for real errors
+        }
       }
       return; // Don't close dialog if there's an error
     }
