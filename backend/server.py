@@ -38,8 +38,8 @@ def get_location_db(location_id=None):
     if location_id and location_id in LOCATION_DATABASES:
         db_name = LOCATION_DATABASES[location_id]
         return client[db_name]
-    # Default to Los Angeles (current database) for backwards compatibility
-    return client[os.environ.get('DB_NAME', 'flexspa_losangeles')]
+    # Default to main database
+    return client[os.environ.get('DB_NAME')]
 
 # Create the main app without a prefix
 app = FastAPI()
