@@ -1249,7 +1249,7 @@ function App({ locationId }) {
           return {
             number: num,
             type: 'regular_room',
-            label: 'Regular Room (With TV)',
+            label: 'Video Room',
             available: !occupied, // Available if NOT occupied
             customer: occupied ? occupied.customer : null,
             color: 'purple',
