@@ -1654,16 +1654,20 @@ function App({ locationId }) {
         // Handle check-in transaction - complete the check-in AFTER payment
         
         // Step 1: Complete the check-in (actually check customer in)
+        console.log('🔄 Starting check-in completion...');
         const checkinResponse = await axios.post(`${API}/api/checkin/complete`, {
           pending_checkin_id: paymentData.pendingCheckinId
         }, { headers });
+        console.log('✅ Check-in completed successfully:', checkinResponse.data);
         
         // Step 2: Create transaction record for accounting
+        console.log('🔄 Creating transaction record...');
         const checkinTransactionData = {
           ...transactionData,
           checkin_id: checkinResponse.data.id // Use the actual check-in ID
         };
-        await axios.post(`${API}/api/transactions`, checkinTransactionData, { headers });
+        const transactionResponse = await axios.post(`${API}/api/transactions`, checkinTransactionData, { headers });
+        console.log('✅ Transaction record created successfully:', transactionResponse.data);
         
         // Print receipt with actual check-in details
         if (paymentData.checkinDetails) {
@@ -1678,9 +1682,16 @@ function App({ locationId }) {
         
         alert(`✅ Check-in completed successfully for ${paymentData.customerName}!\n\nRoom: ${paymentData.checkinDetails?.roomType?.replace('_', ' ')?.toUpperCase()} #${paymentData.checkinDetails?.roomNumber}\nMembership: ${paymentData.checkinDetails?.membershipType?.replace('_', ' ')}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
         
-        // Refresh data to show updated check-ins and room map
-        fetchActiveCheckins();
-        fetchRoomMap();
+        // Refresh data to show updated check-ins and room map (non-blocking)
+        console.log('🔄 Refreshing data...');
+        try {
+          await fetchActiveCheckins();
+          await fetchRoomMap();
+          console.log('✅ Data refresh completed successfully');
+        } catch (refreshError) {
+          console.error('⚠️ Data refresh failed but transaction succeeded:', refreshError);
+          // Don't throw - transaction already succeeded
+        }
         
       } else {
         // Handle other transaction types (legacy check-in format)
