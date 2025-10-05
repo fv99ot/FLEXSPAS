@@ -47,8 +47,8 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# JWT Secret - in production, use a secure secret
-JWT_SECRET = os.environ.get('JWT_SECRET', 'your-secret-key-change-in-production')
+# JWT Secret - must be provided via environment variable
+JWT_SECRET = os.environ.get('JWT_SECRET')
 security = HTTPBearer()
 
 # Enums
