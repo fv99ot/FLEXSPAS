@@ -1682,16 +1682,7 @@ function App({ locationId }) {
         
         alert(`✅ Check-in completed successfully for ${paymentData.customerName}!\n\nRoom: ${paymentData.checkinDetails?.roomType?.replace('_', ' ')?.toUpperCase()} #${paymentData.checkinDetails?.roomNumber}\nMembership: ${paymentData.checkinDetails?.membershipType?.replace('_', ' ')}\nTotal paid: $${paymentData.totalAmount.toFixed(2)}\nPayment method: ${paymentData.paymentMethod.toUpperCase()}`);
         
-        // Refresh data to show updated check-ins and room map (non-blocking)
-        console.log('🔄 Refreshing data...');
-        try {
-          await fetchActiveCheckins();
-          await fetchRoomMap();
-          console.log('✅ Data refresh completed successfully');
-        } catch (refreshError) {
-          console.error('⚠️ Data refresh failed but transaction succeeded:', refreshError);
-          // Don't throw - transaction already succeeded
-        }
+        console.log('✅ Check-in and transaction completed successfully!');
         
       } else {
         // Handle other transaction types (legacy check-in format)
