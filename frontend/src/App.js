@@ -5076,7 +5076,7 @@ function LoginPage({ locationId, locationName }) {
                 <img 
                   src={currentLogo} 
                   alt={`${locationName || 'FLEX SPA'} Logo`}
-                  className="h-8 w-auto object-contain"
+                  className="h-12 w-auto object-contain"
                 />
                 <h2 className="text-white font-bold text-lg">
                   {locationName ? `${locationName.toUpperCase()} SPA` : 'FLEX SPA'}
