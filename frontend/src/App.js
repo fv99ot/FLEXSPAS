@@ -5012,6 +5012,16 @@ function LoginPage({ locationId, locationName }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
 
+  // Location-specific logos mapping
+  const locationLogos = {
+    'los-angeles': 'https://customer-assets.emergentagent.com/job_flexspa-manager-1/artifacts/z4tmcwyp_1.jpg',
+    'cleveland': 'https://customer-assets.emergentagent.com/job_flexspa-manager-1/artifacts/l0vjhp0o_3.jpg', 
+    'atlanta': 'https://customer-assets.emergentagent.com/job_flexspa-manager-1/artifacts/5drj9tuf_5.jpg',
+    'phoenix': 'https://customer-assets.emergentagent.com/job_flexspa-manager-1/artifacts/sleog7a8_7.jpg'
+  };
+
+  const currentLogo = locationLogos[locationId] || locationLogos['los-angeles'];
+
   // Check authentication on component mount
   useEffect(() => {
     const token = localStorage.getItem('token');
