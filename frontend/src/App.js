@@ -1744,7 +1744,17 @@ function App({ locationId }) {
       discountAmount: 0,
       transactionType: 'checkin'
     });
-    fetchActiveCheckins();
+    
+    // Refresh data after successful transaction (non-blocking)
+    setTimeout(async () => {
+      try {
+        await fetchActiveCheckins();
+        await fetchRoomMap();
+        console.log('✅ Data refreshed successfully after transaction');
+      } catch (refreshError) {
+        console.error('⚠️ Data refresh failed (transaction still succeeded):', refreshError);
+      }
+    }, 100);
   };
 
   const fetchPricing = async () => {
