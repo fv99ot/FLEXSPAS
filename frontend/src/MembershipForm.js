@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from './components/ui/alert';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://spa-admin-hub-1.emergent.app';
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const MembershipForm = () => {
