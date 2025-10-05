@@ -1234,7 +1234,7 @@ function App({ locationId }) {
           return {
             number: num,
             type: 'small_room',
-            label: 'Small Room (No TV)',
+            label: 'Regular Room',
             available: !occupied, // Available if NOT occupied
             customer: occupied ? occupied.customer : null,
             color: 'green',
