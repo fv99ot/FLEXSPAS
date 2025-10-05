@@ -1264,7 +1264,7 @@ function App({ locationId }) {
           return {
             number: num,
             type: 'deluxe_room',
-            label: 'Deluxe Room (With TV)',
+            label: 'Large Video Room',
             available: !occupied, // Available if NOT occupied
             customer: occupied ? occupied.customer : null,
             color: 'gold',
