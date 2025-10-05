@@ -2650,7 +2650,7 @@ function App({ locationId }) {
                     {activeCheckins.filter(checkin => checkin.room_type === 'regular_room').length > 0 && (
                       <div>
                         <h3 className="text-lg font-semibold text-purple-400 mb-3">
-                          REGULAR ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'regular_room').length})
+                          VIDEO ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'regular_room').length})
                         </h3>
                         <div className="grid gap-4">
                           {activeCheckins.filter(checkin => checkin.room_type === 'regular_room').map((checkin) => (
