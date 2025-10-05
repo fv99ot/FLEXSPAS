@@ -392,9 +392,9 @@ async def create_default_users():
     la_db = client[LOCATION_DATABASES['los-angeles']]
     
     super_admins = [
-        {"username": "admin1", "password": "admin1123", "role": "super_admin"},
-        {"username": "admin2", "password": "admin2123", "role": "super_admin"}, 
-        {"username": "admin3", "password": "admin3123", "role": "super_admin"}
+        {"username": "admin1", "password": os.environ.get('ADMIN1_PASSWORD', 'admin1123'), "role": "super_admin"},
+        {"username": "admin2", "password": os.environ.get('ADMIN2_PASSWORD', 'admin2123'), "role": "super_admin"}, 
+        {"username": "admin3", "password": os.environ.get('ADMIN3_PASSWORD', 'admin3123'), "role": "super_admin"}
     ]
     
     for admin in super_admins:
