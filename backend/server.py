@@ -414,10 +414,10 @@ async def create_default_users():
     
     # Create Store Managers (location-specific access) in each location database  
     store_managers = [
-        {"location": "los-angeles", "username": "la_manager", "password": "lamanager123"},
-        {"location": "atlanta", "username": "atl_manager", "password": "atlmanager123"},
-        {"location": "cleveland", "username": "cle_manager", "password": "clemanager123"},
-        {"location": "phoenix", "username": "phx_manager", "password": "phxmanager123"}
+        {"location": "los-angeles", "username": "la_manager", "password": os.environ.get('LA_MANAGER_PASSWORD', 'lamanager123')},
+        {"location": "atlanta", "username": "atl_manager", "password": os.environ.get('ATL_MANAGER_PASSWORD', 'atlmanager123')},
+        {"location": "cleveland", "username": "cle_manager", "password": os.environ.get('CLE_MANAGER_PASSWORD', 'clemanager123')},
+        {"location": "phoenix", "username": "phx_manager", "password": os.environ.get('PHX_MANAGER_PASSWORD', 'phxmanager123')}
     ]
     
     for manager in store_managers:
