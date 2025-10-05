@@ -1701,7 +1701,21 @@ function App({ locationId }) {
       }
     } catch (error) {
       console.error('Error completing transaction:', error);
-      alert(error.response?.data?.detail || 'Error completing transaction');
+      
+      // Check if this is a transaction creation error vs other errors
+      if (error.response?.status === 401) {
+        alert('Authentication error. Please log in again.');
+      } else if (error.response?.status === 400) {
+        alert(`Transaction error: ${error.response?.data?.detail || 'Invalid request'}`);
+      } else if (error.response?.status >= 500) {
+        alert(`Server error: ${error.response?.data?.detail || 'Internal server error'}`);
+      } else if (error.message && error.message.includes('Network Error')) {
+        alert('Network error. Please check your connection and try again.');
+      } else {
+        // For unknown errors, check if the transaction actually succeeded by checking the response
+        console.log('Full error details:', error);
+        alert(`Transaction may have succeeded but with errors. Please check transaction history.\n\nError: ${error.response?.data?.detail || error.message || 'Unknown error'}`);
+      }
       return; // Don't close dialog if there's an error
     }
     
