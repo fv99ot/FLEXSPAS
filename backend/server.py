@@ -299,6 +299,31 @@ async def get_room_pricing(room_type: RoomType, is_weekend: bool) -> float:
     
     return pricing_map[room_type]
 
+async def get_upgrade_pricing(from_room_type: RoomType, to_room_type: RoomType, is_weekend: bool) -> float:
+    """Get specific upgrade pricing based on room type transitions"""
+    # Upgrade pricing matrix (weekday/weekend)
+    upgrade_pricing = {
+        # FROM LOCKER TO:
+        (RoomType.LOCKER, RoomType.SMALL_ROOM): (8.0, 8.0),      # TO Regular Room
+        (RoomType.LOCKER, RoomType.REGULAR_ROOM): (15.0, 17.0),  # TO Video Room  
+        (RoomType.LOCKER, RoomType.DELUXE_ROOM): (20.0, 22.0),   # TO Large Video Room
+        
+        # FROM SMALL_ROOM (Regular Room) TO:
+        (RoomType.SMALL_ROOM, RoomType.REGULAR_ROOM): (12.0, 14.0),  # TO Video Room
+        (RoomType.SMALL_ROOM, RoomType.DELUXE_ROOM): (17.0, 19.0),   # TO Large Video Room
+        
+        # FROM REGULAR_ROOM (Video Room) TO:
+        (RoomType.REGULAR_ROOM, RoomType.DELUXE_ROOM): (10.0, 10.0),  # TO Large Video Room
+    }
+    
+    upgrade_key = (from_room_type, to_room_type)
+    if upgrade_key in upgrade_pricing:
+        weekday_price, weekend_price = upgrade_pricing[upgrade_key]
+        return weekend_price if is_weekend else weekday_price
+    
+    # If no specific upgrade pricing found, return 0 (no upgrade or same room type)
+    return 0.0
+
 def is_weekend_time() -> bool:
     """Check if current time falls within weekend pricing period:
     Weekend: Friday 4pm - Monday 12am
