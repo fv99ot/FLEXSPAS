@@ -445,7 +445,7 @@ async def create_default_users():
             admin_user = {
                 "id": str(uuid.uuid4()),
                 "username": "admin", 
-                "password": hash_password("admin123"),
+                "password": hash_password(os.environ.get('DEFAULT_ADMIN_PASSWORD', 'admin123')),
                 "role": UserRole.MANAGER,
                 "location": location_id,
                 "can_manage_users": False,
