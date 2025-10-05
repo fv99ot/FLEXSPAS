@@ -22,16 +22,16 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 
-# Location-specific databases
+# Location-specific databases - loaded from environment
 LOCATION_DATABASES = {
-    'los-angeles': 'flexspa_losangeles',
-    'atlanta': 'flexspa_atlanta', 
-    'cleveland': 'flexspa_cleveland',
-    'phoenix': 'flexspa_phoenix'
+    'los-angeles': os.environ.get('DB_LOS_ANGELES', 'flexspa_losangeles'),
+    'atlanta': os.environ.get('DB_ATLANTA', 'flexspa_atlanta'), 
+    'cleveland': os.environ.get('DB_CLEVELAND', 'flexspa_cleveland'),
+    'phoenix': os.environ.get('DB_PHOENIX', 'flexspa_phoenix')
 }
 
-# Default database (for backwards compatibility)
-db = client[os.environ.get('DB_NAME', 'flexspa_losangeles')]
+# Default database
+db = client[os.environ.get('DB_NAME')]
 
 def get_location_db(location_id=None):
     """Get database connection for specific location"""
