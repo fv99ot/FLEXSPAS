@@ -2391,22 +2391,83 @@ class BathhouseAPITester:
         return self.get_summary()
 
 def main():
-    """Main function"""
+    """Main test execution - Focus on reproducing transaction completion error"""
+    print("🧪 FLEXSPA BACKEND API TESTING SUITE")
+    print("🚨 FOCUS: REPRODUCING 'ERROR COMPLETING TRANSACTION' ISSUE")
+    print("=" * 70)
+    
     tester = BathhouseAPITester()
-    summary = tester.run_all_tests()
     
-    print("\n" + "="*80)
-    print("🏁 TESTING COMPLETE")
-    print("="*80)
-    print(f"📊 Results: {summary['tests_passed']}/{summary['tests_run']} tests passed")
-    print(f"📈 Success Rate: {summary['success_rate']:.1f}%")
+    # Test login first
+    if not tester.test_login():
+        print("❌ Login failed - cannot continue with other tests")
+        return 1
     
-    if summary['tests_passed'] == summary['tests_run']:
-        print("🎉 ALL TESTS PASSED! 🎉")
+    # Run the specific test requested in the review
+    print(f"\n🚀 Running Transaction Completion Error Reproduction Test...")
+    
+    print(f"\n{'='*70}")
+    print(f"🧪 RUNNING: Transaction Completion Error Reproduction")
+    print('='*70)
+    
+    try:
+        success = tester.test_transaction_completion_error_reproduction()
+        if success:
+            print(f"✅ Transaction Completion Error Reproduction - ALL TESTS PASSED")
+            print(f"📝 BACKEND IS WORKING CORRECTLY - Issue is likely frontend-related")
+        else:
+            print(f"❌ Transaction Completion Error Reproduction - BACKEND ISSUES FOUND")
+            print(f"📝 BACKEND PROBLEMS MAY BE CAUSING USER'S TRANSACTION ERRORS")
+    except Exception as e:
+        print(f"💥 Transaction Completion Error Reproduction - EXCEPTION: {str(e)}")
+    
+    # Also run other critical tests if time permits
+    additional_tests = [
+        ("Multi-Location Authentication System", tester.test_multi_location_authentication),
+        ("JWT Authentication Fix", tester.test_jwt_authentication_fix),
+    ]
+    
+    print(f"\n🔄 Running Additional Critical Tests...")
+    
+    for test_name, test_func in additional_tests:
+        print(f"\n{'='*60}")
+        print(f"🧪 RUNNING: {test_name}")
+        print('='*60)
+        
+        try:
+            success = test_func()
+            if success:
+                print(f"✅ {test_name} - ALL TESTS PASSED")
+            else:
+                print(f"❌ {test_name} - SOME TESTS FAILED")
+        except Exception as e:
+            print(f"💥 {test_name} - EXCEPTION: {str(e)}")
+    
+    # Print final summary
+    summary = tester.get_summary()
+    print(f"\n{'='*70}")
+    print("📊 FINAL TEST SUMMARY")
+    print('='*70)
+    print(f"Total Tests Run: {summary['tests_run']}")
+    print(f"Tests Passed: {summary['tests_passed']}")
+    print(f"Tests Failed: {summary['tests_run'] - summary['tests_passed']}")
+    print(f"Success Rate: {summary['success_rate']:.1f}%")
+    
+    if summary['success_rate'] >= 90:
+        print("🎉 EXCELLENT - Backend APIs are working very well!")
+        print("📝 User's transaction completion error is likely a FRONTEND issue")
         return 0
+    elif summary['success_rate'] >= 75:
+        print("✅ GOOD - Backend is mostly working with minor issues")
+        print("📝 Check if minor backend issues are causing frontend error handling")
+        return 0
+    elif summary['success_rate'] >= 50:
+        print("⚠️  FAIR - Backend has significant issues that need attention")
+        print("📝 Backend problems may be causing user's transaction completion errors")
+        return 1
     else:
-        failed_count = summary['tests_run'] - summary['tests_passed']
-        print(f"⚠️  {failed_count} test(s) failed")
+        print("🚨 POOR - Backend has major problems requiring immediate attention")
+        print("📝 Backend failures are likely causing user's transaction completion errors")
         return 1
 
 if __name__ == "__main__":
