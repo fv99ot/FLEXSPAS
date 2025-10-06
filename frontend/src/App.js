@@ -5280,14 +5280,12 @@ function LoginPage({ locationId, locationName }) {
     setLoading(false);
   };
 
-  // This code is unreachable due to earlier returns
-  // The main dashboard is already rendered above when authenticated
-  /*
+  // Single return statement with conditional JSX to fix React hooks violation
   return (
     <>
       {isAuthenticated ? (
         // Render the main App component's admin dashboard
-        renderDashboard()
+        <App locationId={locationId} />
       ) : (
         <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
