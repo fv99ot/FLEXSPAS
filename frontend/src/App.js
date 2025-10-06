@@ -5284,8 +5284,26 @@ function LoginPage({ locationId, locationName }) {
   return (
     <>
       {isAuthenticated ? (
-        // Authentication successful - let parent App component handle the dashboard
-        null
+        // Render the main App component's admin dashboard
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          width: '100%', 
+          height: '100%', 
+          zIndex: 9999,
+          background: 'white'
+        }}>
+          <div style={{ padding: '20px', textAlign: 'center' }}>
+            <h2>Authentication successful!</h2>
+            <p>Redirecting to dashboard...</p>
+            <script>
+              {setTimeout(() => {
+                window.location.reload();
+              }, 1000)}
+            </script>
+          </div>
+        </div>
       ) : (
         <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
