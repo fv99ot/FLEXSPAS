@@ -5284,73 +5284,8 @@ function LoginPage({ locationId, locationName }) {
   return (
     <>
       {isAuthenticated ? (
-      <div className="min-h-screen bg-black">
-        {/* Header */}
-        <header className="bg-black border-b border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-4">
-                <img 
-                  src={currentLogo} 
-                  alt={`${locationName || 'FLEX SPA'} Logo`}
-                  className="h-12 w-auto object-contain"
-                />
-                <h2 className="text-white font-bold text-lg">
-                  {locationName ? `${locationName.toUpperCase()} SPA` : 'FLEX SPA'}
-                </h2>
-                <span className="bg-red-600 text-white px-3 py-1 rounded text-sm">
-                  {user?.role === 'manager' ? 'Manager' : 'Staff'}
-                </span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-300 text-sm">Welcome, {user?.username}</span>
-                <button 
-                  onClick={() => {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('currentLocation');
-                    setIsAuthenticated(false);
-                    setUser(null);
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-white mb-4">
-              {locationName ? `${locationName.toUpperCase()} - SPA MANAGEMENT SYSTEM` : 'SPA MANAGEMENT SYSTEM'}
-            </h1>
-            <p className="text-gray-300 mb-8">
-              Successfully logged into the spa management interface.
-            </p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-md font-medium"
-            >
-              Load Full Admin Dashboard
-            </button>
-            
-            <div className="mt-8 text-left max-w-2xl mx-auto">
-              <div className="bg-gray-900 border border-red-500 rounded-lg p-6">
-                <h3 className="text-white font-bold mb-4">Authentication Successful ✅</h3>
-                <div className="space-y-2 text-sm">
-                  <p className="text-gray-300"><span className="text-red-400">Location:</span> {locationName || 'Default'}</p>
-                  <p className="text-gray-300"><span className="text-red-400">User:</span> {user?.username}</p>
-                  <p className="text-gray-300"><span className="text-red-400">Role:</span> {user?.role}</p>
-                  <p className="text-gray-300"><span className="text-red-400">Database:</span> flexspa_{locationId || 'losangeles'}</p>
-                  <p className="text-gray-300"><span className="text-red-400">Status:</span> <span className="text-green-400">Authenticated</span></p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        // Use the existing LocationApp component for the full admin dashboard
+        <LocationApp locationId={locationId} />)
       ) : (
         <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
