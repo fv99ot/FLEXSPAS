@@ -5280,7 +5280,9 @@ function LoginPage({ locationId, locationName }) {
     setLoading(false);
   };
 
-  // Single return statement with conditional JSX to fix React hooks violation
+  // This code is unreachable due to earlier returns
+  // The main dashboard is already rendered above when authenticated
+  /*
   return (
     <>
       {isAuthenticated ? (
