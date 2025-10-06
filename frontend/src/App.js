@@ -5412,6 +5412,8 @@ function LoginPage({ locationId, locationName }) {
         </div>
       </div>
     </div>
+  )}
+    </>
   );
 }
 
