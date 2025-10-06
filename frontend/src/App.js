@@ -5280,8 +5280,10 @@ function LoginPage({ locationId, locationName }) {
     setLoading(false);
   };
 
-  if (isAuthenticated) {
-    return (
+  // Single return statement with conditional JSX to fix React hooks violation
+  return (
+    <>
+      {isAuthenticated ? (
       <div className="min-h-screen bg-black">
         {/* Header */}
         <header className="bg-black border-b border-gray-800">
