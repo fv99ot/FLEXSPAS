@@ -5284,8 +5284,11 @@ function LoginPage({ locationId, locationName }) {
   return (
     <>
       {isAuthenticated ? (
-        // Render the main App component's admin dashboard
-        <App locationId={locationId} />
+        // Redirect to the main app dashboard after successful authentication
+        (() => {
+          window.location.href = `/${locationId}`;
+          return null;
+        })()
       ) : (
         <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
