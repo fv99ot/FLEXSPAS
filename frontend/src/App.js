@@ -5352,7 +5352,7 @@ function LoginPage({ locationId, locationName }) {
         </div>
       </div>
       ) : (
-    <div className="bg-black">
+        <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8">
           <div className="mb-6">
