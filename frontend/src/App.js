@@ -5284,12 +5284,14 @@ function LoginPage({ locationId, locationName }) {
   return (
     <>
       {isAuthenticated ? (
-        // Render the main App component's admin dashboard
-        (() => {
-          // Reload the page to let the main App component handle the authenticated state
-          window.location.reload();
-          return <div>Redirecting...</div>;
-        })()
+        <div className="min-h-screen flex items-center justify-center bg-black">
+          <div className="text-center">
+            <h2 className="text-white text-xl mb-4">Redirecting to Dashboard...</h2>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mx-auto"></div>
+          </div>
+          {/* Auto-reload to main app interface */}
+          {setTimeout(() => window.location.reload(), 100) && null}
+        </div>
       ) : (
         <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
