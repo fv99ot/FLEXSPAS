@@ -5284,8 +5284,8 @@ function LoginPage({ locationId, locationName }) {
   return (
     <>
       {isAuthenticated ? (
-        // Use the existing LocationApp component for the full admin dashboard
-        <LocationApp locationId={locationId} />)
+        // Render the main App component's admin dashboard
+        <App locationId={locationId} />
       ) : (
         <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
