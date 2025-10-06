@@ -2176,22 +2176,16 @@ function App({ locationId }) {
                 value="active" 
                 className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
               >
-                Active Check-ins
+                Check-ins & Room Map
               </TabsTrigger>
               <TabsTrigger 
                 value="cart" 
                 className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
               >
-                Transactions
+                Transactions & Reports
                 {currentTransaction.items.length > 0 && (
                   <Badge variant="secondary" className="ml-2 rounded-full">{currentTransaction.items.length}</Badge>
                 )}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="reports" 
-                className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
-              >
-                Sales Reports
               </TabsTrigger>
               {user?.role === 'manager' && (
                 <TabsTrigger 
