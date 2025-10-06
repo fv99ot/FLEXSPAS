@@ -2901,6 +2901,191 @@ function App({ locationId }) {
                 )}
               </CardContent>
             </Card>
+
+            {/* Room Map - Combined with Active Check-ins */}
+            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  Room & Locker Availability Map
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Real-time view of all rooms and lockers - Click occupied rooms to manage
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="flex space-x-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-green-500 rounded"></div>
+                      <span className="text-gray-300">Available</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-red-500 rounded"></div>
+                      <span className="text-gray-300">Occupied (click to manage)</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-black border border-gray-400 rounded"></div>
+                      <span className="text-gray-300">Employee Assigned</span>
+                    </div>
+                  </div>
+
+                  <Button onClick={fetchRoomMap} className="flex-button mb-4">
+                    Refresh Map
+                  </Button>
+
+                  {/* Lockers Section */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+                      <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                      LOCKERS (40-153)
+                    </h3>
+                    <div className="grid grid-cols-12 gap-1">
+                      {roomMap.lockers.map((locker) => (
+                        <div
+                          key={locker.number}
+                          className={`relative p-2 text-xs text-center rounded border cursor-pointer transition-colors ${
+                            locker.available 
+                              ? 'bg-green-600 border-green-400 text-white hover:bg-green-700' 
+                              : locker.employee_assigned
+                              ? 'bg-black border-gray-400 text-gray-300 cursor-not-allowed'
+                              : locker.is_overtime
+                              ? 'bg-red-800 border-red-600 text-white hover:bg-red-900'
+                              : 'bg-red-600 border-red-400 text-white hover:bg-red-700'
+                          }`}
+                          title={
+                            locker.employee_assigned
+                              ? `Assigned to employee: ${locker.employee_assigned}`
+                              : locker.available 
+                              ? 'Available' 
+                              : `Occupied by: ${locker.customer}\nTime remaining: ${formatRemainingTime(locker.remaining_hours)}\nClick to manage`
+                          }
+                          onClick={() => !locker.employee_assigned && handleRoomClick(locker)}
+                        >
+                          <div>{locker.number}</div>
+                          {locker.employee_assigned && (
+                            <div className="text-xs mt-1">
+                              Employee
+                            </div>
+                          )}
+                          {!locker.available && !locker.employee_assigned && (
+                            <div className="text-xs mt-1">
+                              {formatRemainingTime(locker.remaining_hours)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rooms Section */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
+                      <div className="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
+                      ROOMS
+                    </h3>
+                    
+                    {/* Regular Rooms */}
+                    <div className="mb-4">
+                      <h4 className="text-lg text-green-400 mb-2">REGULAR ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'small_room').length})</h4>
+                      <div className="grid grid-cols-9 gap-2">
+                        {roomMap.rooms.filter(room => room.type === 'small_room').map((room) => (
+                          <div
+                            key={room.number}
+                            className={`relative p-3 text-sm text-center rounded border cursor-pointer transition-colors ${
+                              room.available 
+                                ? 'bg-green-600 border-green-400 text-white hover:bg-green-700' 
+                                : room.is_overtime
+                                ? 'bg-red-800 border-red-600 text-white hover:bg-red-900'
+                                : 'bg-red-600 border-red-400 text-white hover:bg-red-700'
+                            }`}
+                            title={
+                              room.available 
+                                ? 'Available' 
+                                : `Occupied by: ${room.customer}\nTime remaining: ${formatRemainingTime(room.remaining_hours)}\nClick to manage`
+                            }
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <div>{room.number}</div>
+                            {!room.available && (
+                              <div className="text-xs mt-1">
+                                {formatRemainingTime(room.remaining_hours)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Video Rooms */}
+                    <div className="mb-4">
+                      <h4 className="text-lg text-blue-400 mb-2">VIDEO ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'regular_room').length})</h4>
+                      <div className="grid grid-cols-5 gap-2">
+                        {roomMap.rooms.filter(room => room.type === 'regular_room').map((room) => (
+                          <div
+                            key={room.number}
+                            className={`relative p-4 text-sm text-center rounded border cursor-pointer transition-colors ${
+                              room.available 
+                                ? 'bg-green-600 border-green-400 text-white hover:bg-green-700' 
+                                : room.is_overtime
+                                ? 'bg-red-800 border-red-600 text-white hover:bg-red-900'
+                                : 'bg-red-600 border-red-400 text-white hover:bg-red-700'
+                            }`}
+                            title={
+                              room.available 
+                                ? 'Available' 
+                                : `Occupied by: ${room.customer}\nTime remaining: ${formatRemainingTime(room.remaining_hours)}\nClick to manage`
+                            }
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <div>{room.number}</div>
+                            <div className="text-xs">TV</div>
+                            {!room.available && (
+                              <div className="text-xs mt-1">
+                                {formatRemainingTime(room.remaining_hours)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Large Video Rooms */}
+                    <div>
+                      <h4 className="text-lg text-purple-400 mb-2">LARGE VIDEO ROOMS ({activeCheckins.filter(checkin => checkin.room_type === 'deluxe_room').length})</h4>
+                      <div className="grid grid-cols-8 gap-2">
+                        {roomMap.rooms.filter(room => room.type === 'deluxe_room').map((room) => (
+                          <div
+                            key={room.number}
+                            className={`relative p-4 text-sm text-center rounded border cursor-pointer transition-colors ${
+                              room.available 
+                                ? 'bg-green-600 border-green-400 text-white hover:bg-green-700' 
+                                : room.is_overtime
+                                ? 'bg-red-800 border-red-600 text-white hover:bg-red-900'
+                                : 'bg-red-600 border-red-400 text-white hover:bg-red-700'
+                            }`}
+                            title={
+                              room.available 
+                                ? 'Available' 
+                                : `Occupied by: ${room.customer}\nTime remaining: ${formatRemainingTime(room.remaining_hours)}\nClick to manage`
+                            }
+                            onClick={() => handleRoomClick(room)}
+                          >
+                            <div>{room.number}</div>
+                            <div className="text-xs">DELUXE TV</div>
+                            {!room.available && (
+                              <div className="text-xs mt-1">
+                                {formatRemainingTime(room.remaining_hours)}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Room Map merged into Admin & Room Map tab */}
