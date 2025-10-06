@@ -5351,10 +5351,7 @@ function LoginPage({ locationId, locationName }) {
           </div>
         </div>
       </div>
-    );
-  }
-
-  return (
+      ) : (
     <div className="bg-black">
       <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8">
