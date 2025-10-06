@@ -3401,6 +3401,83 @@ function App({ locationId }) {
                 )}
               </CardContent>
             </Card>
+
+            {/* Sales Reports - Combined with Transactions */}
+            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Sales Reports
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  View daily and monthly sales reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex space-x-4">
+                    <Select value={reportType} onValueChange={setReportType}>
+                      <SelectTrigger className="w-32 bg-white/10 border-white/20 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="date"
+                      value={reportDate}
+                      onChange={(e) => setReportDate(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white"
+                    />
+                    <Button onClick={fetchSalesReport} className="flex-button">
+                      Generate Report
+                    </Button>
+                  </div>
+
+                  {salesReport && (
+                    <div className="bg-white/5 p-4 rounded">
+                      <h4 className="font-semibold text-white mb-4">
+                        {reportType === 'daily' ? 'Daily' : 'Monthly'} Sales Report - {reportDate}
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-300">Total Revenue:</p>
+                          <p className="text-white font-semibold">${salesReport.total_revenue?.toFixed(2) || '0.00'}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-300">Total Transactions:</p>
+                          <p className="text-white font-semibold">{salesReport.total_transactions || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-300">Check-ins:</p>
+                          <p className="text-white font-semibold">{salesReport.checkin_count || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-300">Additional Items:</p>
+                          <p className="text-white font-semibold">{salesReport.item_count || 0}</p>
+                        </div>
+                      </div>
+                      
+                      {salesReport.breakdown && salesReport.breakdown.length > 0 && (
+                        <div className="mt-4">
+                          <h5 className="font-semibold text-white mb-2">Transaction Breakdown:</h5>
+                          <div className="space-y-2">
+                            {salesReport.breakdown.map((item, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-300">{item.type}:</span>
+                                <span className="text-white">${item.amount?.toFixed(2) || '0.00'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* QR Code tab merged into Registration & QR tab */}
