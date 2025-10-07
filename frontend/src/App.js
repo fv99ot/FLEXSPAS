@@ -3437,8 +3437,8 @@ function App({ locationId }) {
                     </Select>
                     <Input
                       type="date"
-                      value={reportDate}
-                      onChange={(e) => setReportDate(e.target.value)}
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
                       className="bg-white/10 border-white/20 text-white"
                     />
                     <Button onClick={fetchSalesReport} className="flex-button">
