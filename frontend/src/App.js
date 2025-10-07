@@ -2098,16 +2098,19 @@ function App({ locationId }) {
     return rateMap[roomType] || (isWeekend ? pricingConfig.locker_weekend : pricingConfig.locker_weekday);
   };
 
-  // Handle authentication state
+  // Handle authentication state - render conditionally instead of early return
+  // Show login page for location-specific authentication
   if (!isAuthenticated && locationId && currentLocation) {
     return <LocationLoginComponent />;
   }
 
+  // Redirect to landing page if not authenticated and no location
   if (!isAuthenticated && !locationId) {
     window.location.href = '/';
     return null;
   }
 
+  // Main authenticated dashboard
   return (
     <div className="min-h-screen" style={{
       background: '#0f1419',
