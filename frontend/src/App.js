@@ -2202,7 +2202,7 @@ function App({ locationId }) {
                   value="admin" 
                   className="rounded-full bg-white/10 hover:bg-white/20 data-[state=active]:bg-red-600 data-[state=active]:text-white text-white border border-white/20 py-3 px-6 font-medium transition-all"
                 >
-                  Admin & Room Map
+                  Admin
                 </TabsTrigger>
               )}
             </TabsList>
