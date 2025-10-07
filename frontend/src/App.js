@@ -3466,7 +3466,7 @@ function App({ locationId }) {
                         </div>
                         <div>
                           <p className="text-gray-300">Additional Items:</p>
-                          <p className="text-white font-semibold">{salesReport.item_count || 0}</p>
+                          <p className="text-white font-semibold">{salesData.item_count || 0}</p>
                         </div>
                       </div>
                       
