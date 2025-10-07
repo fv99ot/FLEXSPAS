@@ -776,9 +776,20 @@ function App({ locationId }) {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      // Add location header for multi-location support
+      if (locationId) {
+        headers['X-Location'] = locationId;
+      } else if (currentLocation) {
+        headers['X-Location'] = currentLocation;
+      }
+      
+      console.log('🔧 Adding employee with headers:', headers);
       await axios.post(`${API}/api/users`, newEmployee, { headers });
       setNewEmployee({ username: '', password: '', role: 'employee' });
       setShowAddEmployee(false);
+      
+      console.log('✅ Employee added, refreshing list...');
       fetchEmployees();
       alert('Employee added successfully!');
     } catch (error) {
