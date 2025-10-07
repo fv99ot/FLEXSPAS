@@ -5283,59 +5283,9 @@ function LoginPage({ locationId, locationName }) {
     setLoading(false);
   };
 
-  // Single return statement with conditional JSX to fix React hooks violation
+  // Single return statement - only show login form
+  // After successful authentication, the page will reload and parent App will handle the authenticated state
   return (
-    <>
-      {isAuthenticated ? (
-        <div className="min-h-screen bg-black">
-          {/* Header */}
-          <header className="bg-black border-b border-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex items-center space-x-4">
-                  <img 
-                    src={currentLogo} 
-                    alt={`${locationName || 'FLEX SPA'} Logo`}
-                    className="h-12 w-auto object-contain"
-                  />
-                  <h1 className="text-xl font-bold text-white">{locationName || 'FLEX SPA'}</h1>
-                  <span className="bg-red-600 text-white px-3 py-1 rounded text-sm">Manager</span>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <span className="text-white text-sm">Welcome, {user?.username}</span>
-                  <button 
-                    onClick={() => {
-                      localStorage.removeItem('token');
-                      localStorage.removeItem('user'); 
-                      localStorage.removeItem('currentLocation');
-                      window.location.reload();
-                    }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          {/* Main content */}
-          <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <div className="text-center text-white">
-              <h2 className="text-2xl font-bold mb-4">Authentication Successful!</h2>
-              <p className="mb-6">You are now logged into the {locationName} spa management system.</p>
-              <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-auto">
-                <div className="text-left space-y-2">
-                  <p><span className="text-gray-400">Location:</span> <span className="text-white">{locationName}</span></p>
-                  <p><span className="text-gray-400">User:</span> <span className="text-white">{user?.username}</span></p>
-                  <p><span className="text-gray-400">Role:</span> <span className="text-white">{user?.role}</span></p>
-                  <p><span className="text-gray-400">Status:</span> <span className="text-green-400">Active</span></p>
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
-      ) : (
         <div className="bg-black min-h-screen">
       <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8">
