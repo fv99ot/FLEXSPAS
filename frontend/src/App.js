@@ -3824,8 +3824,7 @@ function App({ locationId }) {
                       </div>
                     </TabsContent>
 
-                    {/* Room Map Tab */}
-                    <TabsContent value="roommap" className="space-y-4">
+                    {/* Room Map Tab Removed */}
                       <div className="space-y-6">
                         <div className="flex space-x-4 text-sm">
                           <div className="flex items-center space-x-2">
