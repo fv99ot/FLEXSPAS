@@ -650,18 +650,13 @@ function App({ locationId }) {
       if (response.data.success) {
         setScannedIdData(response.data.data);
         // Auto-fill the add customer form with scanned data
-        setNewCustomer({
+        setCustomerForm({
           first_name: response.data.data.first_name || '',
           last_name: response.data.data.last_name || '',
-          email: '',  // ID doesn't contain email
-          phone: '',  // ID doesn't contain phone
-          date_of_birth: response.data.data.date_of_birth || '',
-          address: response.data.data.address || '',
-          city: response.data.data.city || '',
-          state: response.data.data.state || '',
-          zip_code: response.data.data.zip_code || '',
           id_number: response.data.data.id_number || '',
-          id_expiration: response.data.data.expiration_date || ''
+          date_of_birth: response.data.data.date_of_birth || '',
+          id_expiration_date: response.data.data.expiration_date || '',
+          state_of_id: response.data.data.state || ''
         });
         
         console.log('✅ ID scanned successfully:', response.data.data);
