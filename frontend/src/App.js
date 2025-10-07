@@ -5346,10 +5346,8 @@ function LoginPage({ locationId, locationName }) {
         </div>
       </div>
     </div>
-  )}
-    </>
   );
-}
+};
 
 // Admin Login Page Component
 const AdminLoginPage = () => {
