@@ -2263,6 +2263,10 @@ function App({ locationId }) {
                     <Plus className="h-4 w-4 mr-2" />
                     Add New
                   </Button>
+                  <Button variant="outline" onClick={() => setShowIdScanner(true)} className="flex-button bg-blue-600 hover:bg-blue-700 text-white border-blue-600">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Scan ID
+                  </Button>
                 </div>
               </CardContent>
             </Card>
