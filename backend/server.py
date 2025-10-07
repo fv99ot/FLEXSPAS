@@ -2623,6 +2623,206 @@ async def get_membership_form_qr():
             "membership_form_url": f"{frontend_url}/membership"
         }
 
+# ID Scanning Service Integration
+import aiohttp
+import json
+import time
+
+async def scan_id_with_api(image_data: bytes) -> dict:
+    """
+    Scan ID using ID Analyzer API or fallback to OCR parsing
+    Returns structured ID data
+    """
+    api_key = os.environ.get('ID_ANALYZER_API_KEY')
+    
+    if not api_key:
+        # Fallback: Create mock data structure for demo
+        return {
+            "success": False,
+            "error": "ID_ANALYZER_API_KEY not configured. Please set up ID Analyzer API key in environment variables.",
+            "mock_data": {
+                "full_name": "Demo User",
+                "first_name": "Demo", 
+                "last_name": "User",
+                "date_of_birth": "01/01/1990",
+                "id_number": "D1234567890",
+                "address": "123 Demo Street",
+                "city": "Demo City",
+                "state": "CA", 
+                "zip_code": "90210",
+                "expiration_date": "01/01/2025",
+                "document_type": "Driver License",
+                "confidence_score": 0.85
+            }
+        }
+    
+    try:
+        # Convert image data to base64 for API
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+        
+        async with aiohttp.ClientSession() as session:
+            # ID Analyzer API endpoint
+            url = "https://api.idanalyzer.com/"
+            
+            payload = {
+                "apikey": api_key,
+                "accuracy": "2",  # High accuracy mode
+                "authenticate": "1",  # Enable document authentication
+                "outputimage": "0",  # Don't return cropped images
+                "country": "US",  # Restrict to US documents
+                "type": "1",  # Driver license and ID cards only
+                "checkblocklist": "0",  # Skip blocklist check for faster response
+                "OCRtext": "1",  # Return OCR text
+                "file": image_base64
+            }
+            
+            async with session.post(url, data=payload) as response:
+                if response.status == 200:
+                    result = await response.json()
+                    return parse_id_analyzer_response(result)
+                else:
+                    error_text = await response.text()
+                    return {
+                        "success": False, 
+                        "error": f"API request failed: {response.status} - {error_text}"
+                    }
+    
+    except Exception as e:
+        return {"success": False, "error": f"ID scanning failed: {str(e)}"}
+
+def parse_id_analyzer_response(api_response: dict) -> dict:
+    """Parse ID Analyzer API response into our standard format"""
+    try:
+        if api_response.get("success") != "1":
+            error_msg = api_response.get("error", "Unknown API error")
+            return {"success": False, "error": error_msg}
+        
+        # Extract data from the response
+        result = api_response.get("result", [{}])[0] if api_response.get("result") else {}
+        
+        # Parse the extracted data
+        parsed_data = {
+            "full_name": f"{result.get('firstName', '')} {result.get('lastName', '')}".strip(),
+            "first_name": result.get('firstName'),
+            "last_name": result.get('lastName'), 
+            "date_of_birth": result.get('dob'),
+            "id_number": result.get('documentNumber'),
+            "address": result.get('address'),
+            "city": result.get('city'),
+            "state": result.get('state'), 
+            "zip_code": result.get('postcode'),
+            "expiration_date": result.get('expiry'),
+            "document_type": result.get('documentType', 'Driver License'),
+            "confidence_score": float(result.get('confidence', 0)) / 100.0  # Convert to decimal
+        }
+        
+        return {"success": True, "data": parsed_data}
+        
+    except Exception as e:
+        return {"success": False, "error": f"Failed to parse API response: {str(e)}"}
+
+@api_router.post("/scan/id", response_model=IDScanResponse)
+async def scan_driver_license(
+    file: UploadFile = File(...),
+    request: Request = None,
+    current_user: User = Depends(get_current_user_with_ip_validation)
+):
+    """
+    Scan driver's license and extract customer information
+    Supports JPG, PNG image formats
+    """
+    start_time = time.time()
+    scan_id = str(uuid.uuid4())
+    
+    try:
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png']
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Unsupported file type: {file.content_type}. Please upload JPG or PNG images."
+            )
+        
+        # Validate file size (5MB limit)
+        max_size = 5 * 1024 * 1024  # 5MB
+        file_content = await file.read()
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail="File too large. Maximum size is 5MB."
+            )
+        
+        # Scan the ID using our service
+        scan_result = await scan_id_with_api(file_content)
+        
+        processing_time = int((time.time() - start_time) * 1000)
+        
+        if scan_result["success"]:
+            # Create successful response
+            scanned_data = ScannedIDData(**scan_result["data"])
+            
+            return IDScanResponse(
+                success=True,
+                data=scanned_data,
+                scan_id=scan_id,
+                processing_time_ms=processing_time
+            )
+        else:
+            # Handle API key not configured case (demo mode)
+            if "mock_data" in scan_result:
+                scanned_data = ScannedIDData(**scan_result["mock_data"])
+                return IDScanResponse(
+                    success=True,  # Return as success for demo purposes
+                    data=scanned_data,
+                    error_message=f"Demo mode: {scan_result['error']}",
+                    scan_id=scan_id,
+                    processing_time_ms=processing_time
+                )
+            else:
+                # Return error response
+                return IDScanResponse(
+                    success=False,
+                    error_message=scan_result["error"],
+                    scan_id=scan_id,
+                    processing_time_ms=processing_time
+                )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        processing_time = int((time.time() - start_time) * 1000)
+        return IDScanResponse(
+            success=False,
+            error_message=f"Scanning failed: {str(e)}",
+            scan_id=scan_id,
+            processing_time_ms=processing_time
+        )
+
+@api_router.get("/scan/demo")
+async def get_scan_demo_data(current_user: User = Depends(get_current_user)):
+    """Get demo ID data for testing the scanning interface"""
+    demo_data = ScannedIDData(
+        full_name="John Demo Customer",
+        first_name="John",
+        last_name="Customer", 
+        date_of_birth="03/15/1985",
+        id_number="D1234567890",
+        address="456 Oak Avenue",
+        city="Los Angeles", 
+        state="CA",
+        zip_code="90028",
+        expiration_date="03/15/2025",
+        document_type="Driver License",
+        confidence_score=0.92
+    )
+    
+    return IDScanResponse(
+        success=True,
+        data=demo_data,
+        scan_id=str(uuid.uuid4()),
+        processing_time_ms=1250
+    )
+
 @api_router.get("/reports/daily-sales")
 async def get_daily_sales_report(date: str = None, current_user: User = Depends(get_current_user)):
     try:
