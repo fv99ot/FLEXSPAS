@@ -2164,6 +2164,286 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_los_angeles_authentication_specific(self):
+        """Test authentication system specifically for Los Angeles location as requested in review"""
+        print("\n🔐 TESTING LOS ANGELES AUTHENTICATION SYSTEM (SPECIFIC REQUEST)...")
+        print("   Testing POST /api/login with admin/admin123 credentials")
+        print("   Testing X-Location: los-angeles header")
+        print("   Verifying JWT token generation and validation")
+        print("   Testing protected endpoint access with token")
+        print("   Validating response format for frontend compatibility")
+        
+        all_success = True
+        
+        # TEST 1: Login with Los Angeles location header
+        print("   TEST 1: Login with X-Location: los-angeles header...")
+        try:
+            headers_with_location = {
+                'Content-Type': 'application/json',
+                'X-Location': 'los-angeles'
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/login",
+                json={"username": "admin", "password": "admin123"},
+                headers=headers_with_location,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            print(f"      Response Headers: {dict(response.headers)}")
+            
+            if response.status_code == 200:
+                data = response.json()
+                print(f"      Response Body: {json.dumps(data, indent=2)}")
+                
+                # Verify response structure matches frontend expectations
+                required_fields = ['access_token', 'token_type', 'user', 'location']
+                missing_fields = [field for field in required_fields if field not in data]
+                
+                # Verify specific values
+                correct_token_type = data.get('token_type') == 'bearer'
+                correct_location = data.get('location') == 'los-angeles'
+                
+                # Verify user object structure
+                user_data = data.get('user', {})
+                user_required_fields = ['id', 'username', 'role']
+                user_missing_fields = [field for field in user_required_fields if field not in user_data]
+                
+                correct_username = user_data.get('username') == 'admin'
+                correct_role = user_data.get('role') == 'manager'
+                
+                # Verify JWT token format
+                token = data.get('access_token')
+                valid_jwt_format = token and len(token) > 100 and token.count('.') == 2
+                
+                login_success = (len(missing_fields) == 0 and len(user_missing_fields) == 0 and 
+                               correct_token_type and correct_location and correct_username and 
+                               correct_role and valid_jwt_format)
+                
+                details = f"Missing fields: {missing_fields}, User missing: {user_missing_fields}, Token type: {correct_token_type}, Location: {correct_location}, Username: {correct_username}, Role: {correct_role}, JWT format: {valid_jwt_format}"
+                
+                self.log_test("LA Login with Location Header", login_success, details)
+                
+                if login_success:
+                    la_token = token
+                    self.token = token  # Update instance token
+                    self.headers['Authorization'] = f'Bearer {token}'
+                else:
+                    all_success = False
+                    la_token = None
+            else:
+                print(f"      Error Response: {response.text}")
+                self.log_test("LA Login with Location Header", False, f"Status: {response.status_code}")
+                all_success = False
+                la_token = None
+                
+        except Exception as e:
+            self.log_test("LA Login with Location Header", False, f"Exception: {str(e)}")
+            all_success = False
+            la_token = None
+        
+        # TEST 2: JWT Token Structure Validation
+        print("   TEST 2: JWT Token Structure Validation...")
+        if la_token:
+            try:
+                # Decode JWT token (without verification for inspection)
+                import base64
+                
+                # Split token into parts
+                parts = la_token.split('.')
+                if len(parts) == 3:
+                    header_part, payload_part, signature_part = parts
+                    
+                    # Decode header (add padding if needed)
+                    header_padding = '=' * (4 - len(header_part) % 4)
+                    header_decoded = base64.urlsafe_b64decode(header_part + header_padding)
+                    header_json = json.loads(header_decoded)
+                    
+                    # Decode payload (add padding if needed)
+                    payload_padding = '=' * (4 - len(payload_part) % 4)
+                    payload_decoded = base64.urlsafe_b64decode(payload_part + payload_padding)
+                    payload_json = json.loads(payload_decoded)
+                    
+                    print(f"      JWT Header: {json.dumps(header_json, indent=2)}")
+                    print(f"      JWT Payload: {json.dumps(payload_json, indent=2)}")
+                    
+                    # Verify JWT structure
+                    has_algorithm = 'alg' in header_json
+                    has_type = 'typ' in header_json
+                    
+                    has_user_id = 'user_id' in payload_json
+                    has_role = 'role' in payload_json
+                    has_expiration = 'exp' in payload_json
+                    
+                    correct_role_in_token = payload_json.get('role') == 'manager'
+                    
+                    # Check expiration is in future
+                    exp_timestamp = payload_json.get('exp', 0)
+                    current_timestamp = time.time()
+                    not_expired = exp_timestamp > current_timestamp
+                    
+                    jwt_structure_valid = (has_algorithm and has_type and has_user_id and 
+                                         has_role and has_expiration and correct_role_in_token and not_expired)
+                    
+                    details = f"Algorithm: {has_algorithm}, Type: {has_type}, User ID: {has_user_id}, Role: {has_role}, Expiration: {has_expiration}, Correct role: {correct_role_in_token}, Not expired: {not_expired}"
+                    
+                    self.log_test("JWT Token Structure", jwt_structure_valid, details)
+                    
+                    if not jwt_structure_valid:
+                        all_success = False
+                else:
+                    self.log_test("JWT Token Structure", False, f"Invalid JWT format - {len(parts)} parts instead of 3")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("JWT Token Structure", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("JWT Token Structure", False, "No token available from login")
+            all_success = False
+        
+        # TEST 3: Protected Endpoint Access with Token
+        print("   TEST 3: Protected Endpoint Access with Token...")
+        if la_token:
+            try:
+                headers_with_auth = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {la_token}',
+                    'X-Location': 'los-angeles'
+                }
+                
+                # Test customers endpoint (protected)
+                response = requests.get(
+                    f"{self.api_url}/customers",
+                    headers=headers_with_auth,
+                    timeout=10
+                )
+                
+                print(f"      Response Status: {response.status_code}")
+                print(f"      Response Headers: {dict(response.headers)}")
+                
+                if response.status_code == 200:
+                    customers = response.json()
+                    print(f"      Found {len(customers)} customers")
+                    
+                    # Verify response format
+                    is_list = isinstance(customers, list)
+                    has_customer_data = len(customers) >= 0  # Could be empty, that's fine
+                    
+                    # If customers exist, verify structure
+                    customer_structure_valid = True
+                    if customers:
+                        sample_customer = customers[0]
+                        customer_required_fields = ['id', 'first_name', 'last_name', 'id_number']
+                        customer_structure_valid = all(field in sample_customer for field in customer_required_fields)
+                    
+                    protected_access_success = is_list and has_customer_data and customer_structure_valid
+                    
+                    details = f"Is list: {is_list}, Has data: {has_customer_data}, Structure valid: {customer_structure_valid}, Count: {len(customers)}"
+                    
+                    self.log_test("Protected Endpoint Access", protected_access_success, details)
+                    
+                    if not protected_access_success:
+                        all_success = False
+                else:
+                    print(f"      Error Response: {response.text}")
+                    self.log_test("Protected Endpoint Access", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Protected Endpoint Access", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Protected Endpoint Access", False, "No token available")
+            all_success = False
+        
+        # TEST 4: Token Validation with Invalid Token
+        print("   TEST 4: Token Validation with Invalid Token...")
+        try:
+            headers_with_invalid_token = {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer invalid-token-12345',
+                'X-Location': 'los-angeles'
+            }
+            
+            response = requests.get(
+                f"{self.api_url}/customers",
+                headers=headers_with_invalid_token,
+                timeout=10
+            )
+            
+            # Should return 401 for invalid token
+            invalid_token_rejected = response.status_code == 401
+            
+            self.log_test("Invalid Token Rejection", invalid_token_rejected, 
+                        f"Status: {response.status_code} (should be 401)")
+            
+            if not invalid_token_rejected:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid Token Rejection", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 5: Response Format Compatibility Check
+        print("   TEST 5: Response Format Compatibility Check...")
+        if la_token:
+            try:
+                # Re-test login to verify consistent response format
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'X-Location': 'los-angeles'
+                }
+                
+                response = requests.post(
+                    f"{self.api_url}/login",
+                    json={"username": "admin", "password": "admin123"},
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Check Content-Type header
+                    content_type = response.headers.get('Content-Type', '')
+                    is_json_content_type = 'application/json' in content_type
+                    
+                    # Check response is valid JSON
+                    is_valid_json = isinstance(data, dict)
+                    
+                    # Check no extra fields that might confuse frontend
+                    expected_fields = {'access_token', 'token_type', 'user', 'location'}
+                    actual_fields = set(data.keys())
+                    has_only_expected_fields = actual_fields.issubset(expected_fields) or len(actual_fields - expected_fields) <= 2  # Allow some flexibility
+                    
+                    # Check user object doesn't have sensitive data
+                    user_data = data.get('user', {})
+                    no_password_in_response = 'password' not in user_data
+                    
+                    format_compatible = (is_json_content_type and is_valid_json and 
+                                       has_only_expected_fields and no_password_in_response)
+                    
+                    details = f"JSON Content-Type: {is_json_content_type}, Valid JSON: {is_valid_json}, Expected fields: {has_only_expected_fields}, No password: {no_password_in_response}"
+                    
+                    self.log_test("Response Format Compatibility", format_compatible, details)
+                    
+                    if not format_compatible:
+                        all_success = False
+                else:
+                    self.log_test("Response Format Compatibility", False, f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Response Format Compatibility", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Response Format Compatibility", False, "No token available")
+            all_success = False
+        
+        return all_success
+
     def test_multi_location_pricing_support(self):
         """Test multi-location support for pricing fixes"""
         print("\n🌍 TESTING MULTI-LOCATION PRICING SUPPORT...")
