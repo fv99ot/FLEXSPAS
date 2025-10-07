@@ -309,9 +309,12 @@ function App({ locationId }) {
         localStorage.setItem('currentLocation', locationId);
       }
       
-      // Trigger a page reload so the parent App component can detect authentication
-      // and show the full admin dashboard instead of this login component
-      window.location.reload();
+      console.log('🔓 Setting authentication state...');
+      console.log('User data:', userData);
+      
+      setIsAuthenticated(true);
+      setUser(userData);
+      setLoginForm({ username: '', password: '' });
       
       console.log('✅ Authentication state updated successfully');
       
