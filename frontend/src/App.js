@@ -3474,7 +3474,7 @@ function App({ locationId }) {
                         <div className="mt-4">
                           <h5 className="font-semibold text-white mb-2">Transaction Breakdown:</h5>
                           <div className="space-y-2">
-                            {salesReport.breakdown.map((item, index) => (
+                            {salesData.breakdown.map((item, index) => (
                               <div key={index} className="flex justify-between text-sm">
                                 <span className="text-gray-300">{item.type}:</span>
                                 <span className="text-white">${item.amount?.toFixed(2) || '0.00'}</span>
