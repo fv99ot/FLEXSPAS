@@ -587,7 +587,16 @@ function App({ locationId }) {
     try {
       const token = localStorage.getItem('token');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      // Add location header for multi-location support
+      if (locationId) {
+        headers['X-Location'] = locationId;
+      } else if (currentLocation) {
+        headers['X-Location'] = currentLocation;
+      }
+      
       const response = await axios.get(`${API}/api/users`, { headers });
+      console.log('✅ Employees fetched:', response.data);
       setEmployees(response.data);
     } catch (error) {
       console.error('Error fetching employees:', error);
