@@ -65,6 +65,28 @@ class MembershipType(str, Enum):
     ONE_DAY = "1_day"
     SIX_MONTH = "6_month"
 
+# ID Scanning Models
+class ScannedIDData(BaseModel):
+    full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    id_number: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    expiration_date: Optional[str] = None
+    document_type: Optional[str] = None
+    confidence_score: Optional[float] = None
+
+class IDScanResponse(BaseModel):
+    success: bool
+    data: Optional[ScannedIDData] = None
+    error_message: Optional[str] = None
+    scan_id: str
+    processing_time_ms: int
+
 class RoomType(str, Enum):
     LOCKER = "locker"
     SMALL_ROOM = "small_room"
