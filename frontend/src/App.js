@@ -2098,7 +2098,6 @@ function App({ locationId }) {
     return rateMap[roomType] || (isWeekend ? pricingConfig.locker_weekend : pricingConfig.locker_weekday);
   };
 
-  // Handle authentication state - render conditionally instead of early return
   // Show login page for location-specific authentication
   if (!isAuthenticated && locationId && currentLocation) {
     return <LocationLoginComponent />;
