@@ -419,6 +419,161 @@ header .flex {
   }
 }
 
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  /* Mobile login page adjustments */
+  .min-h-screen {
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  
+  /* Location login cards */
+  .max-w-md {
+    max-width: 100% !important;
+    margin: 0;
+    padding: 1.5rem;
+  }
+  
+  /* Form inputs on mobile */
+  input[type="text"], input[type="password"] {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    padding: 1rem !important;
+    min-height: 44px; /* iOS touch target minimum */
+  }
+  
+  /* Buttons on mobile */
+  button {
+    font-size: 18px !important;
+    padding: 1rem 2rem !important;
+    min-height: 44px !important;
+    touch-action: manipulation; /* Faster touch response */
+  }
+  
+  /* Logo adjustments */
+  .h-12 {
+    height: 2.5rem !important;
+  }
+  
+  /* Text sizing */
+  .text-3xl {
+    font-size: 1.75rem !important;
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Spacing adjustments */
+  .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  .space-y-4 > * + * {
+    margin-top: 0.75rem !important;
+  }
+  
+  /* Admin dashboard mobile adjustments */
+  .max-w-7xl {
+    padding: 0 1rem;
+  }
+  
+  /* Tab adjustments for mobile */
+  .grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  .grid-cols-6 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Make tab text smaller on mobile */
+  [role="tab"] {
+    font-size: 0.8rem !important;
+    padding: 0.5rem !important;
+  }
+  
+  /* Card adjustments */
+  .dashboard-card {
+    margin: 0.5rem 0 !important;
+    padding: 1rem !important;
+  }
+  
+  /* Table responsiveness */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    font-size: 0.8rem;
+  }
+  
+  /* Room map mobile adjustments */
+  .grid-cols-12 {
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 0.125rem !important;
+  }
+  
+  .grid-cols-6 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  .grid-cols-7 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+  
+  /* Modal adjustments */
+  .fixed.inset-0 .max-w-md {
+    margin: 1rem;
+    max-width: calc(100% - 2rem) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small devices */
+  .max-w-md {
+    padding: 1rem;
+  }
+  
+  .text-xl {
+    font-size: 1.125rem !important;
+  }
+  
+  .text-lg {
+    font-size: 1rem !important;
+  }
+  
+  /* Even smaller buttons for very small screens */
+  button {
+    font-size: 16px !important;
+    padding: 0.875rem 1.5rem !important;
+  }
+  
+  /* Tighter spacing */
+  .space-y-6 > * + * {
+    margin-top: 0.75rem !important;
+  }
+  
+  /* Smaller room grid for tiny screens */
+  .grid-cols-12 {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* Landscape mobile adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+  .min-h-screen {
+    padding: 0.5rem;
+  }
+  
+  .max-w-md {
+    max-width: 24rem !important;
+  }
+}
+
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   *,
