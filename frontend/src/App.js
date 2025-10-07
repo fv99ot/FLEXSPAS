@@ -5242,10 +5242,17 @@ function LoginPage({ locationId, locationName }) {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
+    console.log('🔍 LoginPage: Checking authentication on mount');
+    console.log('Token exists:', !!token);
+    console.log('User data exists:', !!userData);
+    
     if (token && userData) {
+      console.log('✅ LoginPage: Authentication found, reloading page');
       // If already authenticated, just reload the page to show main dashboard
       // The parent component will handle the authenticated state
       window.location.reload();
+    } else {
+      console.log('❌ LoginPage: No authentication found, showing login form');
     }
   }, []);
 
