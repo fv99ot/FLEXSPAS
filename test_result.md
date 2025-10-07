@@ -565,6 +565,18 @@ backend:
         agent: "testing"
         comment: "RENEWAL SYSTEM FIX TESTING COMPLETED - WORKING PERFECTLY: Comprehensive testing of the corrected renewal system completed with 100% success rate (12/12 tests passed). ✅ INITIAL CHECK-IN: Customer check-in correctly sets 8-hour initial checkout time - WORKING, ✅ FIRST RENEWAL: Renewal properly adds 8 hours to existing checkout time (total 16 hours from original check-in), renewal_count=1, remaining hours calculation correct - WORKING, ✅ SECOND RENEWAL: Second renewal adds another 8 hours (total 24 hours from original check-in), renewal_count=2, remaining hours calculation correct - WORKING, ✅ MAXIMUM RENEWAL LIMIT: Third renewal properly blocked with 400 status and appropriate error message about 3-shift limit - WORKING, ✅ ACTIVE CHECK-INS DATA: GET /api/checkins/active returns correct checkout_time, remaining_hours, and total_allocated_hours throughout renewal process - WORKING, ✅ CUMULATIVE TIME ALLOCATION: System correctly calculates total allocated hours as 8 + (renewal_count * 8) instead of restarting timer - WORKING. The renewal system fix is fully operational and properly adds 8 hours to existing checkout time instead of restarting the timer as requested in review."
 
+  - task: "Users Endpoint 500 Error Investigation"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "USERS ENDPOINT 500 ERROR INVESTIGATION COMPLETED - CRITICAL ISSUE IDENTIFIED: Comprehensive investigation of the /api/users endpoint 500 error as requested in review completed with detailed diagnosis. ❌ USERS ENDPOINT FAILURE: GET /api/users with X-Location: los-angeles header returns 500 Internal Server Error consistently, same error occurs without location header, authentication works correctly (unauthenticated requests return 403 as expected) - FAILING, ❌ ROOT CAUSE IDENTIFIED: Backend logs show Pydantic validation error 'Input should be 'manager' or 'employee' [type=enum, input_value='super_admin', input_type=str]' at line 1384 in server.py, UserRole enum only accepts 'manager' and 'employee' but database contains users with role 'super_admin' - CRITICAL BUG, ✅ EMPLOYEE CREATION WORKS: POST /api/users successfully creates new employees (test_employee_20251007035603 created successfully), issue is only with listing/displaying existing users - PARTIALLY WORKING, ✅ SUPER ADMIN AUTHENTICATION CONFIRMED: Super admin login (admin1/admin1123) works correctly and returns role 'super_admin', confirms super admin users exist in database - WORKING, 🔍 TECHNICAL DIAGNOSIS: The /api/users endpoint at line 1378-1384 in server.py fails when trying to serialize User objects because the UserRole enum (lines 55-57) only defines MANAGER and EMPLOYEE roles, but the database contains users with 'super_admin' role created by the create_default_users function (lines 415-481). This causes Pydantic validation to fail when constructing User objects. 🚨 IMPACT ANALYSIS: This completely blocks employee management functionality - frontend cannot fetch employee list, new employees can be created but won't show up in the UI, admin users cannot manage employee accounts. RECOMMENDATION: Add SUPER_ADMIN = 'super_admin' to UserRole enum to fix the validation error."
+
   - task: "Overtime Payment Transaction"
     implemented: true
     working: true
