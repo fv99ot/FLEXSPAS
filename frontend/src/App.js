@@ -3446,7 +3446,7 @@ function App({ locationId }) {
                     </Button>
                   </div>
 
-                  {salesReport && (
+                  {salesData && (
                     <div className="bg-white/5 p-4 rounded">
                       <h4 className="font-semibold text-white mb-4">
                         {reportType === 'daily' ? 'Daily' : 'Monthly'} Sales Report - {selectedDate}
