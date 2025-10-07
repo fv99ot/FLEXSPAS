@@ -75,6 +75,11 @@ function App({ locationId }) {
   const [showOvertimePrompt, setShowOvertimePrompt] = useState(false);
   const [showRoomManagement, setShowRoomManagement] = useState(false);
   const [selectedRoomForManagement, setSelectedRoomForManagement] = useState(null);
+  
+  // ID Scanner states
+  const [showIdScanner, setShowIdScanner] = useState(false);
+  const [scannedIdData, setScannedIdData] = useState(null);
+  const [idScanLoading, setIdScanLoading] = useState(false);
 
   // Removed debugging useEffect that could cause hook ordering issues
   
