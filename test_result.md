@@ -397,11 +397,13 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Users Endpoint 500 Error Investigation"
     - "QR Code Generation & Redirect Fix"
     - "Authentication System Verification"
     - "Multi-Location Database Isolation"
     - "Membership Form Access"
   stuck_tasks: 
+    - "Users Endpoint 500 Error Investigation"
     - "QR Code URL Configuration Issue"
     - "Super Admin Cross-Location Access"
   test_all: false
