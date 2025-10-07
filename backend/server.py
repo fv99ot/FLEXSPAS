@@ -201,6 +201,89 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+def get_client_ip(request: Request) -> str:
+    """Extract client IP address from request, handling proxies"""
+    # Check for X-Forwarded-For header (common in reverse proxy setups)
+    forwarded_for = request.headers.get('x-forwarded-for')
+    if forwarded_for:
+        # Take the first IP in the chain (original client)
+        return forwarded_for.split(',')[0].strip()
+    
+    # Check for X-Real-IP header (nginx reverse proxy)
+    real_ip = request.headers.get('x-real-ip')
+    if real_ip:
+        return real_ip.strip()
+    
+    # Fallback to direct client IP
+    return request.client.host if request.client else 'unknown'
+
+def is_ip_allowed(ip_address: str, allowed_ips: List[str]) -> bool:
+    """Check if IP address is in the allowed list (supports CIDR notation)"""
+    if not allowed_ips:
+        return True  # If no restrictions configured, allow all
+    
+    try:
+        client_ip = ipaddress.ip_address(ip_address)
+        
+        for allowed_ip in allowed_ips:
+            try:
+                # Handle CIDR notation (e.g., "192.168.1.0/24")
+                if '/' in allowed_ip:
+                    network = ipaddress.ip_network(allowed_ip, strict=False)
+                    if client_ip in network:
+                        return True
+                else:
+                    # Handle single IP address
+                    if client_ip == ipaddress.ip_address(allowed_ip):
+                        return True
+            except ValueError:
+                # Invalid IP format, skip this entry
+                continue
+                
+        return False
+    except ValueError:
+        # Invalid client IP format
+        return False
+
+async def validate_employee_ip_access(request: Request, user: User):
+    """Validate that employee is accessing from allowed IP address"""
+    # Get company IP addresses from environment
+    company_ips_str = os.environ.get('COMPANY_IP_ADDRESSES', '')
+    
+    # If no company IPs configured, allow all access (for now)
+    if not company_ips_str.strip():
+        return True
+    
+    # Parse IP addresses (comma-separated)
+    company_ips = [ip.strip() for ip in company_ips_str.split(',') if ip.strip()]
+    
+    # Get client IP
+    client_ip = get_client_ip(request)
+    
+    # Check if user is employee (applies restrictions only to employees, not managers)
+    if user.role in ['employee']:  # Add more roles here if needed
+        if not is_ip_allowed(client_ip, company_ips):
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied: Employee access restricted to company IP addresses. Your IP: {client_ip}"
+            )
+    
+    return True
+
+async def get_current_user_with_ip_validation(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security), 
+    location: str = Depends(get_location_from_header)
+):
+    """Get current user with IP address validation for employees"""
+    # First get the user using existing authentication
+    user = await get_current_user(credentials, location)
+    
+    # Then validate IP access for employees
+    await validate_employee_ip_access(request, user)
+    
+    return user
+
 async def get_pricing_config() -> PricingConfig:
     """Get current pricing configuration from database"""
     pricing_doc = await db.pricing_config.find_one({})
