@@ -4326,6 +4326,100 @@ function App({ locationId }) {
         </div>
       )}
 
+      {/* ID Scanner Dialog */}
+      {showIdScanner && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-lg w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Scan Driver's License</h3>
+            <p className="text-gray-600 mb-6">
+              Scan a customer's driver's license to automatically fill in their information
+            </p>
+            
+            <div className="space-y-4">
+              {/* File Upload Option */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Camera className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600 mb-4">Choose an option to scan the ID:</p>
+                  
+                  {/* Camera Capture Button */}
+                  <button
+                    type="button"
+                    onClick={handleIdScanFromCamera}
+                    disabled={idScanLoading}
+                    className="w-full mb-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
+                  >
+                    📷 Use Camera
+                  </button>
+                  
+                  {/* File Upload */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) {
+                        scanIdWithFile(file);
+                      }
+                    }}
+                    disabled={idScanLoading}
+                    className="hidden"
+                    id="id-file-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => document.getElementById('id-file-input').click()}
+                    disabled={idScanLoading}
+                    className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
+                  >
+                    📁 Upload Image
+                  </button>
+                </div>
+                
+                {idScanLoading && (
+                  <div className="mt-4 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                    <span className="ml-2 text-sm text-gray-600">Scanning ID...</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Instructions */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-2">📋 Tips for best results:</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Ensure good lighting with no shadows or glare</li>
+                  <li>• Keep the license flat and fully visible</li>
+                  <li>• Take photo straight-on (not at an angle)</li>
+                  <li>• Make sure all text is clearly readable</li>
+                </ul>
+              </div>
+            </div>
+            
+            {/* Modal Buttons */}
+            <div className="flex space-x-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowIdScanner(false)}
+                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowIdScanner(false);
+                  setShowAddCustomer(true);
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                Skip & Add Manually
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Check-in Dialog */}
       {showCheckIn && selectedCustomer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
