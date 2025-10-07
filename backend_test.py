@@ -2360,6 +2360,9 @@ class BathhouseAPITester:
         print("🎯 PRIORITY TESTS FROM REVIEW REQUEST")
         print("="*80)
         
+        # SPECIFIC REQUEST: Test Los Angeles Authentication System
+        self.test_los_angeles_authentication_specific()
+        
         # 1. Transaction Completion Fix - JWT_SECRET environment variable fix
         self.test_jwt_authentication_fix()
         
