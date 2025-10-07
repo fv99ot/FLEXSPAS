@@ -5285,9 +5285,9 @@ function LoginPage({ locationId, locationName }) {
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
       
-      setIsAuthenticated(true);
-      setUser(userData);
-      setLoginForm({ username: '', password: '' });
+      // Force a page refresh by navigating to the same location
+      // This ensures the App component re-initializes with the new authentication state
+      window.location.href = window.location.pathname;
     } catch (error) {
       console.error('Login error:', error);
       alert('Invalid credentials. Please check your username and password.');
