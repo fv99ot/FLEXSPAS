@@ -266,9 +266,17 @@ function App({ locationId }) {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
+    console.log('🔍 App: Checking authentication on mount');
+    console.log('Token exists:', !!token);
+    console.log('User data exists:', !!userData);
+    console.log('Current isAuthenticated state:', isAuthenticated);
+    
     if (token && userData) {
+      console.log('✅ App: Setting authenticated state to true');
       setIsAuthenticated(true);
       setUser(JSON.parse(userData));
+    } else {
+      console.log('❌ App: No authentication found');
     }
   }, []);
 
