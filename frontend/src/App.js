@@ -3470,7 +3470,7 @@ function App({ locationId }) {
                         </div>
                       </div>
                       
-                      {salesReport.breakdown && salesReport.breakdown.length > 0 && (
+                      {salesData.breakdown && salesData.breakdown.length > 0 && (
                         <div className="mt-4">
                           <h5 className="font-semibold text-white mb-2">Transaction Breakdown:</h5>
                           <div className="space-y-2">
