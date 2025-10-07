@@ -2510,7 +2510,7 @@ async def get_membership_form_qr():
         # Fallback with current environment URL
         frontend_url = os.environ.get('FRONTEND_URL')
         return {
-            "qr_code_url": "https://via.placeholder.com/200x200?text=QR+Code",
+            "qr_code_url": f"{frontend_url}/api/qr/membership",
             "membership_form_url": f"{frontend_url}/membership"
         }
 
