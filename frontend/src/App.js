@@ -3827,11 +3827,8 @@ function App({ locationId }) {
                     {/* Room Map Tab Removed */}
                       <div className="space-y-6">
                         <p className="text-gray-300 text-center">Room Map has been moved to the "Check-ins & Room Map" tab.</p>
-                        <div>
-                          <h3 className="text-xl font-semibold text-white mb-3 flex items-center">
-                            <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-                            LOCKERS (40-153)
-                          </h3>
+                      </div>
+                    </TabsContent>
                           <div className="grid grid-cols-12 gap-1">
                             {roomMap.lockers.map((locker) => (
                               <div
