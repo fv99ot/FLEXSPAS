@@ -3845,11 +3845,10 @@ function App({ locationId }) {
                     </TabsContent>
 
                     {/* Room Map Tab Removed */}
-                    <TabsContent value="roommap">
-                      <div className="space-y-6">
-                        <p className="text-gray-300 text-center">Room Map has been moved to the "Check-ins & Room Map" tab.</p>
-                      </div>
-                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
           )}
           
         </Tabs>
