@@ -3826,24 +3826,9 @@ function App({ locationId }) {
 
                     {/* Room Map Tab Removed */}
                       <div className="space-y-6">
-                        <div className="flex space-x-4 text-sm">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-green-500 rounded"></div>
-                            <span className="text-gray-300">Available</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-red-500 rounded"></div>
-                            <span className="text-gray-300">Occupied (click to manage)</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="w-4 h-4 bg-black border border-gray-400 rounded"></div>
-                            <span className="text-gray-300">Employee Assigned</span>
-                          </div>
-                        </div>
-
-                        <Button onClick={fetchRoomMap} className="flex-button mb-4">
-                          Refresh Map
-                        </Button>
+                        <p className="text-gray-300 text-center">Room Map has been moved to the "Check-ins & Room Map" tab.</p>
+                      </div>
+                    </TabsContent>
 
                         {/* Lockers Section */}
                         <div>
