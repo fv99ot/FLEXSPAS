@@ -2624,6 +2624,258 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_users_endpoint_error_investigation(self):
+        """INVESTIGATE /api/users ENDPOINT 500 ERROR AS REQUESTED IN REVIEW"""
+        print("\n🚨 INVESTIGATING /api/users ENDPOINT 500 ERROR...")
+        print("   User reports: Frontend trying to fetch employees with X-Location header but getting 500 errors")
+        print("   This is blocking employee management functionality where new employees don't show up")
+        print("   Testing: GET /api/users with los-angeles location header")
+        print("   Testing: Both authenticated and unauthenticated requests")
+        print("   Checking: Backend logs for specific error details")
+        print("   Verifying: Multi-location database setup impact")
+        
+        all_success = True
+        
+        # TEST 1: Test /api/users endpoint with los-angeles location header (authenticated)
+        print("   TEST 1: GET /api/users with los-angeles location header (authenticated)...")
+        try:
+            headers_with_location = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}',
+                'X-Location': 'los-angeles'
+            }
+            
+            response = requests.get(
+                f"{self.api_url}/users",
+                headers=headers_with_location,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            print(f"      Response Headers: {dict(response.headers)}")
+            
+            if response.status_code == 200:
+                users = response.json()
+                print(f"      Response Body: {json.dumps(users, indent=2)}")
+                
+                # Check response structure
+                is_list = isinstance(users, list)
+                has_users = len(users) > 0 if is_list else False
+                
+                # Check user structure if users exist
+                valid_user_structure = True
+                if has_users:
+                    first_user = users[0]
+                    required_fields = ['id', 'username', 'role']
+                    valid_user_structure = all(field in first_user for field in required_fields)
+                
+                users_success = is_list and valid_user_structure
+                
+                details = f"Is list: {is_list}, Has users: {has_users}, Valid structure: {valid_user_structure}, Count: {len(users) if is_list else 0}"
+                self.log_test("Users Endpoint (Authenticated + Location)", users_success, details)
+                
+                if not users_success:
+                    all_success = False
+            else:
+                error_body = response.text
+                print(f"      Error Response: {error_body}")
+                
+                # Check if it's the expected 500 error
+                is_500_error = response.status_code == 500
+                
+                self.log_test("Users Endpoint (Authenticated + Location)", False, 
+                            f"Status: {response.status_code} (Expected 500 error reproduced: {is_500_error})")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Users Endpoint (Authenticated + Location)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 2: Test /api/users endpoint without location header (authenticated)
+        print("   TEST 2: GET /api/users without location header (authenticated)...")
+        try:
+            headers_no_location = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}'
+            }
+            
+            response = requests.get(
+                f"{self.api_url}/users",
+                headers=headers_no_location,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                users = response.json()
+                users_success = isinstance(users, list)
+                
+                details = f"Users count: {len(users) if users_success else 0}"
+                self.log_test("Users Endpoint (Authenticated, No Location)", users_success, details)
+                
+                if not users_success:
+                    all_success = False
+            else:
+                print(f"      Error Response: {response.text}")
+                
+                # Check if it's the same 500 error
+                is_500_error = response.status_code == 500
+                
+                self.log_test("Users Endpoint (Authenticated, No Location)", False, 
+                            f"Status: {response.status_code} (500 error: {is_500_error})")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Users Endpoint (Authenticated, No Location)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 3: Test /api/users endpoint unauthenticated
+        print("   TEST 3: GET /api/users unauthenticated...")
+        try:
+            headers_no_auth = {
+                'Content-Type': 'application/json',
+                'X-Location': 'los-angeles'
+            }
+            
+            response = requests.get(
+                f"{self.api_url}/users",
+                headers=headers_no_auth,
+                timeout=10
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            
+            # Should return 403 or 401 for unauthenticated request
+            proper_auth_error = response.status_code in [401, 403]
+            
+            self.log_test("Users Endpoint (Unauthenticated)", proper_auth_error, 
+                        f"Status: {response.status_code} (should be 401/403)")
+            
+            if not proper_auth_error:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Users Endpoint (Unauthenticated)", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 4: Test other location headers
+        print("   TEST 4: GET /api/users with other location headers...")
+        other_locations = ['atlanta', 'cleveland', 'phoenix']
+        
+        for location in other_locations:
+            try:
+                headers_with_location = {
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {self.token}',
+                    'X-Location': location
+                }
+                
+                response = requests.get(
+                    f"{self.api_url}/users",
+                    headers=headers_with_location,
+                    timeout=10
+                )
+                
+                print(f"      {location.title()} - Status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    users = response.json()
+                    users_success = isinstance(users, list)
+                    
+                    details = f"Users count: {len(users) if users_success else 0}"
+                    self.log_test(f"Users Endpoint {location.title()}", users_success, details)
+                    
+                    if not users_success:
+                        all_success = False
+                else:
+                    # Check if it's the same 500 error pattern
+                    is_500_error = response.status_code == 500
+                    
+                    self.log_test(f"Users Endpoint {location.title()}", False, 
+                                f"Status: {response.status_code} (500 error: {is_500_error})")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Users Endpoint {location.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 5: Test if the issue is related to super_admin role validation
+        print("   TEST 5: Investigating super_admin role validation issue...")
+        try:
+            # Try to login as super admin to see if super_admin users exist
+            super_admin_response = requests.post(
+                f"{self.api_url}/login",
+                json={"username": "admin1", "password": "admin1123"},
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            super_admin_exists = super_admin_response.status_code == 200
+            
+            if super_admin_exists:
+                super_admin_data = super_admin_response.json()
+                user_role = super_admin_data.get('user', {}).get('role')
+                is_super_admin_role = user_role == 'super_admin'
+                
+                details = f"Super admin login successful: {super_admin_exists}, Role: {user_role}, Is super_admin: {is_super_admin_role}"
+                self.log_test("Super Admin Role Investigation", True, details)
+                
+                print(f"      🔍 DIAGNOSIS: Super admin users exist with role 'super_admin'")
+                print(f"      🔍 DIAGNOSIS: UserRole enum likely only accepts 'manager'/'employee'")
+                print(f"      🔍 DIAGNOSIS: This causes Pydantic validation error in /api/users endpoint")
+                
+            else:
+                self.log_test("Super Admin Role Investigation", False, 
+                            f"Super admin login failed: {super_admin_response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Super Admin Role Investigation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 6: Test employee management functionality impact
+        print("   TEST 6: Testing employee management functionality impact...")
+        try:
+            # Try to create a new user (employee) to see if this works
+            new_user_data = {
+                "username": f"test_employee_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                "password": "testpass123",
+                "role": "employee"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/users",
+                json=new_user_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            print(f"      Create User Status: {response.status_code}")
+            
+            if response.status_code == 200:
+                created_user = response.json()
+                user_created = 'id' in created_user and created_user.get('username') == new_user_data['username']
+                
+                self.log_test("Employee Creation", user_created, 
+                            f"Created user: {created_user.get('username')}, ID: {created_user.get('id')}")
+                
+                if user_created:
+                    print(f"      ✅ Employee creation works - issue is only with listing employees")
+                    print(f"      🔍 DIAGNOSIS: New employees are created but can't be displayed due to /api/users error")
+                else:
+                    all_success = False
+            else:
+                print(f"      Error Response: {response.text}")
+                self.log_test("Employee Creation", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Employee Creation", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all tests and return summary"""
         print("🚀 Starting Spa Management System API Tests...")
