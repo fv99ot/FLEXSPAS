@@ -384,9 +384,9 @@ function App({ locationId }) {
       localStorage.setItem('token', access_token);
       localStorage.setItem('user', JSON.stringify(userData));
       
-      // Reload the page so the parent App component can detect authentication
-      // and show the full admin dashboard
-      window.location.reload();
+      // Force a page refresh by navigating to the same location
+      // This ensures the App component re-initializes with the new authentication state
+      window.location.href = window.location.pathname;
     } catch (error) {
       console.error('Login error:', error);
       alert('Invalid credentials. Please check your username and password.');
