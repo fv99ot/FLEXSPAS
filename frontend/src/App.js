@@ -620,6 +620,105 @@ function App({ locationId }) {
     }
   };
 
+  // ID Scanning Functions
+  const scanIdWithFile = async (file) => {
+    setIdScanLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please log in again to continue.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      };
+
+      // Add location header for multi-location support
+      if (locationId) {
+        headers['X-Location'] = locationId;
+      } else if (currentLocation) {
+        headers['X-Location'] = currentLocation;
+      }
+
+      const response = await axios.post(`${API}/api/scan/id`, formData, { headers });
+      
+      if (response.data.success) {
+        setScannedIdData(response.data.data);
+        // Auto-fill the add customer form with scanned data
+        setNewCustomer({
+          first_name: response.data.data.first_name || '',
+          last_name: response.data.data.last_name || '',
+          email: '',  // ID doesn't contain email
+          phone: '',  // ID doesn't contain phone
+          date_of_birth: response.data.data.date_of_birth || '',
+          address: response.data.data.address || '',
+          city: response.data.data.city || '',
+          state: response.data.data.state || '',
+          zip_code: response.data.data.zip_code || '',
+          id_number: response.data.data.id_number || '',
+          id_expiration: response.data.data.expiration_date || ''
+        });
+        
+        console.log('✅ ID scanned successfully:', response.data.data);
+        alert('ID scanned successfully! Customer information has been pre-filled.');
+        setShowIdScanner(false);
+        setShowAddCustomer(true);  // Open the add customer form
+      } else {
+        alert(`ID scanning failed: ${response.data.error_message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('ID scanning error:', error);
+      if (error.response?.status === 400) {
+        alert(`File error: ${error.response.data.detail}`);
+      } else {
+        alert('ID scanning failed. Please try again or add customer information manually.');
+      }
+    } finally {
+      setIdScanLoading(false);
+    }
+  };
+
+  const handleIdScanFromCamera = async () => {
+    // Check if device supports camera
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Camera not supported on this device. Please use file upload instead.');
+      return;
+    }
+
+    try {
+      // Request camera access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment',  // Use back camera on mobile
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        } 
+      });
+      
+      // Create video element for preview
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.playsInline = true;
+      
+      // We'll implement the camera capture UI in the modal
+      // For now, just show alert about camera access
+      alert('Camera access granted! Camera scanning interface will be available in the modal.');
+      
+      // Stop the stream for now
+      stream.getTracks().forEach(track => track.stop());
+      
+    } catch (error) {
+      console.error('Camera access error:', error);
+      alert('Camera access denied or not available. Please use file upload instead.');
+    }
+  };
+
   const upgradeFromWaitlist = async (entryId, roomNumber, roomType) => {
     try {
       const token = localStorage.getItem('token');
