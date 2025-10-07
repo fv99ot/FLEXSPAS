@@ -5239,14 +5239,15 @@ function LoginPage({ locationId, locationName }) {
 
   const currentLogo = locationLogos[locationId] || locationLogos['los-angeles'];
 
-  // Check authentication on component mount
+  // Check authentication on component mount and redirect if authenticated
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
     if (token && userData) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(userData));
+      // If already authenticated, just reload the page to show main dashboard
+      // The parent component will handle the authenticated state
+      window.location.reload();
     }
   }, []);
 
