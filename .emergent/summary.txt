@@ -1,88 +1,52 @@
 <analysis>
-The trajectory documents an intensely iterative development and bug-fixing process for the Flex Spa Los Angeles application. The work began by addressing user-reported issues on a deployed application, starting with a non-functional customer search and multiple problems with the QR code registration form (wrong URL, poor readability). The engineer systematically fixed these UI and configuration issues.
-
-Subsequently, development shifted to a mix of feature enhancements and critical bug fixes. New features included adding edit/delete functionality for discounts and items, and displaying checkout times on the room map. Critical bugs involving payment security were a major focus. The engineer implemented a two-step prepare/complete pattern to fix flaws where check-ins and room upgrades were applied *before* payment was confirmed, preventing unpaid service access. This pattern was applied to standard check-ins, room upgrades, and waitlist upgrades.
-
-The process also involved database cleanup (implementing hard deletes), resolving UI layering (z-index) problems, and handling JWT token expiration gracefully. A major recurring issue was a persistent payment processing error during check-in, which was investigated multiple times and finally traced to a database field name mismatch in the backend.
-
-The trajectory concludes with the user making a massive request to transform the single-location app into a multi-location enterprise system with a new landing page and significant UI changes. The engineer's last action was to acknowledge this and decide to first fix a lingering QR code redirection bug.
+The AI engineer's work has primarily focused on transforming a single-location spa application into a multi-location enterprise system. This involved extensive modifications to both frontend (React.js) and backend (FastAPI) to support location-specific databases and authentication flows. Key implementations included a new landing page, dedicated admin login pages, and a super-admin dashboard. Persistent challenges revolved around frontend React state management, particularly React hooks violations leading to blank screens after login. The engineer also addressed specific UI redesigns, updated room pricing, fixed transaction issues, and implemented location-specific branding. Despite iterative fixes and troubleshooting, the core problem of a stable, fully functional authenticated admin dashboard rendering after login remained a recurring issue, leading to user frustration and concerns about repeated billing.
 </analysis>
 
 <product_requirements>
-The Flex Spa application is a comprehensive management system for a multi-location spa business. Initially built for a single location, the core requirements include robust customer and membership management with role-based logins (Staff, Manager, Super-Admin) and a QR code-based public registration form.
-
-The system must handle the entire customer lifecycle: check-in/checkout, enforcement of session limits (e.g., 8 hours), overtime billing, and room/locker assignments visualized on an interactive map. All financial activities, including membership purchases, renewals, upgrades, additional item sales, and refunds, are managed through a unified and secure transaction system. A critical security requirement is that no service (check-in, upgrade) is granted until payment is successfully processed.
-
-The system features a waitlist that enforces a fair queue, preventing customers from jumping the line unless a manager provides a password override. It also includes an admin panel for managing pricing, discounts, and sales reporting.
-
-The latest requirement is a major architectural overhaul to support multiple locations (Atlanta, Cleveland, etc.), each with its own isolated database but accessible to a single super-admin. This includes a new public-facing landing page and significant UI redesigns, such as tab consolidation and dynamic favicon badges for alerts.
+The Flex Spa application is a multi-location spa management system for locations like Atlanta, Cleveland, Los Angeles, and Phoenix. It requires customer and membership management with role-based logins (Staff, Manager, Super-Admin), QR code public registration, and features for check-in/checkout, session limits, overtime billing, and room/locker assignments. Secure financial transactions with a prepare/complete flow are mandatory. A waitlist with manager override is also needed. The application features a -inspired public landing page with location links. UI redesigns were requested for tab consolidation, dynamic favicon badges for overtime alerts, and a black, white, and red color scheme. A specific user hierarchy includes three Super-Admins with cross-location access and four Store Managers (one per location). A dedicated ADMIN LOGIN button should lead to a secure login page. Further updates included specific hero text, refined login page fonts, updated location addresses, removal of the About tab from the header, and removal of preset passwords from login forms. Room types and pricing were updated to: Locker (5/8), Regular Room (3/6), Video Room (0/5), Large Video Room (5/0), with specific upgrade pricing math.
 </product_requirements>
 
 <key_technical_concepts>
-- **Backend**: FastAPI (Python) for the REST API.
-- **Frontend**: React.js with Tailwind CSS and Shadcn UI components.
-- **Database**: MongoDB, using UUIDs instead of ObjectIds for IDs.
+- **Backend**: FastAPI (Python), REST API for business logic and database interactions.
+- **Frontend**: React.js, React Router (v6.30.1), Tailwind CSS, Shadcn UI components for user interface.
+- **Database**: MongoDB, utilizing UUIDs for primary keys.
 - **Authentication**: JWT (JSON Web Tokens) with an 8-hour expiration.
-- **Payment Security Pattern**: A two-step prepare/complete transaction flow for critical actions (check-in, upgrades) to ensure services are not rendered before payment is confirmed.
-- **API Interaction**: Axios for frontend HTTP requests.
+- **API Interaction**: Axios for client-side HTTP requests.
 - **Asynchronous Operations**: Extensive use of  in both frontend and backend.
 </key_technical_concepts>
 
 <code_architecture>
-The application is a standard monorepo with a React frontend and a FastAPI backend.
+The application uses a standard monorepo structure:
 
-
-
-- ****
-    - **Importance**: This is the monolithic backend file containing all API endpoints, business logic, and database interactions for the entire application.
-    - **Changes Made**: This file has undergone extensive modifications. Key changes include:
-        - Addition of two-step transaction endpoints (, , , etc.) to enforce payment security.
-        - Implementation of waitlist management endpoints, including logic for queue enforcement and manager overrides.
-        - Addition of hard-delete endpoints for discounts and additional items.
-        - Refactoring of the active check-ins endpoint () to return checkout times and fix field name mismatches ( vs ).
-        - Logic adjustments for membership renewals to correctly add time instead of resetting it.
-
-- ****
-    - **Importance**: This is the core, monolithic frontend component. It manages almost all application state, API calls, and renders all UI views, dialogs, and tabs.
-    - **Changes Made**: This file has been heavily modified throughout the trajectory. Key changes include:
-        - Refactoring check-in, room upgrade, and waitlist upgrade functions to use the new two-step API endpoints.
-        - Adding state and handler functions for numerous new features, including edit dialogs for discounts/items and a manager password override dialog.
-        - Implementing complex UI logic for the waitlist to display available rooms and upgrade options.
-        - Fixing multiple UI bugs, most notably correcting z-index values on all modal dialogs to ensure dropdowns render correctly.
-        - Improving error handling for API calls, especially for JWT token expiration, which now triggers an automatic logout.
-
-- ****
-    - **Importance**: This component is the public-facing new member registration form, accessed via the QR code.
-    - **Changes Made**: Styling was adjusted to improve readability, including increasing text contrast, changing input field text color to black, and making the waiver text more legible. The backend URL was corrected to use environment variables.
-
-- ****
-    - **Importance**: The main HTML entry point for the React application.
-    - **Changes Made**: The Made with Emergent badge and associated analytics scripts (PostHog) were removed at the user's request to de-brand the application for standalone deployment. The page title was also updated.
-
-- ** & **
-    - **Importance**: These files manage environment variables, crucially the backend URL () for the frontend and the public-facing URL () for the backend (used in QR code generation).
-    - **Changes Made**: The  in the backend was updated to point to the correct deployed application URL instead of the preview environment to fix the QR code destination.
+- ****: Core API with multi-location database handling via  header. Implements user roles, default user creation, and authentication logic. Modifications included adding , removing hardcoded database names/fallbacks, manager/super-admin passwords, and refining room pricing/upgrade logic.
+- ****: Central React component for routing, state management, and main UI. Heavily refactored for multi-location authentication, conditional rendering, tab organization (merging Active Check-ins with Room Map, Transactions with Sales Reports), transaction handling (adding  header), and dynamic favicon implementation (temporarily removed due to React hooks issues). Contains  component for location-specific logins and  for super-admin.
+- ****: Public landing page, created from scratch. Displays Flex Spas branding, hero section, location cards, and navigates to login pages. Modified hero text and removed About from header.
+- ****: Dedicated super-admin login page. Created and styled, preset passwords removed.
+- ****: Public registration form. Updated to remove hardcoded backend URL fallbacks.
+- ** files**:  updated to include , ,  (from environment variables), and .  unchanged.
 </code_architecture>
 
 <pending_tasks>
-The user has requested a major architectural and feature overhaul.
-- **Multi-Location Architecture**: Convert the app to support multiple locations (Atlanta, Cleveland, etc.), each with its own database, under one super-admin.
-- **New Landing Page**: Create a new main page that mimics , with links to each location's login portal.
-- **UI Redesign**:
-    - Merge Pending Approval & QR code tabs.
-    - Add a dynamic favicon badge showing the number of customers in overtime.
-    - Change the tab layout from two bars to circled highlighted tabs.
-- **Bug Fix**: The QR code redirects to the admin login portal instead of the customer registration form.
+- Fully implement and stabilize the dynamic favicon badge for overtime customers (currently removed due to React hooks issues).
+- Resolve the persistent blank white screen after login issue, ensuring the full admin dashboard loads automatically without React hooks violations.
+- Ensure all UI redesign elements, including the circled highlighted tabs, are correctly and stably rendered.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was faced with a series of critical, user-reported issues after having just fixed a persistent payment processing error. The user reported three final issues: a persistent check-in payment error, QR codes pointing to the wrong environment, and a feature request for waitlist queue enforcement.
+Immediately prior to this summary, the AI engineer was focused on resolving a critical and persistent blank white screen after login issue. This error stemmed from React hooks violations within the  component, preventing the full admin dashboard from rendering correctly. Previous work involved numerous attempts to restructure conditional rendering and remove problematic  calls.
 
-The AI prioritized and successfully implemented the waitlist queue enforcement with a manager password override system. This involved significant changes to both the backend check-in logic and the frontend UI to include a new manager approval dialog.
+Despite these efforts, the login process now correctly displays the login page and processes credentials, but after successful authentication, it presents a simplified Authentication Successful ✅ screen with user details instead of the full tabbed admin interface. Attempts to automatically load the full dashboard led back to blank screens or compilation errors, suggesting deep-seated JSX and hooks issues.
 
-However, the user's final message in the trajectory was a massive pivot, requesting a complete architectural transformation of the application from a single-site tool into a multi-location enterprise system with a new landing page and a different UI. The AI engineer's very last action was to acknowledge this huge new scope of work and decide on the immediate first step: fixing the lingering issue of the QR code redirecting to the admin login page instead of the customer registration form. The project is therefore at a critical juncture, having just resolved a series of stability bugs and now facing a complete architectural redesign.
+Concurrently, the engineer had completed several tasks:
+1.  **Deployment Readiness**: Removed hardcoded configurations (database names, JWT secret, passwords) from the backend.
+2.  **Location-Specific Logos**: Implemented and resized distinct logos for each location on their respective login pages.
+3.  **Transaction Error**: Fixed a recurring error completing transaction by ensuring the backend  was present and frontend API calls included the  header.
+4.  **Room & Pricing Updates**: Updated room types (Locker, Regular, Video, Large Video) with new weekday/weekend prices and corrected upgrade pricing calculations.
+5.  **Tab Reorganization**: The UI tabs were re-arranged to combine Active Check-ins with Room Map and Transactions with Sales Reports.
+
+The user expressed significant frustration regarding the recurring login issues and associated billing. The AI engineer advised contacting support for billing concerns. The application is currently in a state where the login page loads, authentication succeeds, but the full admin dashboard does not render stably or automatically.
 </current_work>
 
 <optional_next_step>
-Fix the QR code redirection issue. The QR code currently directs users to the admin login portal instead of the public customer registration form, which is a critical bug blocking new customer sign-ups.
+Fully restore the admin dashboard in  to render automatically after successful login, ensuring no React hooks violations.
 </optional_next_step>

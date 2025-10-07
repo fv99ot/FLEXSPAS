@@ -5,7 +5,7 @@ import sys
 def create_michael_customer():
     """Create a test customer named Michael Johnson for frontend testing"""
     
-    base_url = "https://flexspa-manager-1.preview.emergentagent.com"
+    base_url = "https://flex-enterprise-1.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
     # Login first
