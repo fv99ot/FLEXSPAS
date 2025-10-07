@@ -2892,6 +2892,9 @@ class BathhouseAPITester:
         print("🎯 PRIORITY TESTS FROM REVIEW REQUEST")
         print("="*80)
         
+        # HIGHEST PRIORITY: Investigate /api/users endpoint 500 error
+        self.test_users_endpoint_error_investigation()
+        
         # SPECIFIC REQUEST: Test Los Angeles Authentication System
         self.test_los_angeles_authentication_specific()
         
