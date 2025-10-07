@@ -3462,7 +3462,7 @@ function App({ locationId }) {
                         </div>
                         <div>
                           <p className="text-gray-300">Check-ins:</p>
-                          <p className="text-white font-semibold">{salesReport.checkin_count || 0}</p>
+                          <p className="text-white font-semibold">{salesData.checkin_count || 0}</p>
                         </div>
                         <div>
                           <p className="text-gray-300">Additional Items:</p>
