@@ -55,6 +55,7 @@ security = HTTPBearer()
 class UserRole(str, Enum):
     MANAGER = "manager"
     EMPLOYEE = "employee"
+    SUPER_ADMIN = "super_admin"
 
 class MembershipType(str, Enum):
     ONE_DAY = "1_day"
