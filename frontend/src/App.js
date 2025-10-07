@@ -3454,7 +3454,7 @@ function App({ locationId }) {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-gray-300">Total Revenue:</p>
-                          <p className="text-white font-semibold">${salesReport.total_revenue?.toFixed(2) || '0.00'}</p>
+                          <p className="text-white font-semibold">${salesData.total_revenue?.toFixed(2) || '0.00'}</p>
                         </div>
                         <div>
                           <p className="text-gray-300">Total Transactions:</p>
