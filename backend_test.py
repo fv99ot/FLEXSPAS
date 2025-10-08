@@ -3172,6 +3172,264 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_global_analytics_endpoint(self):
+        """Test Global Analytics Endpoint as requested in review"""
+        print("\n📊 TESTING GLOBAL ANALYTICS ENDPOINT...")
+        print("   Testing GET /api/analytics/global endpoint with super admin authentication")
+        print("   Checking if endpoint requires authentication and what type")
+        print("   Verifying super admin user exists and can access analytics")
+        print("   Testing endpoint returns proper JSON response structure")
+        print("   Checking backend logs for any errors when endpoint is called")
+        print("   Verifying endpoint path and parameters are correct")
+        
+        all_success = True
+        
+        # TEST 1: Test without authentication (should fail)
+        print("   TEST 1: Test without authentication (should fail)...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/analytics/global",
+                headers={'Content-Type': 'application/json'},  # No auth header
+                timeout=10
+            )
+            
+            no_auth_rejected = response.status_code in [401, 403]
+            
+            self.log_test("Analytics No Auth Rejection", no_auth_rejected, 
+                        f"Status: {response.status_code} (should be 401/403)")
+            
+            if not no_auth_rejected:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Analytics No Auth Rejection", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 2: Test with regular admin authentication (should fail)
+        print("   TEST 2: Test with regular admin authentication (should fail)...")
+        if self.token:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/analytics/global",
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Authorization': f'Bearer {self.token}'
+                    },
+                    timeout=10
+                )
+                
+                regular_admin_rejected = response.status_code == 403
+                
+                self.log_test("Analytics Regular Admin Rejection", regular_admin_rejected, 
+                            f"Status: {response.status_code} (should be 403)")
+                
+                if not regular_admin_rejected:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Analytics Regular Admin Rejection", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Analytics Regular Admin Rejection", False, "No regular admin token available")
+            all_success = False
+        
+        # TEST 3: Test super admin login and token acquisition
+        print("   TEST 3: Super admin login and token acquisition...")
+        super_admin_token = None
+        super_admin_accounts = [
+            {"username": "admin1", "password": "admin1123"},
+            {"username": "admin2", "password": "admin2123"},
+            {"username": "admin3", "password": "admin3123"}
+        ]
+        
+        for admin in super_admin_accounts:
+            try:
+                response = requests.post(
+                    f"{self.api_url}/login",
+                    json={"username": admin["username"], "password": admin["password"]},
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    user_data = data.get('user', {})
+                    
+                    if user_data.get('role') == 'super_admin':
+                        super_admin_token = data['access_token']
+                        
+                        self.log_test(f"Super Admin Login {admin['username']}", True, 
+                                    f"Role: {user_data.get('role')}, Token acquired")
+                        break
+                    else:
+                        self.log_test(f"Super Admin Login {admin['username']}", False, 
+                                    f"Role: {user_data.get('role')} (expected super_admin)")
+                else:
+                    self.log_test(f"Super Admin Login {admin['username']}", False, 
+                                f"Status: {response.status_code}")
+                    
+            except Exception as e:
+                self.log_test(f"Super Admin Login {admin['username']}", False, f"Exception: {str(e)}")
+        
+        if not super_admin_token:
+            self.log_test("Super Admin Token Acquisition", False, "No super admin token acquired")
+            all_success = False
+            return all_success
+        else:
+            self.log_test("Super Admin Token Acquisition", True, "Super admin token acquired successfully")
+        
+        # TEST 4: Test analytics endpoint with super admin authentication
+        print("   TEST 4: Analytics endpoint with super admin authentication...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/analytics/global",
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {super_admin_token}'
+                },
+                timeout=30  # Longer timeout for analytics processing
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            print(f"      Response Headers: {dict(response.headers)}")
+            
+            if response.status_code == 200:
+                try:
+                    analytics_data = response.json()
+                    print(f"      Response Body Keys: {list(analytics_data.keys())}")
+                    
+                    # Check required fields in analytics response
+                    required_fields = [
+                        'report_generated', 'report_period', 'total_locations',
+                        'total_checkins', 'total_revenue', 'avg_stay_duration',
+                        'location_performance', 'peak_times', 'visitor_demographics',
+                        'top_performing_location', 'growth_metrics'
+                    ]
+                    
+                    has_required_fields = all(field in analytics_data for field in required_fields)
+                    
+                    # Check data types and structure
+                    valid_structure = True
+                    structure_details = []
+                    
+                    # Check basic types
+                    if not isinstance(analytics_data.get('total_locations'), int):
+                        valid_structure = False
+                        structure_details.append("total_locations not int")
+                    
+                    if not isinstance(analytics_data.get('total_checkins'), int):
+                        valid_structure = False
+                        structure_details.append("total_checkins not int")
+                    
+                    if not isinstance(analytics_data.get('total_revenue'), (int, float)):
+                        valid_structure = False
+                        structure_details.append("total_revenue not numeric")
+                    
+                    if not isinstance(analytics_data.get('location_performance'), list):
+                        valid_structure = False
+                        structure_details.append("location_performance not list")
+                    
+                    if not isinstance(analytics_data.get('peak_times'), list):
+                        valid_structure = False
+                        structure_details.append("peak_times not list")
+                    
+                    if not isinstance(analytics_data.get('visitor_demographics'), dict):
+                        valid_structure = False
+                        structure_details.append("visitor_demographics not dict")
+                    
+                    # Check location_performance structure
+                    location_performance = analytics_data.get('location_performance', [])
+                    if location_performance and isinstance(location_performance, list):
+                        first_location = location_performance[0]
+                        location_required_fields = [
+                            'location_id', 'location_name', 'total_checkins',
+                            'total_revenue', 'active_customers', 'avg_stay_duration',
+                            'peak_hour', 'occupancy_rate'
+                        ]
+                        location_structure_valid = all(field in first_location for field in location_required_fields)
+                        if not location_structure_valid:
+                            valid_structure = False
+                            structure_details.append("location_performance structure invalid")
+                    
+                    # Check visitor_demographics structure
+                    demographics = analytics_data.get('visitor_demographics', {})
+                    if isinstance(demographics, dict):
+                        demo_required_fields = ['age_groups', 'membership_types', 'repeat_customers', 'new_customers']
+                        demo_structure_valid = all(field in demographics for field in demo_required_fields)
+                        if not demo_structure_valid:
+                            valid_structure = False
+                            structure_details.append("visitor_demographics structure invalid")
+                    
+                    analytics_success = has_required_fields and valid_structure
+                    
+                    details = f"Required fields: {has_required_fields}, Valid structure: {valid_structure}"
+                    if structure_details:
+                        details += f", Issues: {', '.join(structure_details)}"
+                    
+                    self.log_test("Analytics Endpoint Response", analytics_success, details)
+                    
+                    if not analytics_success:
+                        all_success = False
+                        
+                    # Additional detailed logging for debugging
+                    print(f"      Total Locations: {analytics_data.get('total_locations')}")
+                    print(f"      Total Checkins: {analytics_data.get('total_checkins')}")
+                    print(f"      Total Revenue: {analytics_data.get('total_revenue')}")
+                    print(f"      Location Performance Count: {len(analytics_data.get('location_performance', []))}")
+                    print(f"      Peak Times Count: {len(analytics_data.get('peak_times', []))}")
+                    
+                except json.JSONDecodeError as e:
+                    self.log_test("Analytics Endpoint Response", False, f"Invalid JSON: {str(e)}")
+                    print(f"      Raw Response: {response.text[:500]}...")
+                    all_success = False
+                    
+            else:
+                error_text = response.text[:500] if response.text else "No error message"
+                self.log_test("Analytics Endpoint Response", False, 
+                            f"Status: {response.status_code}, Error: {error_text}")
+                print(f"      Error Response: {response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Analytics Endpoint Response", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 5: Test analytics endpoint with parameters
+        print("   TEST 5: Analytics endpoint with parameters...")
+        if super_admin_token:
+            try:
+                response = requests.get(
+                    f"{self.api_url}/analytics/global?days=7",
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Authorization': f'Bearer {super_admin_token}'
+                    },
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    analytics_data = response.json()
+                    
+                    # Check if report period reflects the parameter
+                    report_period = analytics_data.get('report_period', '')
+                    correct_period = '7' in report_period or 'Last 7 days' in report_period
+                    
+                    self.log_test("Analytics Endpoint Parameters", correct_period, 
+                                f"Report period: {report_period}")
+                    
+                    if not correct_period:
+                        all_success = False
+                else:
+                    self.log_test("Analytics Endpoint Parameters", False, 
+                                f"Status: {response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Analytics Endpoint Parameters", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all tests and return summary"""
         print("🚀 Starting Spa Management System API Tests...")
