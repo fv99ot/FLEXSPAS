@@ -4518,93 +4518,166 @@ function App({ locationId }) {
       {/* ID Scanner Dialog */}
       {showIdScanner && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-lg w-full mx-4">
+          <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Scan Driver's License</h3>
-            <p className="text-gray-600 mb-6">
-              Scan a customer's driver's license to automatically fill in their information
-            </p>
             
-            <div className="space-y-4">
-              {/* File Upload Option */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Camera className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600 mb-4">Choose an option to scan the ID:</p>
+            {!showCameraPreview ? (
+              <>
+                <p className="text-gray-600 mb-6">
+                  Scan a customer's driver's license to automatically fill in their information
+                </p>
+                
+                <div className="space-y-4">
+                  {/* File Upload Option */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                    <Camera className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600 mb-4">Choose an option to scan the ID:</p>
+                      
+                      {/* Camera Capture Button */}
+                      <button
+                        type="button"
+                        onClick={handleIdScanFromCamera}
+                        disabled={idScanLoading}
+                        className="w-full mb-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
+                      >
+                        📷 Use Camera
+                      </button>
+                      
+                      {/* File Upload */}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            scanIdWithFile(file);
+                          }
+                        }}
+                        disabled={idScanLoading}
+                        className="hidden"
+                        id="id-file-input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('id-file-input').click()}
+                        disabled={idScanLoading}
+                        className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
+                      >
+                        📁 Upload Image
+                      </button>
+                    </div>
+                    
+                    {idScanLoading && (
+                      <div className="mt-4 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                        <span className="ml-2 text-sm text-gray-600">Scanning ID...</span>
+                      </div>
+                    )}
+                  </div>
                   
-                  {/* Camera Capture Button */}
-                  <button
-                    type="button"
-                    onClick={handleIdScanFromCamera}
-                    disabled={idScanLoading}
-                    className="w-full mb-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
-                  >
-                    📷 Use Camera
-                  </button>
-                  
-                  {/* File Upload */}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      if (file) {
-                        scanIdWithFile(file);
+                  {/* Instructions */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-medium text-blue-900 mb-2">📋 Tips for best results:</h4>
+                    <ul className="text-sm text-blue-800 space-y-1">
+                      <li>• Ensure good lighting with no shadows or glare</li>
+                      <li>• Keep the license flat and fully visible</li>
+                      <li>• Take photo straight-on (not at an angle)</li>
+                      <li>• Make sure all text is clearly readable</li>
+                    </ul>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* Camera Preview Interface */
+              <div className="space-y-4">
+                <div className="text-center mb-4">
+                  <h4 className="text-lg font-medium text-gray-900">Position ID Card in Frame</h4>
+                  <p className="text-sm text-gray-600">Align the driver's license within the frame below</p>
+                </div>
+                
+                {/* Camera Preview */}
+                <div className="relative bg-black rounded-lg overflow-hidden">
+                  <video
+                    id="camera-preview"
+                    ref={(video) => {
+                      if (video && cameraStream) {
+                        video.srcObject = cameraStream;
                       }
                     }}
-                    disabled={idScanLoading}
-                    className="hidden"
-                    id="id-file-input"
+                    autoPlay
+                    playsInline
+                    className="w-full h-80 object-cover"
                   />
+                  
+                  {/* ID Card Overlay Frame */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="border-2 border-yellow-400 bg-yellow-400/10 rounded-lg" style={{
+                      width: '85%',
+                      height: '60%',
+                      boxShadow: 'inset 0 0 0 2px rgba(255, 255, 255, 0.3)'
+                    }}>
+                      <div className="text-yellow-400 text-sm font-medium text-center mt-2">
+                        Position ID Card Here
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Camera Controls */}
+                <div className="flex space-x-3">
                   <button
                     type="button"
-                    onClick={() => document.getElementById('id-file-input').click()}
-                    disabled={idScanLoading}
-                    className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
+                    onClick={stopCameraStream}
+                    className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
                   >
-                    📁 Upload Image
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={capturePhotoFromCamera}
+                    disabled={idScanLoading}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-md transition-colors flex items-center justify-center"
+                  >
+                    📸 Capture & Scan
                   </button>
                 </div>
                 
                 {idScanLoading && (
-                  <div className="mt-4 flex items-center justify-center">
+                  <div className="flex items-center justify-center py-4">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-sm text-gray-600">Scanning ID...</span>
+                    <span className="ml-2 text-sm text-gray-600">Processing captured image...</span>
                   </div>
                 )}
               </div>
-              
-              {/* Instructions */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">📋 Tips for best results:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Ensure good lighting with no shadows or glare</li>
-                  <li>• Keep the license flat and fully visible</li>
-                  <li>• Take photo straight-on (not at an angle)</li>
-                  <li>• Make sure all text is clearly readable</li>
-                </ul>
-              </div>
-            </div>
+            )}
             
-            {/* Modal Buttons */}
-            <div className="flex space-x-3 mt-6">
-              <button
-                type="button"
-                onClick={() => setShowIdScanner(false)}
-                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowIdScanner(false);
-                  setShowAddCustomer(true);
-                }}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
-              >
-                Skip & Add Manually
-              </button>
-            </div>
+            {/* Modal Buttons (only show when not in camera mode) */}
+            {!showCameraPreview && (
+              <div className="flex space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopCameraStream();
+                    setShowIdScanner(false);
+                  }}
+                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopCameraStream();
+                    setShowIdScanner(false);
+                    setShowAddCustomer(true);
+                  }}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+                >
+                  Skip & Add Manually
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
