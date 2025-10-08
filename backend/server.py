@@ -3105,7 +3105,7 @@ async def get_location_analytics(
         return {
             "location_id": location_id,
             "total_checkins": len(checkins),
-            "total_revenue": sum(t.get('amount', 0) for t in transactions),
+            "total_revenue": sum(t.get('total_amount', 0) for t in transactions),
             "total_customers": customers,
             "active_checkins": await db.checkins.count_documents({"checkout_time": {"$exists": False}}),
             "report_period": f"Last {days} days"
