@@ -3225,9 +3225,9 @@ class BathhouseAPITester:
         return self.get_summary()
 
 def main():
-    """Main test execution - Focus on reproducing transaction completion error"""
+    """Main test execution - Focus on ID scanning functionality"""
     print("🧪 FLEXSPA BACKEND API TESTING SUITE")
-    print("🚨 FOCUS: REPRODUCING 'ERROR COMPLETING TRANSACTION' ISSUE")
+    print("🆔 FOCUS: ID SCANNING FUNCTIONALITY TESTING")
     print("=" * 70)
     
     tester = BathhouseAPITester()
@@ -3238,27 +3238,27 @@ def main():
         return 1
     
     # Run the specific test requested in the review
-    print(f"\n🚀 Running Transaction Completion Error Reproduction Test...")
+    print(f"\n🚀 Running ID Scanning Functionality Test...")
     
     print(f"\n{'='*70}")
-    print(f"🧪 RUNNING: Transaction Completion Error Reproduction")
+    print(f"🧪 RUNNING: ID Scanning Functionality")
     print('='*70)
     
     try:
-        success = tester.test_transaction_completion_error_reproduction()
+        success = tester.test_id_scanning_functionality()
         if success:
-            print(f"✅ Transaction Completion Error Reproduction - ALL TESTS PASSED")
-            print(f"📝 BACKEND IS WORKING CORRECTLY - Issue is likely frontend-related")
+            print(f"✅ ID Scanning Functionality - ALL TESTS PASSED")
+            print(f"📝 ID SCANNING BACKEND IS WORKING CORRECTLY")
         else:
-            print(f"❌ Transaction Completion Error Reproduction - BACKEND ISSUES FOUND")
-            print(f"📝 BACKEND PROBLEMS MAY BE CAUSING USER'S TRANSACTION ERRORS")
+            print(f"❌ ID Scanning Functionality - BACKEND ISSUES FOUND")
+            print(f"📝 ID SCANNING PROBLEMS IDENTIFIED")
     except Exception as e:
-        print(f"💥 Transaction Completion Error Reproduction - EXCEPTION: {str(e)}")
+        print(f"💥 ID Scanning Functionality - EXCEPTION: {str(e)}")
     
     # Also run other critical tests if time permits
     additional_tests = [
+        ("Transaction Completion Error Reproduction", tester.test_transaction_completion_error_reproduction),
         ("Multi-Location Authentication System", tester.test_multi_location_authentication),
-        ("JWT Authentication Fix", tester.test_jwt_authentication_fix),
     ]
     
     print(f"\n🔄 Running Additional Critical Tests...")
