@@ -361,7 +361,10 @@ const SuperAdminDashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <button className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md">
+                <button 
+                  onClick={handleGlobalSettings}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                >
                   Manage Settings
                 </button>
               </div>
