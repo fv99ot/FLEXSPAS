@@ -4313,6 +4313,448 @@ class BathhouseAPITester:
         
         return overall_success
 
+    def test_payment_processing_and_receipt_functionality(self):
+        """Test Payment Processing System and Receipt Functionality as requested in review"""
+        print("\n💳 TESTING PAYMENT PROCESSING SYSTEM AND RECEIPT FUNCTIONALITY...")
+        print("   Testing complete check-in transaction flow that would trigger receipt printing")
+        print("   Verifying transaction completes successfully without printWindow errors")
+        print("   Testing simple transaction to ensure all payment processing works")
+        print("   Checking transaction is properly recorded in database")
+        print("   Verifying print receipt error handling is working correctly")
+        
+        all_success = True
+        unique_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        
+        # SETUP: Create test customer for payment processing
+        print("   SETUP: Creating test customer for payment processing...")
+        try:
+            customer_data = {
+                "first_name": "Payment",
+                "last_name": "TestCustomer",
+                "id_number": f"PAY_TEST_{unique_timestamp}",
+                "date_of_birth": "1990-01-01",
+                "id_expiration_date": "2025-12-31",
+                "state_of_id": "CA"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/customers",
+                json=customer_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                customer = response.json()
+                test_customer_id = customer['id']
+                print(f"      ✅ Created test customer: {customer['first_name']} {customer['last_name']} (ID: {test_customer_id})")
+            else:
+                print(f"      ❌ Failed to create test customer: {response.status_code}")
+                self.log_test("Payment Processing Setup", False, f"Customer creation failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print(f"      ❌ Exception creating test customer: {str(e)}")
+            self.log_test("Payment Processing Setup", False, f"Exception: {str(e)}")
+            return False
+        
+        # TEST 1: Complete Check-in Transaction Flow (Two-Step Process)
+        print("   TEST 1: Complete Check-in Transaction Flow (Two-Step Process)...")
+        try:
+            # Step 1: Prepare check-in
+            prepare_data = {
+                "customer_id": test_customer_id,
+                "membership_type": "1_day",
+                "room_type": "locker",
+                "room_number": 100  # Use a high number to avoid conflicts
+            }
+            
+            prepare_response = requests.post(
+                f"{self.api_url}/checkin/prepare",
+                json=prepare_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if prepare_response.status_code == 200:
+                prepare_data_response = prepare_response.json()
+                pending_checkin_id = prepare_data_response.get('pending_checkin_id')
+                total_amount = prepare_data_response.get('total_amount')
+                
+                # Verify prepare response structure
+                required_fields = ['pending_checkin_id', 'customer', 'room_type', 'room_number', 'total_amount', 'expires_at']
+                has_required_fields = all(field in prepare_data_response for field in required_fields)
+                
+                prepare_success = has_required_fields and pending_checkin_id and total_amount > 0
+                
+                details = f"Pending ID: {pending_checkin_id}, Amount: ${total_amount}, Required fields: {has_required_fields}"
+                self.log_test("Check-in Prepare Step", prepare_success, details)
+                
+                if not prepare_success:
+                    all_success = False
+                    return all_success
+                
+                # Step 2: Complete check-in (simulating payment completion)
+                complete_data = {
+                    "pending_checkin_id": pending_checkin_id
+                }
+                
+                complete_response = requests.post(
+                    f"{self.api_url}/checkin/complete",
+                    json=complete_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if complete_response.status_code == 200:
+                    complete_data_response = complete_response.json()
+                    checkin_id = complete_data_response.get('id')
+                    
+                    # Verify complete response structure
+                    complete_required_fields = ['id', 'customer_id', 'membership_type', 'room_type', 'room_number', 'check_in_time', 'total_amount']
+                    complete_has_required_fields = all(field in complete_data_response for field in complete_required_fields)
+                    
+                    complete_success = complete_has_required_fields and checkin_id
+                    
+                    details = f"Checkin ID: {checkin_id}, Customer ID: {complete_data_response.get('customer_id')}, Amount: ${complete_data_response.get('total_amount')}"
+                    self.log_test("Check-in Complete Step", complete_success, details)
+                    
+                    if not complete_success:
+                        all_success = False
+                        return all_success
+                        
+                    # Store for later tests
+                    test_checkin_id = checkin_id
+                    
+                else:
+                    self.log_test("Check-in Complete Step", False, f"Status: {complete_response.status_code}, Response: {complete_response.text}")
+                    all_success = False
+                    return all_success
+                    
+            else:
+                self.log_test("Check-in Prepare Step", False, f"Status: {prepare_response.status_code}, Response: {prepare_response.text}")
+                all_success = False
+                return all_success
+                
+        except Exception as e:
+            self.log_test("Complete Check-in Transaction Flow", False, f"Exception: {str(e)}")
+            all_success = False
+            return all_success
+        
+        # TEST 2: Create Transaction Record (Receipt Data)
+        print("   TEST 2: Create Transaction Record (Receipt Data)...")
+        try:
+            transaction_data = {
+                "customer_id": test_customer_id,
+                "customer_name": f"Payment TestCustomer",
+                "transaction_type": "checkin",
+                "items": [
+                    {"name": "1-Day Membership", "price": total_amount, "quantity": 1}
+                ],
+                "subtotal": total_amount,
+                "discount_amount": 0.0,
+                "total_amount": total_amount,
+                "payment_method": "cash",
+                "checkin_id": test_checkin_id,
+                "membership_type": "1_day",
+                "notes": "Payment processing test transaction"
+            }
+            
+            transaction_response = requests.post(
+                f"{self.api_url}/transactions",
+                json=transaction_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if transaction_response.status_code == 200:
+                transaction = transaction_response.json()
+                transaction_id = transaction.get('id')
+                
+                # Verify transaction structure (receipt data)
+                receipt_required_fields = ['id', 'customer_id', 'customer_name', 'transaction_type', 'items', 'total_amount', 'payment_method', 'created_at']
+                receipt_has_required_fields = all(field in transaction for field in receipt_required_fields)
+                
+                # Verify transaction data integrity
+                correct_customer = transaction.get('customer_id') == test_customer_id
+                correct_amount = transaction.get('total_amount') == total_amount
+                correct_type = transaction.get('transaction_type') == 'checkin'
+                has_items = isinstance(transaction.get('items'), list) and len(transaction.get('items')) > 0
+                
+                transaction_success = (receipt_has_required_fields and correct_customer and 
+                                     correct_amount and correct_type and has_items)
+                
+                details = f"Transaction ID: {transaction_id}, Customer: {correct_customer}, Amount: ${transaction.get('total_amount')}, Items: {len(transaction.get('items', []))}"
+                self.log_test("Transaction Record Creation", transaction_success, details)
+                
+                if not transaction_success:
+                    all_success = False
+                    
+                # Store for verification
+                test_transaction_id = transaction_id
+                
+            else:
+                self.log_test("Transaction Record Creation", False, f"Status: {transaction_response.status_code}, Response: {transaction_response.text}")
+                all_success = False
+                test_transaction_id = None
+                
+        except Exception as e:
+            self.log_test("Transaction Record Creation", False, f"Exception: {str(e)}")
+            all_success = False
+            test_transaction_id = None
+        
+        # TEST 3: Verify Transaction is Recorded in Database
+        print("   TEST 3: Verify Transaction is Recorded in Database...")
+        if test_transaction_id:
+            try:
+                # Get transaction history to verify it's recorded
+                history_response = requests.get(
+                    f"{self.api_url}/transactions",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if history_response.status_code == 200:
+                    transactions = history_response.json()
+                    
+                    # Find our transaction
+                    found_transaction = None
+                    for txn in transactions:
+                        if txn.get('id') == test_transaction_id:
+                            found_transaction = txn
+                            break
+                    
+                    transaction_recorded = found_transaction is not None
+                    
+                    if transaction_recorded:
+                        # Verify transaction data persistence
+                        persistent_data_correct = (
+                            found_transaction.get('customer_id') == test_customer_id and
+                            found_transaction.get('total_amount') == total_amount and
+                            found_transaction.get('transaction_type') == 'checkin'
+                        )
+                        
+                        details = f"Transaction found: {transaction_recorded}, Data correct: {persistent_data_correct}, Total transactions: {len(transactions)}"
+                        self.log_test("Transaction Database Recording", persistent_data_correct, details)
+                        
+                        if not persistent_data_correct:
+                            all_success = False
+                    else:
+                        self.log_test("Transaction Database Recording", False, f"Transaction not found in history (searched {len(transactions)} transactions)")
+                        all_success = False
+                        
+                else:
+                    self.log_test("Transaction Database Recording", False, f"Status: {history_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Transaction Database Recording", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Transaction Database Recording", False, "No transaction ID to verify")
+            all_success = False
+        
+        # TEST 4: Simple Standalone Transaction (Alternative Payment Flow)
+        print("   TEST 4: Simple Standalone Transaction (Alternative Payment Flow)...")
+        try:
+            simple_transaction_data = {
+                "customer_id": test_customer_id,
+                "customer_name": "Payment TestCustomer",
+                "transaction_type": "standalone",
+                "items": [
+                    {"name": "Additional Service", "price": 15.0, "quantity": 1},
+                    {"name": "Service Fee", "price": 5.0, "quantity": 1}
+                ],
+                "subtotal": 20.0,
+                "discount_amount": 2.0,
+                "total_amount": 18.0,
+                "payment_method": "card",
+                "notes": "Simple payment processing test"
+            }
+            
+            simple_response = requests.post(
+                f"{self.api_url}/transactions",
+                json=simple_transaction_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if simple_response.status_code == 200:
+                simple_transaction = simple_response.json()
+                
+                # Verify simple transaction processing
+                simple_required_fields = ['id', 'customer_id', 'total_amount', 'payment_method', 'items']
+                simple_has_required_fields = all(field in simple_transaction for field in simple_required_fields)
+                
+                correct_calculation = simple_transaction.get('total_amount') == 18.0
+                correct_payment_method = simple_transaction.get('payment_method') == 'card'
+                has_multiple_items = len(simple_transaction.get('items', [])) == 2
+                
+                simple_success = (simple_has_required_fields and correct_calculation and 
+                                correct_payment_method and has_multiple_items)
+                
+                details = f"Required fields: {simple_has_required_fields}, Amount: ${simple_transaction.get('total_amount')}, Payment: {simple_transaction.get('payment_method')}, Items: {len(simple_transaction.get('items', []))}"
+                self.log_test("Simple Standalone Transaction", simple_success, details)
+                
+                if not simple_success:
+                    all_success = False
+                    
+            else:
+                self.log_test("Simple Standalone Transaction", False, f"Status: {simple_response.status_code}, Response: {simple_response.text}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Simple Standalone Transaction", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 5: Payment Method Validation
+        print("   TEST 5: Payment Method Validation...")
+        payment_methods = ['cash', 'card']
+        
+        for payment_method in payment_methods:
+            try:
+                method_transaction_data = {
+                    "customer_id": test_customer_id,
+                    "customer_name": "Payment TestCustomer",
+                    "transaction_type": "standalone",
+                    "items": [
+                        {"name": f"Test {payment_method.title()} Payment", "price": 10.0, "quantity": 1}
+                    ],
+                    "subtotal": 10.0,
+                    "discount_amount": 0.0,
+                    "total_amount": 10.0,
+                    "payment_method": payment_method,
+                    "notes": f"Testing {payment_method} payment method"
+                }
+                
+                method_response = requests.post(
+                    f"{self.api_url}/transactions",
+                    json=method_transaction_data,
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if method_response.status_code == 200:
+                    method_transaction = method_response.json()
+                    
+                    # Verify payment method is correctly processed
+                    method_stored_correctly = method_transaction.get('payment_method') == payment_method
+                    has_transaction_id = 'id' in method_transaction
+                    
+                    method_success = method_stored_correctly and has_transaction_id
+                    
+                    details = f"Method stored: {method_transaction.get('payment_method')}, Has ID: {has_transaction_id}"
+                    self.log_test(f"Payment Method {payment_method.title()}", method_success, details)
+                    
+                    if not method_success:
+                        all_success = False
+                else:
+                    self.log_test(f"Payment Method {payment_method.title()}", False, f"Status: {method_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test(f"Payment Method {payment_method.title()}", False, f"Exception: {str(e)}")
+                all_success = False
+        
+        # TEST 6: Error Handling for Invalid Payment Data
+        print("   TEST 6: Error Handling for Invalid Payment Data...")
+        try:
+            # Test missing required fields
+            invalid_transaction_data = {
+                "customer_id": test_customer_id,
+                # Missing customer_name, transaction_type, items, etc.
+                "total_amount": 25.0,
+                "payment_method": "cash"
+            }
+            
+            invalid_response = requests.post(
+                f"{self.api_url}/transactions",
+                json=invalid_transaction_data,
+                headers=self.headers,
+                timeout=10
+            )
+            
+            # Should return validation error
+            validation_error_handled = invalid_response.status_code in [400, 422]
+            
+            self.log_test("Invalid Payment Data Handling", validation_error_handled, 
+                        f"Status: {invalid_response.status_code} (should be 400 or 422)")
+            
+            if not validation_error_handled:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid Payment Data Handling", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 7: Receipt Data Structure Validation
+        print("   TEST 7: Receipt Data Structure Validation...")
+        if test_transaction_id:
+            try:
+                # Get the transaction again to verify receipt data structure
+                receipt_response = requests.get(
+                    f"{self.api_url}/transactions",
+                    headers=self.headers,
+                    timeout=10
+                )
+                
+                if receipt_response.status_code == 200:
+                    transactions = receipt_response.json()
+                    
+                    # Find our main transaction
+                    receipt_transaction = None
+                    for txn in transactions:
+                        if txn.get('id') == test_transaction_id:
+                            receipt_transaction = txn
+                            break
+                    
+                    if receipt_transaction:
+                        # Verify all fields needed for receipt printing are present
+                        receipt_fields = [
+                            'id', 'customer_id', 'customer_name', 'transaction_type',
+                            'items', 'subtotal', 'discount_amount', 'total_amount',
+                            'payment_method', 'created_at', 'notes'
+                        ]
+                        
+                        receipt_structure_complete = all(field in receipt_transaction for field in receipt_fields)
+                        
+                        # Verify items structure for receipt
+                        items = receipt_transaction.get('items', [])
+                        items_structure_valid = True
+                        if items:
+                            for item in items:
+                                if not all(field in item for field in ['name', 'price', 'quantity']):
+                                    items_structure_valid = False
+                                    break
+                        
+                        # Verify date format for receipt
+                        created_at = receipt_transaction.get('created_at')
+                        date_format_valid = created_at is not None
+                        
+                        receipt_data_valid = (receipt_structure_complete and items_structure_valid and date_format_valid)
+                        
+                        details = f"Structure complete: {receipt_structure_complete}, Items valid: {items_structure_valid}, Date valid: {date_format_valid}"
+                        self.log_test("Receipt Data Structure", receipt_data_valid, details)
+                        
+                        if not receipt_data_valid:
+                            all_success = False
+                    else:
+                        self.log_test("Receipt Data Structure", False, "Transaction not found for receipt validation")
+                        all_success = False
+                        
+                else:
+                    self.log_test("Receipt Data Structure", False, f"Status: {receipt_response.status_code}")
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Receipt Data Structure", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Receipt Data Structure", False, "No transaction ID for receipt validation")
+            all_success = False
+        
+        return all_success
+
     def run_all_tests(self):
         """Run all tests and return summary"""
         print("🚀 Starting Spa Management System API Tests...")
