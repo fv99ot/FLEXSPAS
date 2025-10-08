@@ -675,6 +675,7 @@ function App({ locationId }) {
         setShowIdScanner(false);
         setShowAddCustomer(true);  // Open the add customer form
       } else {
+        console.log('❌ ID Scan failed:', response.data);
         alert(`ID scanning failed: ${response.data.error_message || 'Unknown error'}`);
       }
     } catch (error) {
