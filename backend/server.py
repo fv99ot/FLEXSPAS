@@ -2913,9 +2913,9 @@ async def get_global_analytics(
                 
                 # Get transactions for revenue
                 transactions = await db.transactions.find({
-                    "transaction_date": {
-                        "$gte": start_date.isoformat(),
-                        "$lte": end_date.isoformat()
+                    "created_at": {
+                        "$gte": start_date,
+                        "$lte": end_date
                     }
                 }).to_list(length=None)
                 
