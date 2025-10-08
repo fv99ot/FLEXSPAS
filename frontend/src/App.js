@@ -80,6 +80,8 @@ function App({ locationId }) {
   const [showIdScanner, setShowIdScanner] = useState(false);
   const [scannedIdData, setScannedIdData] = useState(null);
   const [idScanLoading, setIdScanLoading] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const [showCameraPreview, setShowCameraPreview] = useState(false);
 
   // Removed debugging useEffect that could cause hook ordering issues
   
