@@ -78,6 +78,22 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Health check endpoint for deployment monitoring
+@api_router.get("/health")
+async def health_check():
+    """Simple health check endpoint for deployment monitoring"""
+    try:
+        # Test database connection
+        await client.admin.command('ping')
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "service": "FastAPI Flex Spa Management",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Service unhealthy: {str(e)}")
+
 # JWT Secret - must be provided via environment variable
 JWT_SECRET = os.environ.get('JWT_SECRET')
 security = HTTPBearer()
