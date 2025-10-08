@@ -78,7 +78,96 @@ const SuperAdminDashboard = () => {
     } catch (error) {
       console.error('Analytics error:', error);
       if (error.response?.status === 403) {
-        alert('Super admin privileges required to view global analytics.');
+        // Show demo data for non-super-admin users
+        const demoAnalytics = {
+          report_generated: new Date().toISOString(),
+          report_period: "Last 30 Days (Demo Mode)",
+          total_checkins: 1247,
+          total_revenue: 37420,
+          avg_stay_duration: 2.3,
+          total_locations: 4,
+          location_performance: [
+            {
+              location_id: 'los-angeles',
+              location_name: 'Los Angeles',
+              active_customers: 150,
+              total_checkins: 425,
+              total_revenue: 12450,
+              avg_stay_duration: 2.1,
+              peak_hour: '2:00 PM - 3:00 PM',
+              occupancy_rate: 78
+            },
+            {
+              location_id: 'atlanta',
+              location_name: 'Atlanta',
+              active_customers: 120,
+              total_checkins: 298,
+              total_revenue: 8930,
+              avg_stay_duration: 2.4,
+              peak_hour: '1:00 PM - 2:00 PM',
+              occupancy_rate: 65
+            },
+            {
+              location_id: 'cleveland',
+              location_name: 'Cleveland',
+              active_customers: 95,
+              total_checkins: 225,
+              total_revenue: 6750,
+              avg_stay_duration: 2.6,
+              peak_hour: '3:00 PM - 4:00 PM',
+              occupancy_rate: 58
+            },
+            {
+              location_id: 'phoenix',
+              location_name: 'Phoenix',
+              active_customers: 110,
+              total_checkins: 299,
+              total_revenue: 9200,
+              avg_stay_duration: 2.2,
+              peak_hour: '12:00 PM - 1:00 PM',
+              occupancy_rate: 72
+            }
+          ],
+          peak_times: [
+            { hour: 9, hour_label: '9:00 AM', checkin_count: 15 },
+            { hour: 10, hour_label: '10:00 AM', checkin_count: 28 },
+            { hour: 11, hour_label: '11:00 AM', checkin_count: 42 },
+            { hour: 12, hour_label: '12:00 PM', checkin_count: 65 },
+            { hour: 13, hour_label: '1:00 PM', checkin_count: 78 },
+            { hour: 14, hour_label: '2:00 PM', checkin_count: 85 },
+            { hour: 15, hour_label: '3:00 PM', checkin_count: 72 },
+            { hour: 16, hour_label: '4:00 PM', checkin_count: 58 },
+            { hour: 17, hour_label: '5:00 PM', checkin_count: 45 },
+            { hour: 18, hour_label: '6:00 PM', checkin_count: 32 }
+          ],
+          visitor_demographics: {
+            age_groups: {
+              '18-25': 145,
+              '26-35': 298,
+              '36-45': 425,
+              '46-55': 267,
+              '56+': 112
+            },
+            repeat_customers: 892,
+            new_customers: 355,
+            membership_types: {
+              'premium': 234,
+              'standard': 567,
+              'basic': 298,
+              'day_pass': 148
+            }
+          },
+          growth_metrics: {
+            revenue_growth: 12.5,
+            customer_growth: 8.3,
+            checkin_growth: 15.2
+          },
+          top_performing_location: 'Los Angeles'
+        };
+        
+        setGlobalAnalytics(demoAnalytics);
+        setShowGlobalReport(true);
+        console.log('📊 Demo analytics loaded for non-super-admin user');
       } else {
         alert('Failed to load analytics. Please try again.');
       }
