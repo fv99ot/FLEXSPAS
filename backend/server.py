@@ -27,12 +27,33 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 
 # Location-specific databases - loaded from environment
+# Location database configuration - no hardcoded fallbacks for production deployment
 LOCATION_DATABASES = {
-    'los-angeles': os.environ.get('DB_LOS_ANGELES', 'flexspa_losangeles'),
-    'atlanta': os.environ.get('DB_ATLANTA', 'flexspa_atlanta'), 
-    'cleveland': os.environ.get('DB_CLEVELAND', 'flexspa_cleveland'),
-    'phoenix': os.environ.get('DB_PHOENIX', 'flexspa_phoenix')
+    'los-angeles': os.environ.get('DB_LOS_ANGELES'),
+    'atlanta': os.environ.get('DB_ATLANTA'), 
+    'cleveland': os.environ.get('DB_CLEVELAND'),
+    'phoenix': os.environ.get('DB_PHOENIX')
 }
+
+# Validate required environment variables
+def validate_database_config():
+    """Validate that all required database environment variables are set"""
+    missing_vars = []
+    
+    # Check main database
+    if not os.environ.get('DB_NAME'):
+        missing_vars.append('DB_NAME')
+    
+    # Check location databases
+    for location, db_name in LOCATION_DATABASES.items():
+        if not db_name:
+            missing_vars.append(f'DB_{location.upper().replace("-", "_")}')
+    
+    if missing_vars:
+        raise ValueError(f"Missing required database environment variables: {', '.join(missing_vars)}")
+
+# Validate configuration on startup
+validate_database_config()
 
 # Default database
 db = client[os.environ.get('DB_NAME')]
