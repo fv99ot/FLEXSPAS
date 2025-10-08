@@ -1210,6 +1210,302 @@ class BathhouseAPITester:
         
         return all_success
 
+    def test_id_scanning_functionality(self):
+        """Test ID Scanning Functionality as requested in review"""
+        print("\n🆔 TESTING ID SCANNING FUNCTIONALITY...")
+        print("   Testing POST /api/scan/id endpoint with sample image file")
+        print("   Checking if endpoint responds and what data is returned")
+        print("   Verifying if ID_ANALYZER_API_KEY is configured or running in demo mode")
+        print("   Testing image upload handling and file validation")
+        print("   Examining if scanned data structure matches frontend expectations")
+        
+        all_success = True
+        
+        # TEST 1: Check ID_ANALYZER_API_KEY configuration
+        print("   TEST 1: Check ID_ANALYZER_API_KEY configuration...")
+        try:
+            # Create a small test image (1x1 PNG)
+            import io
+            from PIL import Image
+            
+            # Create a minimal PNG image
+            img = Image.new('RGB', (100, 100), color='white')
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format='PNG')
+            img_buffer.seek(0)
+            
+            files = {'file': ('test_id.png', img_buffer, 'image/png')}
+            
+            response = requests.post(
+                f"{self.api_url}/scan/id",
+                files=files,
+                headers={'Authorization': f'Bearer {self.token}'},
+                timeout=15
+            )
+            
+            print(f"      Response Status: {response.status_code}")
+            print(f"      Response Headers: {dict(response.headers)}")
+            
+            if response.status_code == 200:
+                scan_result = response.json()
+                print(f"      Response Body: {json.dumps(scan_result, indent=2)}")
+                
+                # Check response structure
+                required_fields = ['success', 'scan_id', 'processing_time_ms']
+                has_required_fields = all(field in scan_result for field in required_fields)
+                
+                # Check if running in demo mode
+                is_demo_mode = scan_result.get('error_message') and 'Demo mode' in scan_result.get('error_message', '')
+                has_demo_data = scan_result.get('data') is not None
+                
+                # Check data structure if present
+                data_structure_valid = True
+                if scan_result.get('data'):
+                    data = scan_result['data']
+                    expected_data_fields = ['first_name', 'last_name', 'id_number', 'date_of_birth', 'state']
+                    data_structure_valid = all(field in data for field in expected_data_fields)
+                
+                api_key_test_success = has_required_fields and (is_demo_mode or scan_result.get('success'))
+                
+                details = f"Required fields: {has_required_fields}, Demo mode: {is_demo_mode}, Data present: {has_demo_data}, Data structure: {data_structure_valid}"
+                self.log_test("ID Scanning API Key Check", api_key_test_success, details)
+                
+                if not api_key_test_success:
+                    all_success = False
+                    
+                # Store scan result for further tests
+                test_scan_result = scan_result
+                
+            else:
+                print(f"      Error Response: {response.text}")
+                self.log_test("ID Scanning API Key Check", False, f"Status: {response.status_code}")
+                all_success = False
+                test_scan_result = None
+                
+        except ImportError:
+            # PIL not available, create a simple test file
+            try:
+                # Create a minimal test file
+                test_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
+                
+                files = {'file': ('test_id.png', test_content, 'image/png')}
+                
+                response = requests.post(
+                    f"{self.api_url}/scan/id",
+                    files=files,
+                    headers={'Authorization': f'Bearer {self.token}'},
+                    timeout=15
+                )
+                
+                if response.status_code == 200:
+                    scan_result = response.json()
+                    
+                    # Check basic response structure
+                    has_success_field = 'success' in scan_result
+                    has_scan_id = 'scan_id' in scan_result
+                    has_processing_time = 'processing_time_ms' in scan_result
+                    
+                    basic_structure_valid = has_success_field and has_scan_id and has_processing_time
+                    
+                    self.log_test("ID Scanning API Key Check", basic_structure_valid, 
+                                f"Basic structure: {basic_structure_valid}")
+                    
+                    if not basic_structure_valid:
+                        all_success = False
+                        
+                    test_scan_result = scan_result
+                else:
+                    self.log_test("ID Scanning API Key Check", False, f"Status: {response.status_code}")
+                    all_success = False
+                    test_scan_result = None
+                    
+            except Exception as e:
+                self.log_test("ID Scanning API Key Check", False, f"Exception: {str(e)}")
+                all_success = False
+                test_scan_result = None
+        
+        except Exception as e:
+            self.log_test("ID Scanning API Key Check", False, f"Exception: {str(e)}")
+            all_success = False
+            test_scan_result = None
+        
+        # TEST 2: Test file validation
+        print("   TEST 2: File validation...")
+        try:
+            # Test invalid file type
+            invalid_files = {'file': ('test.txt', b'This is not an image', 'text/plain')}
+            
+            response = requests.post(
+                f"{self.api_url}/scan/id",
+                files=invalid_files,
+                headers={'Authorization': f'Bearer {self.token}'},
+                timeout=10
+            )
+            
+            invalid_file_rejected = response.status_code == 400
+            error_message = response.text if response.status_code != 200 else ""
+            
+            self.log_test("Invalid File Type Rejection", invalid_file_rejected, 
+                        f"Status: {response.status_code} (should be 400), Error: {error_message}")
+            
+            if not invalid_file_rejected:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Invalid File Type Rejection", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 3: Test file size validation
+        print("   TEST 3: File size validation...")
+        try:
+            # Create a large file (simulate > 5MB)
+            large_content = b'x' * (6 * 1024 * 1024)  # 6MB
+            large_files = {'file': ('large_image.png', large_content, 'image/png')}
+            
+            response = requests.post(
+                f"{self.api_url}/scan/id",
+                files=large_files,
+                headers={'Authorization': f'Bearer {self.token}'},
+                timeout=10
+            )
+            
+            large_file_rejected = response.status_code == 400
+            error_message = response.text if response.status_code != 200 else ""
+            
+            self.log_test("Large File Rejection", large_file_rejected, 
+                        f"Status: {response.status_code} (should be 400), Error: {error_message}")
+            
+            if not large_file_rejected:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Large File Rejection", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 4: Test authentication requirement
+        print("   TEST 4: Authentication requirement...")
+        try:
+            # Create a simple test file
+            test_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\nIDATx\x9cc\xf8\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00IEND\xaeB`\x82'
+            files = {'file': ('test_id.png', test_content, 'image/png')}
+            
+            # Test without authentication
+            response = requests.post(
+                f"{self.api_url}/scan/id",
+                files=files,
+                timeout=10
+            )
+            
+            auth_required = response.status_code in [401, 403]
+            
+            self.log_test("Authentication Required", auth_required, 
+                        f"Status: {response.status_code} (should be 401 or 403)")
+            
+            if not auth_required:
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Authentication Required", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 5: Test demo data endpoint
+        print("   TEST 5: Demo data endpoint...")
+        try:
+            response = requests.get(
+                f"{self.api_url}/scan/demo",
+                headers=self.headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                demo_data = response.json()
+                
+                # Check demo data structure
+                required_fields = ['success', 'data', 'scan_id', 'processing_time_ms']
+                has_required_fields = all(field in demo_data for field in required_fields)
+                
+                # Check demo data content
+                demo_success = demo_data.get('success') == True
+                has_demo_customer_data = demo_data.get('data') is not None
+                
+                if has_demo_customer_data:
+                    data = demo_data['data']
+                    expected_demo_fields = ['first_name', 'last_name', 'id_number', 'date_of_birth', 'state']
+                    demo_data_complete = all(field in data for field in expected_demo_fields)
+                else:
+                    demo_data_complete = False
+                
+                demo_endpoint_success = has_required_fields and demo_success and demo_data_complete
+                
+                details = f"Required fields: {has_required_fields}, Success: {demo_success}, Demo data: {demo_data_complete}"
+                self.log_test("Demo Data Endpoint", demo_endpoint_success, details)
+                
+                if not demo_endpoint_success:
+                    all_success = False
+                    
+            else:
+                self.log_test("Demo Data Endpoint", False, f"Status: {response.status_code}")
+                all_success = False
+                
+        except Exception as e:
+            self.log_test("Demo Data Endpoint", False, f"Exception: {str(e)}")
+            all_success = False
+        
+        # TEST 6: Test data structure compatibility with frontend
+        print("   TEST 6: Data structure compatibility with frontend...")
+        if test_scan_result and test_scan_result.get('data'):
+            try:
+                data = test_scan_result['data']
+                
+                # Check if all expected fields for customer creation are present
+                customer_creation_fields = [
+                    'first_name', 'last_name', 'id_number', 'date_of_birth', 'state'
+                ]
+                
+                # Check field presence
+                fields_present = {field: field in data for field in customer_creation_fields}
+                all_fields_present = all(fields_present.values())
+                
+                # Check field values are not None/empty
+                field_values_valid = True
+                if all_fields_present:
+                    for field in customer_creation_fields:
+                        value = data.get(field)
+                        if not value or (isinstance(value, str) and not value.strip()):
+                            field_values_valid = False
+                            break
+                
+                # Check date format (should be parseable)
+                date_format_valid = True
+                if data.get('date_of_birth'):
+                    try:
+                        # Try to parse the date
+                        dob = data['date_of_birth']
+                        # Common formats: MM/DD/YYYY, YYYY-MM-DD
+                        if '/' in dob or '-' in dob:
+                            date_format_valid = True
+                        else:
+                            date_format_valid = False
+                    except:
+                        date_format_valid = False
+                
+                frontend_compatibility = all_fields_present and field_values_valid and date_format_valid
+                
+                details = f"Fields present: {all_fields_present}, Values valid: {field_values_valid}, Date format: {date_format_valid}, Missing: {[k for k, v in fields_present.items() if not v]}"
+                self.log_test("Frontend Data Compatibility", frontend_compatibility, details)
+                
+                if not frontend_compatibility:
+                    all_success = False
+                    
+            except Exception as e:
+                self.log_test("Frontend Data Compatibility", False, f"Exception: {str(e)}")
+                all_success = False
+        else:
+            self.log_test("Frontend Data Compatibility", False, "No scan result data available for testing")
+            all_success = False
+        
+        return all_success
+
     def test_transaction_completion_error_reproduction(self):
         """REPRODUCE THE 'ERROR COMPLETING TRANSACTION' ISSUE AS REQUESTED IN REVIEW"""
         print("\n🚨 REPRODUCING 'ERROR COMPLETING TRANSACTION' ISSUE...")
