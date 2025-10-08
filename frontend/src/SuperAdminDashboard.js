@@ -557,7 +557,14 @@ const SuperAdminDashboard = () => {
               {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Global Analytics Report</h3>
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-2xl font-bold text-gray-900">Global Analytics Report</h3>
+                    {globalAnalytics.report_period.includes('Demo Mode') && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        📊 Demo Mode
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500">
                     Generated: {new Date(globalAnalytics.report_generated).toLocaleDateString()} | 
                     Period: {globalAnalytics.report_period}
