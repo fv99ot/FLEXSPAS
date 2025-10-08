@@ -2990,7 +2990,12 @@ async def get_global_analytics(
                     dob = customer.get('date_of_birth', '')
                     if dob:
                         try:
-                            birth_year = datetime.fromisoformat(dob).year if '-' in dob else int(dob.split('/')[2])
+                            if '-' in dob:
+                                birth_year = datetime.fromisoformat(dob).year
+                            elif '/' in dob:
+                                birth_year = int(dob.split('/')[2])
+                            else:
+                                birth_year = int(dob)
                             age = datetime.now().year - birth_year
                             if age >= 55:
                                 demographics["age_groups"]["55+"] += 1
