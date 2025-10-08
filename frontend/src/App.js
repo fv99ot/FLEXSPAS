@@ -647,6 +647,10 @@ function App({ locationId }) {
 
       const response = await axios.post(`${API}/api/scan/id`, formData, { headers });
       
+      console.log('🔍 ID Scan Response:', response.data);
+      console.log('🔍 Response success field:', response.data.success);
+      console.log('🔍 Response data field:', response.data.data);
+      
       if (response.data.success) {
         setScannedIdData(response.data.data);
         // Auto-fill the add customer form with scanned data
