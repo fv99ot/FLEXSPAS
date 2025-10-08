@@ -2901,7 +2901,7 @@ async def get_global_analytics(
         # Analyze each location
         for location_id in locations:
             try:
-                db = get_database(location_id)
+                db = get_location_db(location_id)
                 
                 # Get checkins for this period
                 checkins = await db.checkins.find({
