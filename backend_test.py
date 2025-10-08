@@ -4372,35 +4372,30 @@ class BathhouseAPITester:
         return self.get_summary()
 
 def main():
-    """Main test execution - Focus on ID scanning functionality"""
+    """Main test execution - Focus on deployment readiness testing"""
     print("🧪 FLEXSPA BACKEND API TESTING SUITE")
-    print("🆔 FOCUS: ID SCANNING FUNCTIONALITY TESTING")
+    print("🚀 FOCUS: DEPLOYMENT READINESS TESTING")
     print("=" * 70)
     
     tester = BathhouseAPITester()
     
-    # Test login first
-    if not tester.test_login():
-        print("❌ Login failed - cannot continue with other tests")
-        return 1
-    
-    # Run the specific test requested in the review
-    print(f"\n🚀 Running ID Scanning Functionality Test...")
+    # Run deployment readiness tests as requested in the review
+    print(f"\n🚀 Running Final Comprehensive Deployment Readiness Test...")
     
     print(f"\n{'='*70}")
-    print(f"🧪 RUNNING: ID Scanning Functionality")
+    print(f"🧪 RUNNING: DEPLOYMENT READINESS VERIFICATION")
     print('='*70)
     
     try:
-        success = tester.test_id_scanning_functionality()
+        success = tester.run_deployment_readiness_tests()
         if success:
-            print(f"✅ ID Scanning Functionality - ALL TESTS PASSED")
-            print(f"📝 ID SCANNING BACKEND IS WORKING CORRECTLY")
+            print(f"✅ DEPLOYMENT READINESS - ALL TESTS PASSED")
+            print(f"📝 APPLICATION IS READY FOR PRODUCTION DEPLOYMENT")
         else:
-            print(f"❌ ID Scanning Functionality - BACKEND ISSUES FOUND")
-            print(f"📝 ID SCANNING PROBLEMS IDENTIFIED")
+            print(f"❌ DEPLOYMENT READINESS - CRITICAL ISSUES FOUND")
+            print(f"📝 DEPLOYMENT BLOCKERS IDENTIFIED - RESOLVE BEFORE PRODUCTION")
     except Exception as e:
-        print(f"💥 ID Scanning Functionality - EXCEPTION: {str(e)}")
+        print(f"💥 DEPLOYMENT READINESS - EXCEPTION: {str(e)}")
     
     # Also run other critical tests if time permits
     additional_tests = [
