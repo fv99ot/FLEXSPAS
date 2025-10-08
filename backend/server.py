@@ -2662,7 +2662,7 @@ async def clear_all_locations_preset_data(current_user: User = Depends(get_curre
                 customers_result = await location_db.customers.delete_many({})
                 items_result = await location_db.additional_items.delete_many({})
                 discounts_result = await location_db.discounts.delete_many({})
-                checkins_result = await location_db.checkins.delete_many({})
+                checkins_result = await location_db.check_ins.delete_many({})
                 transactions_result = await location_db.transactions.delete_many({})
                 waitlist_result = await location_db.waitlist.delete_many({})
                 
