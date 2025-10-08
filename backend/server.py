@@ -2904,10 +2904,10 @@ async def get_global_analytics(
                 db = get_location_db(location_id)
                 
                 # Get checkins for this period
-                checkins = await db.checkins.find({
-                    "checkin_time": {
-                        "$gte": start_date.isoformat(),
-                        "$lte": end_date.isoformat()
+                checkins = await db.check_ins.find({
+                    "check_in_time": {
+                        "$gte": start_date,
+                        "$lte": end_date
                     }
                 }).to_list(length=None)
                 
