@@ -3069,7 +3069,7 @@ async def get_location_analytics(
         raise HTTPException(status_code=403, detail="Super admin privileges required")
     
     try:
-        db = get_database(location_id)
+        db = get_location_db(location_id)
         end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
