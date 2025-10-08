@@ -2924,12 +2924,16 @@ async def get_global_analytics(
                 location_revenue = sum(t.get('total_amount', 0) for t in transactions)
                 
                 # Calculate average stay duration
-                completed_checkins = [c for c in checkins if c.get('checkout_time')]
+                completed_checkins = [c for c in checkins if c.get('check_out_time')]
                 stay_durations = []
                 for checkin in completed_checkins:
                     try:
-                        checkin_dt = datetime.fromisoformat(checkin['checkin_time'])
-                        checkout_dt = datetime.fromisoformat(checkin['checkout_time'])
+                        checkin_dt = checkin['check_in_time']
+                        checkout_dt = checkin['check_out_time']
+                        if isinstance(checkin_dt, str):
+                            checkin_dt = datetime.fromisoformat(checkin_dt.replace('Z', '+00:00'))
+                        if isinstance(checkout_dt, str):
+                            checkout_dt = datetime.fromisoformat(checkout_dt.replace('Z', '+00:00'))
                         duration = (checkout_dt - checkin_dt).total_seconds() / 3600  # hours
                         stay_durations.append(duration)
                         all_stay_durations.append(duration)
