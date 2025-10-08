@@ -4771,6 +4771,9 @@ class BathhouseAPITester:
         print("🎯 PRIORITY TESTS FROM REVIEW REQUEST")
         print("="*80)
         
+        # HIGHEST PRIORITY: Payment Processing and Receipt Functionality
+        self.test_payment_processing_and_receipt_functionality()
+        
         # HIGHEST PRIORITY: Comprehensive Database Cleanup for Fresh Deployment
         self.test_comprehensive_database_cleanup()
         
