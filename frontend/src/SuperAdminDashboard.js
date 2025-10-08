@@ -335,8 +335,12 @@ const SuperAdminDashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md">
-                  Generate Report
+                <button 
+                  onClick={generateGlobalReport}
+                  disabled={analyticsLoading}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                >
+                  {analyticsLoading ? 'Generating...' : 'Generate Report'}
                 </button>
               </div>
             </div>
