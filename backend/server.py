@@ -3086,17 +3086,17 @@ async def get_location_analytics(
         start_date = end_date - timedelta(days=days)
         
         # Get basic metrics
-        checkins = await db.checkins.find({
-            "checkin_time": {
-                "$gte": start_date.isoformat(),
-                "$lte": end_date.isoformat()
+        checkins = await db.check_ins.find({
+            "check_in_time": {
+                "$gte": start_date,
+                "$lte": end_date
             }
         }).to_list(length=None)
         
         transactions = await db.transactions.find({
-            "transaction_date": {
-                "$gte": start_date.isoformat(),
-                "$lte": end_date.isoformat()
+            "created_at": {
+                "$gte": start_date,
+                "$lte": end_date
             }
         }).to_list(length=None)
         
