@@ -664,7 +664,14 @@ function App({ locationId }) {
         });
         
         console.log('✅ ID scanned successfully:', response.data.data);
-        alert('ID scanned successfully! Customer information has been pre-filled.');
+        
+        // Check if this is demo mode
+        const isDemoMode = response.data.error_message && response.data.error_message.includes('Demo mode');
+        const successMessage = isDemoMode 
+          ? '🎯 DEMO MODE: ID scanned successfully! Demo customer information has been pre-filled. (To scan real IDs, configure ID_ANALYZER_API_KEY)'
+          : 'ID scanned successfully! Customer information has been pre-filled.';
+          
+        alert(successMessage);
         setShowIdScanner(false);
         setShowAddCustomer(true);  // Open the add customer form
       } else {
