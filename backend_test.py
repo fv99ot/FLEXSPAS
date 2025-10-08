@@ -3480,6 +3480,9 @@ class BathhouseAPITester:
         # 4. Membership Form Access
         self.test_membership_form_access()
         
+        # ANALYTICS ENDPOINT TEST (as requested in review)
+        self.test_global_analytics_endpoint()
+        
         return self.get_summary()
 
 def main():
