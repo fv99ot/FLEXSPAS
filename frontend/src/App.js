@@ -1368,17 +1368,83 @@ function App({ locationId }) {
           </html>
         `;
         
-        // Open in current window for printing
-        const newWindow = window.open();
-        if (newWindow) {
-          newWindow.document.write(printContent);
-          newWindow.document.close();
-          newWindow.print();
-          newWindow.close();
+        // Popup blocked - offer modern alternatives
+        const userChoice = confirm(
+          "🖨️ RECEIPT READY!\n\n" +
+          "Your browser blocked the print popup (this is normal for security).\n\n" + 
+          "Choose your preferred option:\n" +
+          "• OK = Print directly from this page\n" +
+          "• Cancel = Download receipt file\n\n" +
+          "Both options work great!"
+        );
+
+        if (userChoice) {
+          // Direct print method (no popup needed)
+          const printDiv = document.createElement('div');
+          printDiv.innerHTML = `
+            <style>
+              @media print {
+                body * { visibility: hidden; }
+                .receipt-print, .receipt-print * { visibility: visible; }
+                .receipt-print { position: absolute; left: 0; top: 0; width: 100%; }
+                @page { margin: 0.5in; size: auto; }
+              }
+              @media screen {
+                .receipt-print { display: none; }
+              }
+            </style>
+            <div class="receipt-print">${receiptContent}</div>
+          `;
+          
+          document.body.appendChild(printDiv);
+          
+          // Give user a moment to see the dialog, then print
+          setTimeout(() => {
+            window.print();
+            document.body.removeChild(printDiv);
+          }, 500);
+          
         } else {
-          // Fallback - just log the receipt content
-          console.log('📄 Receipt generated:', receiptContent);
-          alert('Receipt generated successfully! (Print popup was blocked)');
+          // Download receipt as HTML file
+          const blob = new Blob([`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>FLEX SPA Receipt - ${customer.first_name} ${customer.last_name}</title>
+                <style>
+                  body { 
+                    font-family: 'Courier New', monospace; 
+                    margin: 20px; 
+                    background: white;
+                  }
+                  @media print { 
+                    @page { margin: 0.5in; } 
+                    body { margin: 0; } 
+                  }
+                </style>
+              </head>
+              <body>
+                ${receiptContent}
+                <div style="margin-top: 30px; padding: 15px; border: 1px solid #ddd; background: #f9f9f9;">
+                  <p style="margin: 0; font-size: 11px; text-align: center;">
+                    <strong>Print Instructions:</strong><br>
+                    Press Ctrl+P (Windows) or Cmd+P (Mac) to print this receipt
+                  </p>
+                </div>
+              </body>
+            </html>
+          `], { type: 'text/html' });
+          
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `flex-spa-receipt-${customer.first_name}-${new Date().getTime()}.html`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          alert('📄 Receipt downloaded! Open the file and press Ctrl+P to print.');
         }
         return;
       }
