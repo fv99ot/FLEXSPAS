@@ -2960,7 +2960,7 @@ async def get_global_analytics(
                 # Get active customers (customers with recent activity)
                 recent_customers = await db.customers.count_documents({
                     "created_at": {
-                        "$gte": (end_date - timedelta(days=7)).isoformat()
+                        "$gte": end_date - timedelta(days=7)
                     }
                 })
                 
