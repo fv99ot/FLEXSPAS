@@ -83,6 +83,13 @@ function App({ locationId }) {
   const [cameraStream, setCameraStream] = useState(null);
   const [showCameraPreview, setShowCameraPreview] = useState(false);
 
+  // Cleanup camera stream when modal closes
+  React.useEffect(() => {
+    if (!showIdScanner && cameraStream) {
+      stopCameraStream();
+    }
+  }, [showIdScanner, cameraStream]);
+
   // Removed debugging useEffect that could cause hook ordering issues
   
   // Check-in state
