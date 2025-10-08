@@ -459,6 +459,325 @@ const SuperAdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Global Analytics Report Modal */}
+      {showGlobalReport && globalAnalytics && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border max-w-6xl shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">Global Analytics Report</h3>
+                  <p className="text-sm text-gray-500">
+                    Generated: {new Date(globalAnalytics.report_generated).toLocaleDateString()} | 
+                    Period: {globalAnalytics.report_period}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowGlobalReport(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Key Metrics Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-blue-600">{globalAnalytics.total_checkins.toLocaleString()}</div>
+                  <div className="text-sm text-blue-800">Total Check-ins</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">{formatCurrency(globalAnalytics.total_revenue)}</div>
+                  <div className="text-sm text-green-800">Total Revenue</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600">{formatDuration(globalAnalytics.avg_stay_duration)}</div>
+                  <div className="text-sm text-purple-800">Avg Stay Duration</div>
+                </div>
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-yellow-600">{globalAnalytics.total_locations}</div>
+                  <div className="text-sm text-yellow-800">Active Locations</div>
+                </div>
+              </div>
+
+              {/* Location Performance Comparison */}
+              <div className="mb-8">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Location Performance Comparison</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-ins</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Stay</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peak Time</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Occupancy</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {globalAnalytics.location_performance.map((location, index) => (
+                        <tr key={location.location_id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{location.location_name}</div>
+                            <div className="text-sm text-gray-500">{location.active_customers} active customers</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {location.total_checkins.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                            {formatCurrency(location.total_revenue)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDuration(location.avg_stay_duration)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {location.peak_hour}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {location.occupancy_rate}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Peak Times Analysis */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Peak Times Analysis</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="space-y-2">
+                      {globalAnalytics.peak_times
+                        .filter(time => time.checkin_count > 0)
+                        .sort((a, b) => b.checkin_count - a.checkin_count)
+                        .slice(0, 6)
+                        .map((time, index) => (
+                          <div key={time.hour} className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700">{time.hour_label}</span>
+                            <div className="flex items-center">
+                              <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                <div 
+                                  className="bg-blue-600 h-2 rounded-full" 
+                                  style={{
+                                    width: `${(time.checkin_count / Math.max(...globalAnalytics.peak_times.map(t => t.checkin_count))) * 100}%`
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-600">{time.checkin_count}</span>
+                            </div>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                {/* Visitor Demographics */}
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Visitor Demographics</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                    
+                    {/* Age Groups */}
+                    <div>
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">Age Groups</h5>
+                      {Object.entries(globalAnalytics.visitor_demographics.age_groups).map(([age, count]) => (
+                        <div key={age} className="flex justify-between items-center mb-1">
+                          <span className="text-sm text-gray-600">{age}</span>
+                          <span className="text-sm font-medium text-gray-900">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Customer Type */}
+                    <div className="border-t pt-3">
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">Customer Engagement</h5>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm text-gray-600">Repeat Customers</span>
+                        <span className="text-sm font-medium text-green-600">{globalAnalytics.visitor_demographics.repeat_customers}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">New Customers</span>
+                        <span className="text-sm font-medium text-blue-600">{globalAnalytics.visitor_demographics.new_customers}</span>
+                      </div>
+                    </div>
+
+                    {/* Membership Types */}
+                    <div className="border-t pt-3">
+                      <h5 className="text-sm font-medium text-gray-700 mb-2">Popular Memberships</h5>
+                      {Object.entries(globalAnalytics.visitor_demographics.membership_types)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 3)
+                        .map(([type, count]) => (
+                          <div key={type} className="flex justify-between items-center mb-1">
+                            <span className="text-sm text-gray-600 capitalize">{type.replace('_', ' ')}</span>
+                            <span className="text-sm font-medium text-gray-900">{count}</span>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Growth Metrics & Top Performer */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Growth Metrics</h4>
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Revenue Growth</span>
+                        <span className="text-sm font-bold text-green-600">+{globalAnalytics.growth_metrics.revenue_growth}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Customer Growth</span>
+                        <span className="text-sm font-bold text-blue-600">+{globalAnalytics.growth_metrics.customer_growth}%</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Check-in Growth</span>
+                        <span className="text-sm font-bold text-purple-600">+{globalAnalytics.growth_metrics.checkin_growth}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Top Performing Location</h4>
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600 mb-2">🏆</div>
+                      <div className="text-xl font-bold text-gray-900">{globalAnalytics.top_performing_location}</div>
+                      <div className="text-sm text-gray-600 mt-2">Highest revenue performance this period</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowGlobalReport(false)}
+                  className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Print Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Global Settings</h3>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">System Configuration</h4>
+                  <p className="text-sm text-gray-600 mb-3">Manage global system settings and policies</p>
+                  <div className="space-y-2">
+                    <button className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                      Business Hours Settings
+                    </button>
+                    <button className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                      Pricing Configuration
+                    </button>
+                    <button className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                      Email Templates
+                    </button>
+                    <button className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-gray-100 rounded">
+                      User Permissions
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Location Modal */}
+      {showAddLocation && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-5 border max-w-md shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Add New Location</h3>
+                <button
+                  onClick={() => setShowAddLocation(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Location Name</label>
+                  <input type="text" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Miami" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                  <textarea className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Full address including city, state, zip"></textarea>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                  <input type="tel" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="(555) 123-FLEX" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Manager Email</label>
+                  <input type="email" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="manager@flexspas.com" />
+                </div>
+              </form>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowAddLocation(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    alert('Location setup functionality would be implemented here');
+                    setShowAddLocation(false);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  Create Location
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
