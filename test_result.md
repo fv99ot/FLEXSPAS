@@ -409,6 +409,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Payment Processing System and Receipt Functionality"
     - "Final Deployment Readiness Verification"
     - "Health Check Endpoint Testing"
     - "Database Validation System Testing"
@@ -418,7 +419,7 @@ test_plan:
     - "Users Endpoint 500 Error Investigation"
     - "QR Code URL Configuration Issue"
   test_all: false
-  test_priority: "deployment_readiness"
+  test_priority: "payment_processing_first"
 
 frontend:
   - task: "UI Redesign: Merge Pending Approval & QR Code Tabs"
