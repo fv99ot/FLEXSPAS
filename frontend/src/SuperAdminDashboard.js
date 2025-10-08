@@ -4,6 +4,14 @@ import axios from 'axios';
 
 const SuperAdminDashboard = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [showGlobalReport, setShowGlobalReport] = useState(false);
+  const [globalAnalytics, setGlobalAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showAddLocation, setShowAddLocation] = useState(false);
+  
+  // Get API URL from environment
+  const API = process.env.REACT_APP_BACKEND_URL || import.meta.env.REACT_APP_BACKEND_URL;
   
   const locations = [
     {
