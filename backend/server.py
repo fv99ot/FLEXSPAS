@@ -62,9 +62,15 @@ def get_location_db(location_id=None):
     """Get database connection for specific location"""
     if location_id and location_id in LOCATION_DATABASES:
         db_name = LOCATION_DATABASES[location_id]
+        if not db_name:
+            raise ValueError(f"Database name not configured for location: {location_id}")
         return client[db_name]
+    
     # Default to main database
-    return client[os.environ.get('DB_NAME')]
+    main_db_name = os.environ.get('DB_NAME')
+    if not main_db_name:
+        raise ValueError("DB_NAME environment variable not set")
+    return client[main_db_name]
 
 # Create the main app without a prefix
 app = FastAPI()
