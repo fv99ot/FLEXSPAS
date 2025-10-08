@@ -56,6 +56,63 @@ const SuperAdminDashboard = () => {
     }
   ];
 
+  // Generate Global Analytics Report
+  const generateGlobalReport = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login again to continue.');
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const response = await axios.get(`${API}/api/analytics/global?days=30`, { headers });
+      setGlobalAnalytics(response.data);
+      setShowGlobalReport(true);
+      console.log('✅ Global analytics loaded:', response.data);
+    } catch (error) {
+      console.error('Analytics error:', error);
+      if (error.response?.status === 403) {
+        alert('Super admin privileges required to view global analytics.');
+      } else {
+        alert('Failed to load analytics. Please try again.');
+      }
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Handle Global Settings
+  const handleGlobalSettings = () => {
+    setShowSettings(true);
+  };
+
+  // Handle Add Location
+  const handleAddLocation = () => {
+    setShowAddLocation(true);
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
+
+  // Format duration
+  const formatDuration = (hours) => {
+    if (hours < 1) {
+      return `${Math.round(hours * 60)}m`;
+    }
+    return `${hours.toFixed(1)}h`;
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
