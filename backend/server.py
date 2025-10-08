@@ -2731,7 +2731,7 @@ async def clear_all_additional_items(current_user: User = Depends(get_current_us
     return {"message": f"All additional items cleared from database ({result.deleted_count} records removed)"}
 
 @api_router.delete("/admin/clear-preset-data")
-async def clear_all_preset_data(current_user: User = Depends(get_current_user)):
+async def clear_preset_data_legacy(current_user: User = Depends(get_current_user)):
     """HARD DELETE: Clear all preset data (discounts and additional items) from database completely"""
     if current_user.role != UserRole.MANAGER:
         raise HTTPException(status_code=403, detail="Only managers can clear all preset data")
