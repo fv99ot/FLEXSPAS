@@ -704,28 +704,56 @@ function App({ locationId }) {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
           facingMode: 'environment',  // Use back camera on mobile
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
         } 
       });
       
-      // Create video element for preview
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      video.autoplay = true;
-      video.playsInline = true;
-      
-      // We'll implement the camera capture UI in the modal
-      // For now, just show alert about camera access
-      alert('Camera access granted! Camera scanning interface will be available in the modal.');
-      
-      // Stop the stream for now
-      stream.getTracks().forEach(track => track.stop());
+      setCameraStream(stream);
+      setShowCameraPreview(true);
       
     } catch (error) {
       console.error('Camera access error:', error);
       alert('Camera access denied or not available. Please use file upload instead.');
     }
+  };
+
+  const capturePhotoFromCamera = () => {
+    if (!cameraStream) return;
+    
+    // Get the video element
+    const video = document.getElementById('camera-preview');
+    if (!video) return;
+    
+    // Create canvas to capture the frame
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    // Convert to blob and scan
+    canvas.toBlob(async (blob) => {
+      if (blob) {
+        // Create a file from the blob
+        const file = new File([blob], 'captured-id.jpg', { type: 'image/jpeg' });
+        
+        // Stop camera stream
+        stopCameraStream();
+        
+        // Scan the captured image
+        await scanIdWithFile(file);
+      }
+    }, 'image/jpeg', 0.8);
+  };
+
+  const stopCameraStream = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setShowCameraPreview(false);
   };
 
   const upgradeFromWaitlist = async (entryId, roomNumber, roomType) => {
