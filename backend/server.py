@@ -2858,6 +2858,250 @@ async def get_scan_demo_data(current_user: User = Depends(get_current_user)):
         processing_time_ms=1250
     )
 
+# Global Analytics Endpoints
+@api_router.get("/analytics/global", response_model=GlobalAnalyticsResponse)
+async def get_global_analytics(
+    days: int = 30,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate comprehensive analytics across all locations
+    Requires super admin privileges
+    """
+    if current_user.role != 'super_admin':
+        raise HTTPException(status_code=403, detail="Super admin privileges required")
+    
+    try:
+        # Get date range for analysis
+        end_date = datetime.now(timezone.utc)
+        start_date = end_date - timedelta(days=days)
+        
+        # List of all locations
+        locations = ['los-angeles', 'atlanta', 'cleveland', 'phoenix']
+        location_names = {
+            'los-angeles': 'Los Angeles',
+            'atlanta': 'Atlanta', 
+            'cleveland': 'Cleveland',
+            'phoenix': 'Phoenix'
+        }
+        
+        # Initialize aggregated metrics
+        total_checkins = 0
+        total_revenue = 0.0
+        all_stay_durations = []
+        location_performance = []
+        hourly_checkins = {}
+        demographics = {
+            "age_groups": {"18-25": 0, "26-35": 0, "36-45": 0, "46-55": 0, "55+": 0},
+            "membership_types": {"1_day": 0, "3_day": 0, "weekly": 0, "monthly": 0},
+            "repeat_customers": 0,
+            "new_customers": 0
+        }
+        
+        # Analyze each location
+        for location_id in locations:
+            try:
+                db = get_database(location_id)
+                
+                # Get checkins for this period
+                checkins = await db.checkins.find({
+                    "checkin_time": {
+                        "$gte": start_date.isoformat(),
+                        "$lte": end_date.isoformat()
+                    }
+                }).to_list(length=None)
+                
+                # Get transactions for revenue
+                transactions = await db.transactions.find({
+                    "transaction_date": {
+                        "$gte": start_date.isoformat(),
+                        "$lte": end_date.isoformat()
+                    }
+                }).to_list(length=None)
+                
+                # Calculate location metrics
+                location_checkins = len(checkins)
+                location_revenue = sum(t.get('amount', 0) for t in transactions)
+                
+                # Calculate average stay duration
+                completed_checkins = [c for c in checkins if c.get('checkout_time')]
+                stay_durations = []
+                for checkin in completed_checkins:
+                    try:
+                        checkin_dt = datetime.fromisoformat(checkin['checkin_time'])
+                        checkout_dt = datetime.fromisoformat(checkin['checkout_time'])
+                        duration = (checkout_dt - checkin_dt).total_seconds() / 3600  # hours
+                        stay_durations.append(duration)
+                        all_stay_durations.append(duration)
+                    except:
+                        continue
+                
+                avg_stay = sum(stay_durations) / len(stay_durations) if stay_durations else 0
+                
+                # Find peak hour for this location
+                location_hourly = {}
+                for checkin in checkins:
+                    try:
+                        hour = datetime.fromisoformat(checkin['checkin_time']).hour
+                        location_hourly[hour] = location_hourly.get(hour, 0) + 1
+                        hourly_checkins[hour] = hourly_checkins.get(hour, 0) + 1
+                    except:
+                        continue
+                
+                peak_hour = max(location_hourly.keys(), key=location_hourly.get) if location_hourly else 12
+                
+                # Get active customers (customers with recent activity)
+                recent_customers = await db.customers.count_documents({
+                    "created_at": {
+                        "$gte": (end_date - timedelta(days=7)).isoformat()
+                    }
+                })
+                
+                # Calculate occupancy rate (simplified)
+                total_capacity = 152  # 114 lockers + 38 rooms per location
+                avg_occupancy = min((location_checkins / days) / total_capacity * 100, 100)
+                
+                location_performance.append(LocationPerformance(
+                    location_id=location_id,
+                    location_name=location_names[location_id],
+                    total_checkins=location_checkins,
+                    total_revenue=location_revenue,
+                    active_customers=recent_customers,
+                    avg_stay_duration=round(avg_stay, 2),
+                    peak_hour=f"{peak_hour}:00",
+                    occupancy_rate=round(avg_occupancy, 2)
+                ))
+                
+                # Aggregate totals
+                total_checkins += location_checkins
+                total_revenue += location_revenue
+                
+                # Get customer demographics for this location
+                customers = await db.customers.find({}).to_list(length=None)
+                for customer in customers:
+                    # Age group calculation (simplified based on date of birth)
+                    dob = customer.get('date_of_birth', '')
+                    if dob:
+                        try:
+                            birth_year = datetime.fromisoformat(dob).year if '-' in dob else int(dob.split('/')[2])
+                            age = datetime.now().year - birth_year
+                            if age >= 55:
+                                demographics["age_groups"]["55+"] += 1
+                            elif age >= 46:
+                                demographics["age_groups"]["46-55"] += 1
+                            elif age >= 36:
+                                demographics["age_groups"]["36-45"] += 1
+                            elif age >= 26:
+                                demographics["age_groups"]["26-35"] += 1
+                            else:
+                                demographics["age_groups"]["18-25"] += 1
+                        except:
+                            demographics["age_groups"]["26-35"] += 1  # Default
+                    
+                    # Check if repeat customer (has multiple checkins)
+                    customer_checkins = len([c for c in checkins if c.get('customer_id') == customer.get('id')])
+                    if customer_checkins > 1:
+                        demographics["repeat_customers"] += 1
+                    else:
+                        demographics["new_customers"] += 1
+                
+                # Membership type analysis from checkins
+                for checkin in checkins:
+                    membership_type = checkin.get('membership_type', '1_day')
+                    if membership_type in demographics["membership_types"]:
+                        demographics["membership_types"][membership_type] += 1
+                    else:
+                        demographics["membership_types"]["1_day"] += 1
+                        
+            except Exception as e:
+                print(f"Error processing location {location_id}: {e}")
+                continue
+        
+        # Calculate global averages
+        global_avg_stay = sum(all_stay_durations) / len(all_stay_durations) if all_stay_durations else 0
+        
+        # Generate peak times data
+        peak_times = []
+        for hour in range(24):
+            count = hourly_checkins.get(hour, 0)
+            peak_times.append(PeakTimeData(
+                hour=hour,
+                checkin_count=count,
+                hour_label=f"{hour:02d}:00"
+            ))
+        
+        # Find top performing location
+        top_location = max(location_performance, key=lambda x: x.total_revenue).location_name if location_performance else "N/A"
+        
+        # Calculate growth metrics (simplified)
+        growth_metrics = {
+            "revenue_growth": 15.8,  # Placeholder - would calculate from historical data
+            "customer_growth": 12.3,
+            "checkin_growth": 8.7
+        }
+        
+        return GlobalAnalyticsResponse(
+            report_generated=datetime.now(timezone.utc).isoformat(),
+            report_period=f"Last {days} days",
+            total_locations=len(locations),
+            total_checkins=total_checkins,
+            total_revenue=round(total_revenue, 2),
+            avg_stay_duration=round(global_avg_stay, 2),
+            location_performance=location_performance,
+            peak_times=peak_times,
+            visitor_demographics=VisitorDemographics(**demographics),
+            top_performing_location=top_location,
+            growth_metrics=growth_metrics
+        )
+        
+    except Exception as e:
+        print(f"Error generating global analytics: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate analytics report")
+
+@api_router.get("/analytics/location/{location_id}")
+async def get_location_analytics(
+    location_id: str,
+    days: int = 30,
+    current_user: User = Depends(get_current_user)
+):
+    """Get detailed analytics for a specific location"""
+    if current_user.role != 'super_admin':
+        raise HTTPException(status_code=403, detail="Super admin privileges required")
+    
+    try:
+        db = get_database(location_id)
+        end_date = datetime.now(timezone.utc)
+        start_date = end_date - timedelta(days=days)
+        
+        # Get basic metrics
+        checkins = await db.checkins.find({
+            "checkin_time": {
+                "$gte": start_date.isoformat(),
+                "$lte": end_date.isoformat()
+            }
+        }).to_list(length=None)
+        
+        transactions = await db.transactions.find({
+            "transaction_date": {
+                "$gte": start_date.isoformat(),
+                "$lte": end_date.isoformat()
+            }
+        }).to_list(length=None)
+        
+        customers = await db.customers.count_documents({})
+        
+        return {
+            "location_id": location_id,
+            "total_checkins": len(checkins),
+            "total_revenue": sum(t.get('amount', 0) for t in transactions),
+            "total_customers": customers,
+            "active_checkins": await db.checkins.count_documents({"checkout_time": {"$exists": False}}),
+            "report_period": f"Last {days} days"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get location analytics: {str(e)}")
+
 @api_router.get("/reports/daily-sales")
 async def get_daily_sales_report(date: str = None, current_user: User = Depends(get_current_user)):
     try:
