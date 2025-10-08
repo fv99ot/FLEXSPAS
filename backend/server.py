@@ -2921,7 +2921,7 @@ async def get_global_analytics(
                 
                 # Calculate location metrics
                 location_checkins = len(checkins)
-                location_revenue = sum(t.get('amount', 0) for t in transactions)
+                location_revenue = sum(t.get('total_amount', 0) for t in transactions)
                 
                 # Calculate average stay duration
                 completed_checkins = [c for c in checkins if c.get('checkout_time')]
