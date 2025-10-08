@@ -87,6 +87,41 @@ class IDScanResponse(BaseModel):
     scan_id: str
     processing_time_ms: int
 
+# Analytics Models
+class LocationPerformance(BaseModel):
+    location_id: str
+    location_name: str
+    total_checkins: int
+    total_revenue: float
+    active_customers: int
+    avg_stay_duration: float  # in hours
+    peak_hour: str
+    occupancy_rate: float
+
+class PeakTimeData(BaseModel):
+    hour: int
+    checkin_count: int
+    hour_label: str
+
+class VisitorDemographics(BaseModel):
+    age_groups: Dict[str, int]  # "18-25": 45, "26-35": 123, etc.
+    membership_types: Dict[str, int]
+    repeat_customers: int
+    new_customers: int
+
+class GlobalAnalyticsResponse(BaseModel):
+    report_generated: str
+    report_period: str
+    total_locations: int
+    total_checkins: int
+    total_revenue: float
+    avg_stay_duration: float
+    location_performance: List[LocationPerformance]
+    peak_times: List[PeakTimeData]
+    visitor_demographics: VisitorDemographics
+    top_performing_location: str
+    growth_metrics: Dict[str, float]
+
 class RoomType(str, Enum):
     LOCKER = "locker"
     SMALL_ROOM = "small_room"
