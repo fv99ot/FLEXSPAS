@@ -3048,6 +3048,117 @@ function App({ locationId }) {
               </CardContent>
             </Card>
 
+            {/* Waitlist */}
+            <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
+              <CardHeader>
+                <CardTitle className="flex items-center text-white">
+                  <Clock className="h-5 w-5 mr-2" />
+                  Waitlist ({(() => {
+                    // Create flat waitlist array from nested structure
+                    const flatWaitlist = [];
+                    if (waitlist.waitlists) {
+                      Object.values(waitlist.waitlists).forEach(roomTypeList => {
+                        flatWaitlist.push(...roomTypeList);
+                      });
+                    }
+                    return flatWaitlist.length;
+                  })()})
+                </CardTitle>
+                <CardDescription className="text-gray-300">
+                  Customers waiting for available rooms or lockers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  // Create flat waitlist array from nested structure
+                  const flatWaitlist = [];
+                  if (waitlist.waitlists) {
+                    Object.values(waitlist.waitlists).forEach(roomTypeList => {
+                      flatWaitlist.push(...roomTypeList);
+                    });
+                  }
+                  
+                  return flatWaitlist.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No customers in waitlist</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {flatWaitlist.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className="p-4 border border-yellow-500/50 rounded-lg bg-yellow-600/10"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <Avatar>
+                                <AvatarFallback className="bg-yellow-600 text-white">
+                                  {entry.customer?.first_name?.charAt(0)}{entry.customer?.last_name?.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h3 className="font-semibold text-white">
+                                  {entry.customer?.first_name} {entry.customer?.last_name}
+                                </h3>
+                                <div className="text-sm text-gray-300 space-y-1">
+                                  <p>Requested: <span className="font-medium capitalize">{entry.desired_room_type?.replace('_', ' ')}</span></p>
+                                  <p>Current: <span className="capitalize">{entry.current_room_type?.replace('_', ' ')} #{entry.current_room_number}</span></p>
+                                  <p>Added: {new Date(entry.created_at).toLocaleString()}</p>
+                                  <p>Wait Time: {Math.floor((Date.now() - new Date(entry.created_at).getTime()) / (1000 * 60))} min</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => {
+                                  // Find available rooms of the requested type
+                                  const availableRooms = roomMap.rooms?.filter(room => 
+                                    room.type === entry.desired_room_type && room.available
+                                  ) || [];
+                                  const availableLockers = roomMap.lockers?.filter(locker => 
+                                    entry.desired_room_type === 'locker' && locker.available && !locker.employee_assigned
+                                  ) || [];
+                                  
+                                  if (availableRooms.length > 0 || (entry.desired_room_type === 'locker' && availableLockers.length > 0)) {
+                                    const roomNumber = entry.desired_room_type === 'locker' 
+                                      ? availableLockers[0].number 
+                                      : availableRooms[0].number;
+                                    upgradeFromWaitlist(entry.id, roomNumber, entry.desired_room_type);
+                                  } else {
+                                    alert(`No ${entry.desired_room_type.replace('_', ' ')} available at the moment.`);
+                                  }
+                                }}
+                              >
+                                Check In
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-white/20 text-white hover:bg-white/10"
+                                onClick={() => removeFromWaitlist(entry.id)}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+                
+                <div className="mt-6 pt-4 border-t border-white/10">
+                  <Button
+                    onClick={fetchWaitlist}
+                    className="flex-button"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Refresh Waitlist
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Room Map - Combined with Active Check-ins */}
             <Card className="dashboard-card" style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(30, 58, 138, 0.3)', color: '#ffffff' }}>
               <CardHeader>
