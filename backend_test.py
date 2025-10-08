@@ -3873,6 +3873,9 @@ class BathhouseAPITester:
         print("🎯 PRIORITY TESTS FROM REVIEW REQUEST")
         print("="*80)
         
+        # HIGHEST PRIORITY: Comprehensive Database Cleanup for Fresh Deployment
+        self.test_comprehensive_database_cleanup()
+        
         # HIGHEST PRIORITY: Investigate /api/users endpoint 500 error
         self.test_users_endpoint_error_investigation()
         
