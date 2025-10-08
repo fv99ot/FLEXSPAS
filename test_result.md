@@ -397,17 +397,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Users Endpoint 500 Error Investigation"
-    - "QR Code Generation & Redirect Fix"
-    - "Authentication System Verification"
-    - "Multi-Location Database Isolation"
-    - "Membership Form Access"
+    - "Final Deployment Readiness Verification"
+    - "Health Check Endpoint Testing"
+    - "Database Validation System Testing"
+    - "Environment Variable Usage Verification"
+    - "Critical API Endpoints Testing"
   stuck_tasks: 
     - "Users Endpoint 500 Error Investigation"
     - "QR Code URL Configuration Issue"
-    - "Super Admin Cross-Location Access"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "deployment_readiness"
 
 frontend:
   - task: "UI Redesign: Merge Pending Approval & QR Code Tabs"
