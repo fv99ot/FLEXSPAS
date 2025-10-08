@@ -634,8 +634,8 @@ function App({ locationId }) {
       formData.append('file', file);
 
       const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
+        'Authorization': `Bearer ${token}`
+        // Don't set Content-Type for FormData - browser will set it automatically with boundary
       };
 
       // Add location header for multi-location support
