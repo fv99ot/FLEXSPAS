@@ -1307,25 +1307,66 @@ function App({ locationId }) {
       </div>
     `;
     
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>FLEX SPA Receipt</title>
-          <style>
-            @media print {
-              @page { margin: 0.5in; }
-              body { margin: 0; }
-            }
-          </style>
-        </head>
-        <body onload="window.print(); window.close();">
-          ${receiptContent}
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    // Create a new window for printing with error handling
+    try {
+      const printWindow = window.open('', '_blank', 'width=400,height=600');
+      
+      if (!printWindow) {
+        // Popup blocked - use alternative method
+        console.log('📄 Popup blocked, using alternative print method');
+        const printContent = `
+          <html>
+            <head>
+              <title>FLEX SPA Receipt</title>
+              <style>
+                @media print {
+                  @page { margin: 0.5in; }
+                  body { margin: 0; }
+                }
+              </style>
+            </head>
+            <body>
+              ${receiptContent}
+            </body>
+          </html>
+        `;
+        
+        // Open in current window for printing
+        const newWindow = window.open();
+        if (newWindow) {
+          newWindow.document.write(printContent);
+          newWindow.document.close();
+          newWindow.print();
+          newWindow.close();
+        } else {
+          // Fallback - just log the receipt content
+          console.log('📄 Receipt generated:', receiptContent);
+          alert('Receipt generated successfully! (Print popup was blocked)');
+        }
+        return;
+      }
+      
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>FLEX SPA Receipt</title>
+            <style>
+              @media print {
+                @page { margin: 0.5in; }
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body onload="window.print(); window.close();">
+            ${receiptContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('Receipt printing error:', error);
+      alert('Receipt generated successfully! (Printing not available)');
+    }
   };
 
   const saveProfileNotes = async () => {
