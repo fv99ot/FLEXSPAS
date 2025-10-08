@@ -2589,6 +2589,111 @@ async def clear_all_discounts(current_user: User = Depends(get_current_user)):
     result = await db.discounts.delete_many({})
     return {"message": f"All discounts cleared from database ({result.deleted_count} records removed)"}
 
+@api_router.delete("/admin/clear-all-preset-data")
+async def clear_all_preset_data(
+    current_user: User = Depends(get_current_user),
+    location: str = Depends(get_location_from_header)
+):
+    """HARD DELETE: Clear all preset customers, additional items, and discounts for fresh deployment"""
+    if current_user.role != UserRole.MANAGER:
+        raise HTTPException(status_code=403, detail="Only managers can clear preset data")
+    
+    try:
+        # Get the database for the specified location
+        location_db = get_location_db(location)
+        
+        # Clear all customers
+        customers_result = await location_db.customers.delete_many({})
+        
+        # Clear all additional items
+        items_result = await location_db.additional_items.delete_many({})
+        
+        # Clear all discounts  
+        discounts_result = await location_db.discounts.delete_many({})
+        
+        # Clear all checkins (active sessions)
+        checkins_result = await location_db.checkins.delete_many({})
+        
+        # Clear all transactions
+        transactions_result = await location_db.transactions.delete_many({})
+        
+        # Clear all waitlist entries
+        waitlist_result = await location_db.waitlist.delete_many({})
+        
+        return {
+            "message": "All preset data cleared successfully for fresh deployment",
+            "location": location,
+            "deleted_counts": {
+                "customers": customers_result.deleted_count,
+                "additional_items": items_result.deleted_count, 
+                "discounts": discounts_result.deleted_count,
+                "checkins": checkins_result.deleted_count,
+                "transactions": transactions_result.deleted_count,
+                "waitlist": waitlist_result.deleted_count
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing preset data: {str(e)}")
+
+@api_router.delete("/admin/clear-all-locations-preset-data") 
+async def clear_all_locations_preset_data(current_user: User = Depends(get_current_user)):
+    """HARD DELETE: Clear all preset data from ALL locations for fresh deployment"""
+    if current_user.role not in [UserRole.MANAGER, UserRole.SUPER_ADMIN]:
+        raise HTTPException(status_code=403, detail="Only managers or super admins can clear all location data")
+    
+    locations = ['los-angeles', 'atlanta', 'cleveland', 'phoenix']
+    results = {}
+    total_deleted = {
+        "customers": 0,
+        "additional_items": 0,
+        "discounts": 0,
+        "checkins": 0,
+        "transactions": 0, 
+        "waitlist": 0
+    }
+    
+    try:
+        for location_id in locations:
+            try:
+                location_db = get_location_db(location_id)
+                
+                # Clear all data for this location
+                customers_result = await location_db.customers.delete_many({})
+                items_result = await location_db.additional_items.delete_many({})
+                discounts_result = await location_db.discounts.delete_many({})
+                checkins_result = await location_db.checkins.delete_many({})
+                transactions_result = await location_db.transactions.delete_many({})
+                waitlist_result = await location_db.waitlist.delete_many({})
+                
+                location_deleted = {
+                    "customers": customers_result.deleted_count,
+                    "additional_items": items_result.deleted_count,
+                    "discounts": discounts_result.deleted_count,
+                    "checkins": checkins_result.deleted_count,
+                    "transactions": transactions_result.deleted_count,
+                    "waitlist": waitlist_result.deleted_count
+                }
+                
+                results[location_id] = location_deleted
+                
+                # Add to totals
+                for key in total_deleted:
+                    total_deleted[key] += location_deleted[key]
+                    
+            except Exception as e:
+                results[location_id] = {"error": f"Failed to clear {location_id}: {str(e)}"}
+        
+        return {
+            "message": "All preset data cleared from all locations for fresh deployment",
+            "locations_processed": locations,
+            "results_by_location": results,
+            "total_deleted": total_deleted
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing all location data: {str(e)}")
+
 @api_router.delete("/admin/additional-items/clear-all")
 async def clear_all_additional_items(current_user: User = Depends(get_current_user)):
     """HARD DELETE: Clear all additional items from database completely"""
