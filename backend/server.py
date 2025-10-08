@@ -2946,7 +2946,10 @@ async def get_global_analytics(
                 location_hourly = {}
                 for checkin in checkins:
                     try:
-                        hour = datetime.fromisoformat(checkin['checkin_time']).hour
+                        checkin_time = checkin['check_in_time']
+                        if isinstance(checkin_time, str):
+                            checkin_time = datetime.fromisoformat(checkin_time.replace('Z', '+00:00'))
+                        hour = checkin_time.hour
                         location_hourly[hour] = location_hourly.get(hour, 0) + 1
                         hourly_checkins[hour] = hourly_checkins.get(hour, 0) + 1
                     except:
